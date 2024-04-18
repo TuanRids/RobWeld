@@ -66,14 +66,16 @@ namespace nwindow
     // Initialize UI components
     mUICtx->pre_render();
 
-    // render scene to framebuffer and add it to scene view
-    mSceneView->render();
 
+
+    // render scene to framebuffer and add it to scene view
+
+    mSceneView->render();
     mPropertyPanel->render(mSceneView.get());
+
 
     // Render the UI 
     mUICtx->post_render();
-
     // Render end, swap buffers
     mRenderCtx->post_render();
 

@@ -19,11 +19,12 @@ namespace nui
       mCurrentFile = "< ... >";
 
       mFileDialog.SetTitle("Import Mesh");
-      mFileDialog.SetFileFilters({ ".fbx", ".obj" });
+      mFileDialog.SetFileFilters({ ".fbx", ".obj",".stl"});
 
       ImGuiIO& io = ImGui::GetIO();
       io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/Arial.ttf", 16.0f);
 
+      showMenuBar = true;
     }
        void MenuBar();
     void render(nui::SceneView* mScene);
@@ -34,6 +35,7 @@ namespace nui
     }
     void OpenFileDialog();
   private:
+    bool showMenuBar;
     // create a file browser instance
     ImGui::FileBrowser mFileDialog;
 

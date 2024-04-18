@@ -7,8 +7,10 @@
 #include "element.h"
 #include "shader/shader_util.h"
 
+
 namespace nelems
 {
+	
 	class Camera : public Element
 	{
 	public:
@@ -83,7 +85,7 @@ namespace nelems
 
 	void on_mouse_wheel(double delta)
 	{
-		set_distance(delta * 0.5f);
+		set_distance(float(delta) * 0.5f);
 
 		update_view_matrix();
 	}
@@ -152,6 +154,11 @@ namespace nelems
 		mViewMatrix = glm::translate(glm::mat4(1.0f), mPosition) * glm::toMat4(orientation);
 		mViewMatrix = glm::inverse(mViewMatrix);
 	}
+	glm::vec3 get_position() const
+	{
+		return mPosition;
+	}
+
 
 	private:
 		glm::mat4 mViewMatrix;
@@ -162,9 +169,9 @@ namespace nelems
 
 		float mDistance = 5.0f;
 		float mAspect;
-    float mFOV;
-    float mNear;
-    float mFar;
+		float mFOV;
+		float mNear;
+		float mFar;
 
 		float mPitch = 0.0f;
 		float mYaw = 0.0f;

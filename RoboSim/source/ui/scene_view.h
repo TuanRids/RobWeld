@@ -52,18 +52,24 @@ namespace nui
       mMesh = mesh;
     }
 
+
+
     std::shared_ptr<nelems::Mesh> get_mesh() { return mMesh; }
     
     void on_mouse_move(double x, double y, nelems::EInputButton button);
 
     void on_mouse_wheel(double delta);
 
+    //void on_mouse_click(double x, double y);
+
+
     void reset_view()
     {
       mCamera->reset();
     }
-
+    
   private:
+    int noMesh = 0;
     std::unique_ptr<nelems::Camera> mCamera;
     std::unique_ptr<nrender::OpenGL_FrameBuffer> mFrameBuffer;
     std::unique_ptr<nshaders::Shader> mShader;

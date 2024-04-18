@@ -9,33 +9,38 @@ namespace nui
     auto mesh = scene_view->get_mesh();
 
     ImGui::Begin("Properties");
-    if (ImGui::CollapsingHeader("Object", ImGuiTreeNodeFlags_DefaultOpen))
+
+
+    if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
     {
-      
-      if (ImGui::Button("Open..."))
-      {
-          OpenFileDialog();
-      }
-      ImGui::SameLine(0, 5.0f);
-      ImGui::Text(mCurrentFile.c_str());
+        if (mesh)
+        {
+            ImGui::ColorEdit3("Color", (float*)&mesh->mColor);
+            //ImGui::ColorPicker3("Color", (float*)&mesh->mColor, ImGuiColorEditFlags_DisplayRGB);
+            ImGui::SliderFloat("Roughness", &mesh->mRoughness, 0.0f, 1.0f);
+            ImGui::SliderFloat("Metallic", &mesh->mMetallic, 0.0f, 1.0f);
+        }
+        else {
+            ImVec4 disabledColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);// gray out the widgets
+            float disabledFloat = 0.5f; // 0.5f is the default value
+            ImGui::ColorEdit3("Color", (float*)&disabledColor);
+
+            //ImGui::ColorPicker3("Color", (float*)&disabledColor,  ImGuiColorEditFlags_DisplayRGB);
+            ImGui::SliderFloat("Roughness", &disabledFloat, 0.0f, 1.0f);
+            ImGui::SliderFloat("Metallic", &disabledFloat, 0.0f, 1.0f);
+        }
     }
 
-    if (ImGui::CollapsingHeader("Material") && mesh)
-    {
-        ImGui::ColorPicker3("Color", (float*)&mesh->mColor, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_DisplayRGB);
-        ImGui::SliderFloat("Roughness", &mesh->mRoughness, 0.0f, 1.0f);
-        ImGui::SliderFloat("Metallic", &mesh->mMetallic, 0.0f, 1.0f);
-    }
-
-    if (ImGui::CollapsingHeader("Light"))
+    if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
     {
 
       ImGui::Separator();
       ImGui::Text("Position");
       ImGui::Separator();
       nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f);
+      ImGui::SliderInt("Light Intensity", &scene_view->get_light()->mStrength, 1, 1000);
     }
-    if (ImGui::CollapsingHeader("iObject") && mesh)
+    if (ImGui::CollapsingHeader("iObject", ImGuiTreeNodeFlags_DefaultOpen) && mesh)
     {
 
         ImGui::Separator();
@@ -44,7 +49,6 @@ namespace nui
         ImGui::Text("Vertices: %d", mesh->get_vertices_size());
     }
     ImGui::End();
-
   }
   void Property_Panel::OpenFileDialog()
   {
@@ -56,7 +60,7 @@ namespace nui
       ofn.hwndOwner = NULL;
       ofn.lpstrFile = szFile;
       ofn.nMaxFile = sizeof(szFile);
-      ofn.lpstrFilter = "FBX Files (*.fbx)\0*.fbx\0All Files (*.*)\0*.*\0";
+      ofn.lpstrFilter = "FBX Files (*.fbx)\0*.fbx\0OBJ Files (*.obj)\0*.obj\0STL Files (*.stl)\0*.stl\0All Files (*.*)\0*.*\0";
       ofn.nFilterIndex = 1;
       ofn.lpstrFileTitle = NULL;
       ofn.nMaxFileTitle = 0;
@@ -75,40 +79,52 @@ namespace nui
 }
 void nui::Property_Panel::MenuBar()
 {
+
+
     if (ImGui::BeginMainMenuBar())
     {
-     if (ImGui::BeginMenu("File"))
-     {
-         if (ImGui::MenuItem("New"))
-         {
-          //NewScene();
-         }
-         if (ImGui::MenuItem("Open"))
-         {
-          //OpenScene();
-         }
-         if (ImGui::MenuItem("Save"))
-         {
-          //SaveScene();
-         }
-         if (ImGui::MenuItem("Save As"))
-         {
-          //SaveSceneAs();
-         }
-         ImGui::EndMenu();
-     }
-     if (ImGui::BeginMenu("Edit"))
-     {
-         if (ImGui::MenuItem("Undo"))
-         {
-          //Undo();
-         }
-         if (ImGui::MenuItem("Redo"))
-         {
-          //Redo();
-         }
-         ImGui::EndMenu();
-     }
-     ImGui::EndMainMenuBar();
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("New"))
+            {
+                //NewScene();
+            }
+            if (ImGui::MenuItem("Open"))
+            {
+                //OpenScene();
+            }
+            if (ImGui::MenuItem("Import"))
+            {
+                OpenFileDialog();
+            }
+            if (ImGui::MenuItem("Save"))
+            {
+                //SaveScene();
+            }
+            if (ImGui::MenuItem("Save As"))
+            {
+                //SaveSceneAs();
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Edit"))
+        {
+            if (ImGui::MenuItem("Undo"))
+            {
+                //Undo();
+            }
+            if (ImGui::MenuItem("Redo"))
+            {
+                //Redo();
+            }
+            if (ImGui::MenuItem("Collapse"))
+            {
+                showMenuBar = false;
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
     }
+        
+
 }
