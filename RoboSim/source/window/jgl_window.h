@@ -1,6 +1,6 @@
 #pragma once
 
-#include "elems/mesh.h"
+
 #include "elems/camera.h"
 #include "elems/light.h"
 #include "shader/shader_util.h"

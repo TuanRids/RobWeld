@@ -5,7 +5,7 @@
 
 namespace nmesh_import
 {
-  bool ObjMeshImporter::from_file(const std::string& filepath, nelems::Mesh* pMesh)
+  bool ObjMeshImporter::from_file(const std::string& filepath, nelems::oMesh* pMesh)
   {
     std::ifstream in(filepath, std::ios::in);
     if (!in)

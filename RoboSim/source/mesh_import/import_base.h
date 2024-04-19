@@ -6,6 +6,6 @@ namespace nmesh_import {
 
 	struct IMeshImporter
 	{
-    virtual bool from_file(const std::string& filepath, nelems::Mesh* pMesh) = 0;
+    virtual bool from_file(const std::string& filepath, nelems::oMesh* pMesh) = 0;
 	};
 }

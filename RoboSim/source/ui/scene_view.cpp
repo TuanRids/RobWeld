@@ -26,11 +26,11 @@ namespace nui
 
   void SceneView::load_mesh(const std::string& filepath)
   {
-    if(!mMesh)
-      mMesh = std::make_shared<nelems::Mesh>();
+    if(!crMesh)
+        crMesh = std::make_shared<nelems::mMesh>();
     try
     {
-        mMesh->load(filepath, noMesh);
+        crMesh->load(filepath);
     }
     catch (const std::exception& e)
 	{
@@ -47,17 +47,16 @@ namespace nui
 
     mFrameBuffer->bind();
 
-    if (mMesh)
+    if (crMesh)
     {
-      mMesh->update(mShader.get());
-      mMesh->render();
+	  crMesh->update(mShader.get());
+      crMesh->render();
     }
 
     mFrameBuffer->unbind();
 
 
     ImGui::Begin("ViewPort");
-    ImGui::SliderInt("MeshID", &noMesh, -1, 10);
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     mSize = { viewportPanelSize.x, viewportPanelSize.y };
 
@@ -69,11 +68,8 @@ namespace nui
     ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
     
     // Check User left Click on mainviewport
-    if (mMesh && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-    {
-        // Get position of Viewport window
-        //mMesh->mColor = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow color
-    }
+    
+    //mMesh->mColor = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow color
     ImGui::End();
 
 

@@ -2,6 +2,7 @@
 
 #include "elems/light.h"
 #include "ui/scene_view.h"
+#include "elems/mesh.h"
 
 #include "imgui.h"
 #include "utils/imgui_widgets.h"
@@ -10,7 +11,7 @@
 #include <Commdlg.h>
 namespace nui
 {
-  class Property_Panel
+  class Property_Panel: public nelems::mMesh
   {
   public:
 
@@ -35,6 +36,8 @@ namespace nui
     }
     void OpenFileDialog();
   private:
+    nelems::oMesh *mesh = nullptr;
+    long long selectedID = 0;
     bool showMenuBar;
     // create a file browser instance
     ImGui::FileBrowser mFileDialog;

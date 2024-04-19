@@ -9,7 +9,7 @@
 
 namespace nui
 {
-  class SceneView
+    class SceneView 
   {
 
   private:
@@ -47,15 +47,27 @@ namespace nui
 
     void load_mesh(const std::string& filepath);
 
-    void set_mesh(std::shared_ptr<nelems::Mesh> mesh)
+    bool check_mesh() 
+    { 
+        if (crMesh == nullptr)
+			return false;
+		return true;
+    }
+
+    std::shared_ptr<nelems::mMesh> get_mesh_scene()
     {
-      mMesh = mesh;
+        if (crMesh) {
+            return crMesh;
+        }
+        else {
+            return nullptr;
+        }
     }
 
 
+    // TODO: return a vector of mesh ids
+    void get_mesh_ids(std::vector<long long> &IDs) { crMesh->get_mesh_ids(IDs); }
 
-    std::shared_ptr<nelems::Mesh> get_mesh() { return mMesh; }
-    
     void on_mouse_move(double x, double y, nelems::EInputButton button);
 
     void on_mouse_wheel(double delta);
@@ -69,12 +81,15 @@ namespace nui
     }
     
   private:
-    int noMesh = 0;
+      /*void set_mesh(std::shared_ptr<nelems::Mesh> mesh)
+      {
+          mMesh = mesh;
+      }*/
     std::unique_ptr<nelems::Camera> mCamera;
     std::unique_ptr<nrender::OpenGL_FrameBuffer> mFrameBuffer;
     std::unique_ptr<nshaders::Shader> mShader;
     std::unique_ptr<nelems::Light> mLight;
-    std::shared_ptr<nelems::Mesh> mMesh;
+    std::shared_ptr<nelems::mMesh> crMesh;
     glm::vec2 mSize;
   };
 }
