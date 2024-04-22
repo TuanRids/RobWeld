@@ -3,7 +3,6 @@
 
 #include "elems/camera.h"
 #include "elems/light.h"
-#include "shader/shader_util.h"
 
 #include "render/ui_context.h"
 #include "render/opengl_context.h"
@@ -14,10 +13,10 @@
 #include "ui/property_panel.h"
 #include "ui/scene_view.h"
 
+
 using namespace nui;
 using namespace nelems;
 using namespace nrender;
-using namespace nshaders;
 
 namespace nwindow
 {
@@ -34,7 +33,8 @@ namespace nwindow
 
     ~GLWindow();
 
-    bool init(int width, int height, const std::string& title);
+
+    bool init( const std::string& title);
 
     void render();
 

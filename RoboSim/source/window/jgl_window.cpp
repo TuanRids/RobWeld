@@ -5,10 +5,28 @@
 
 namespace nwindow
 {
-  bool GLWindow::init(int width, int height, const std::string& title)
+  bool GLWindow::init( const std::string& title)
   {
-    Width = width;
-    Height = height;
+      int offsize = 50;
+    if (!glfwInit()) {
+        Width = 1920 - offsize;
+        Height = 1080 - offsize;
+        return false;
+    }
+    else 
+    {
+        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        if (!mode) {
+            Width = 1920 - offsize;
+            Height = 1080 - offsize;
+            glfwTerminate();
+        }
+		else {
+			Width = mode->width - offsize;
+			Height = mode->height - offsize;
+		}
+    }
+
     Title = title;
 
     mRenderCtx->init(this);
@@ -88,12 +106,12 @@ namespace nwindow
 
     if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
     {
-      mSceneView->on_mouse_wheel(-0.4f);
+      mSceneView->on_mouse_wheel(0.4f);
     }
 
     if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
     {
-      mSceneView->on_mouse_wheel(0.4f);
+      mSceneView->on_mouse_wheel(-0.4f);
     }
 
     if (glfwGetKey(mWindow, GLFW_KEY_F) == GLFW_PRESS)

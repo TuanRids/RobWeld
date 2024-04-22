@@ -32,11 +32,13 @@ namespace nrender
   {
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+    glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glDeleteBuffers(1, &mIBO);
     glDeleteBuffers(1, &mVBO);
     glDeleteVertexArrays(1, &mVAO);
+      
   }
 
   void OpenGL_VertexIndexBuffer::bind()

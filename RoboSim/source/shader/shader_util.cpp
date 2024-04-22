@@ -76,6 +76,7 @@ namespace nshaders
 		glUniform1i(myLoc, v);
 	}
 
+	 /*name: fs_pbr.shader*/
 	void Shader::set_f1(float v, const std::string& name)
 	{
 		GLint myLoc = glGetUniformLocation(get_program_id(), name.c_str());
@@ -92,6 +93,20 @@ namespace nshaders
 	{
 		GLint myLoc = glGetUniformLocation(get_program_id(), name.c_str());
 		glProgramUniform3fv(get_program_id(), myLoc, 1, glm::value_ptr(vec3));
+	}
+	void Shader::set_material(const Material& mat, const std::string& name)
+	{
+		GLint myLoc = glGetUniformLocation(get_program_id(), (name + ".mColor").c_str());
+		glUniform3fv(myLoc, 1, glm::value_ptr(mat.mColor));
+
+		myLoc = glGetUniformLocation(get_program_id(), (name + ".mMetallic").c_str());
+		glUniform1f(myLoc, mat.metallic);
+
+		myLoc = glGetUniformLocation(get_program_id(), (name + ".mRoughness").c_str());
+		glUniform1f(myLoc, mat.roughness);
+
+		myLoc = glGetUniformLocation(get_program_id(), (name + ".mAo").c_str());
+		glUniform1f(myLoc, mat.ao);
 	}
 
   void Shader::set_vec4(const glm::vec4& vec4, const std::string& name)

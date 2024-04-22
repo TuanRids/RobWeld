@@ -36,6 +36,13 @@ namespace nui
             {
                 selectedID = id;
             }
+            if (id == selectedID)
+            {
+                ImU32 yellowColorU32 = ImGui::ColorConvertFloat4ToU32(ImVec4(0.25f, 0.42f, 1.0f, 1.0f));
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, yellowColorU32);
+
+            }
+
         }
         ImGui::EndTable();
 	}
@@ -53,20 +60,18 @@ namespace nui
     /// Material
     if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        if (mesh)
+        if (prevSelectedID)
         {
-            std::cout << "ID" << mesh->ID << mesh ->mRoughness << std::endl;
-            ImGui::ColorEdit3("Color", (float*)&(mesh->mColor));
-            //ImGui::ColorPicker3("Color", (float*)&mesh->mColor, ImGuiColorEditFlags_DisplayRGB);
-            ImGui::SliderFloat("Roughness", &mesh->mRoughness, 0.0f, 1.0f);
-            ImGui::SliderFloat("Metallic", &mesh->mMetallic, 0.0f, 1.0f);
+            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
+            ImGui::ColorEdit3("Color", (float*)&(mesh->oMaterial.mColor));
+            ImGui::SliderFloat("Roughness", &mesh->oMaterial.roughness, 0.0f, 1.0f);
+            ImGui::SliderFloat("Metallic", &mesh->oMaterial.metallic, 0.0f, 1.0f);
         }
         else {
+            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
             static ImVec4 disabledColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);// gray out the widgets
             static float disabledFloat = 0.5f; // 0.5f is the default value
             ImGui::ColorEdit3("Color", (float*)&disabledColor);
-
-            //ImGui::ColorPicker3("Color", (float*)&disabledColor,  ImGuiColorEditFlags_DisplayRGB);
             ImGui::SliderFloat("Roughness", &disabledFloat, 0.0f, 1.0f);
             ImGui::SliderFloat("Metallic", &disabledFloat, 0.0f, 1.0f);
         }
@@ -74,23 +79,19 @@ namespace nui
     /// Light
     if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
     {
-      static float tt = 0.2f;
-      ImGui::SliderFloat("test", &tt, 0.0f, 1.0f);
-      ImGui::Separator();
-      ImGui::Text("Position");
       ImGui::Separator();
       nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f);
-      ImGui::SliderInt("Light Intensity", &scene_view->get_light()->mStrength, 1, 100000);
+      ImGui::SliderInt("Light Intensity", &scene_view->get_light()->mStrength, 1, 1000);
     }
     /// iObject
     if (ImGui::CollapsingHeader("iObject", ImGuiTreeNodeFlags_DefaultOpen) && mesh)
     {
 
         ImGui::Separator();
-        ImGui::Text("Name: %s", mCurrentFile.c_str());
-        ImGui::Text("ID: %lld", mesh->ID);
-        ImGui::Text("Indices: %d", mesh->get_vertex_indices_size());
-        ImGui::Text("Vertices: %d", mesh->get_vertices_size());
+        ImGui::Text("Name:          %s", mCurrentFile.c_str());
+        ImGui::Text("ID:            %lld", mesh->ID);
+        ImGui::Text("Indices:       %d", mesh->get_vertex_indices_size());
+        ImGui::Text("Vertices:      %d", mesh->get_vertices_size());
 
     }
     ImGui::End();

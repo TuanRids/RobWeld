@@ -41,6 +41,7 @@ namespace nrender
     // Create the window and store this window as window pointer
     // so that we can use it in callback functions
     auto glWindow = glfwCreateWindow(window->Width, window->Height, window->Title.c_str(), nullptr, nullptr);
+
     window->set_native_window(glWindow);
 
     if (!glWindow)
@@ -68,11 +69,11 @@ namespace nrender
 
     return true;
   }
-
+  //TODO: SET VIEWPORT COLOR    #TODO VIEWPORT COLOR TODO COLOR TODOCOLOR
   void OpenGL_Context::pre_render()
   {
     glViewport(0, 0, mWindow->Width, mWindow->Height);
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClearColor(0.14f, 0.15f, 0.18f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 

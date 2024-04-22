@@ -12,13 +12,14 @@
 #include <assimp/scene.h>
 #include <random>
 #include <chrono>
+#include "material.h"
+
 namespace nelems {
 
     struct oMesh {
-        glm::vec3 mColor = { 1.0f, 0.0f, 0.0f };
-        float mRoughness = 0.2f;
-        float mMetallic = 0.1f;
-        long long ID;
+        Material oMaterial { { 1.0f, 0.0f, 0.0f },
+                            0.2f, 0.2f, 1.0f };
+        long long ID{ 0 };
         std::vector<VertexHolder> mVertices;
         std::vector<unsigned int> mVertexIndices;
         std::shared_ptr<nrender::VertexIndexBuffer> mRenderBufferMgr;
@@ -150,15 +151,13 @@ namespace nelems {
         }
 
         void update(nshaders::Shader* shader) {
-            std::vector<float> a;
-            for (auto& mesh : mMeshes) {
-                a.push_back(mesh.mRoughness);
-                shader->set_vec3(mesh.mColor, "albedo");
-                shader->set_f1(mesh.mRoughness, "roughness");
-                shader->set_f1(mesh.mMetallic, "metallic");
-                shader->set_f1(1.0f, "ao");
+            for (int i = 0; i < mMeshes.size(); ++i) {
+                auto& mesh = mMeshes[i];
+                shader->set_material(mesh.oMaterial, "materialData");
+                mesh.render();
             }
         }
+
 
         void render() {
             for (auto& mesh : mMeshes) 
@@ -185,7 +184,6 @@ namespace nelems {
                 }
             }
         }
-
     private:
         std::vector<oMesh> mMeshes;
     };
