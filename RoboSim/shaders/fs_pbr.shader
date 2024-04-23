@@ -11,11 +11,6 @@ struct material{
 	float mAo;
 	};
 uniform material materialData;
-// material parameters
-// uniform vec3 albedo;
-// uniform float metallic;
-// uniform float roughness;
-// uniform float ao;
 
 // lights
 uniform vec3 lightPosition;

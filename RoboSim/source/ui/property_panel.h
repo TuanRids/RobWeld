@@ -22,7 +22,6 @@ namespace nui
     {
     private:
         nelems::mMesh* proMesh; // Mesh Properties
-        // nui::SceneView* mSceneMesh; // scene for lights, camera and others
         nelems::oMesh* mesh = nullptr; // for each objects
         long long selectedID = 0;
         bool showMenuBar;
@@ -31,7 +30,8 @@ namespace nui
         std::function<void(const std::string&)> mMeshLoadCallback;
         std::string mCurrentFile;
         public:
-            Property_Panel()
+            Property_Panel():
+                proMesh(nullptr),mesh(nullptr)
             {
                 mCurrentFile = "< ... >";
                 mFileDialog.SetTitle("Import Mesh");

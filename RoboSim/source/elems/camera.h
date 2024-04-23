@@ -19,12 +19,11 @@ namespace nelems
 		{
 			mPosition = position;
 			mAspect = aspect;
-		  mNear = near;
-		  mFar = far;
-		  mFOV = fov;
+			mNear = near;
+			mFar = far;
+			mFOV = fov;
 
 			set_aspect(mAspect);
-
 			update_view_matrix();
 		}
 

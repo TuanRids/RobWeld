@@ -10,7 +10,7 @@ namespace nui
         if (!proMesh) {
             proMesh = &nelems::mMesh::getInstance();
         }
-        //---------------------------------------------------------------------------------
+        //================================================================================================
         /// Main Properties
         MenuBar();
         std::vector<long long> IDs;
@@ -25,6 +25,7 @@ namespace nui
         }
         if (IDs.size() > 0)
         {
+            //================================================================================================
             ImGui::BeginTable("MeshTable", 2, ImGuiTableFlags_Borders);
             ImGui::TableSetupColumn("IDs");
             //ImGui::TableSetupColumn("Name");
@@ -54,13 +55,12 @@ namespace nui
 
         //---------------------------------------------------------------------------------
         // get scenemesh for lights and other properties
-        
-
         if (proMesh && selectedID != prevSelectedID && selectedID != 0)
         {
             proMesh->get_mesh_ptr(selectedID, mesh);
         }
         prevSelectedID = selectedID;
+        //================================================================================================
         /// Material
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
@@ -99,11 +99,30 @@ namespace nui
 
         }
         ImGui::End();
-        // End of Properties
-        //---------------------------------------------------------------------------------
+
+        // CameraSettings
+
+        //================================================================================================
+        
+        ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
+        
+        if (ImGui::Begin("CameraSetting", nullptr))
+        {
+            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
+            ImGui::Separator();
+            static float newfov{ 45.0f }, newnear{ 1.0f }, newfar{ 400.0f };
+            static int newzoom(5);
+            ImGui::SliderFloat("Fov", &newfov, 1.0f, 99.0f, "%.0f");
+            ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f");
+            ImGui::SliderFloat("Far", &newfar, 0.1f, 400.0f, "%.1f");
+            ImGui::SliderInt("ZSp", &newzoom, 0, 20);
+            SceneView::getInstance().setFov(newfov);
+            SceneView::getInstance().setNear(newnear);
+            SceneView::getInstance().setFar(newfar);
+            SceneView::getInstance().setZoom(newzoom);
+            ImGui::End();
+        }
     }
-
-
 
     void Property_Panel::OpenFileDialog()
     {
@@ -145,7 +164,7 @@ namespace nui
                 if (ImGui::MenuItem("Load"))
                 {
 
-                    //nelems::RobsFileIO::LoadFromFile(*proMesh);
+                    nelems::RobsFileIO::LoadFromFile(*proMesh);
                 }
                 if (ImGui::MenuItem("Import"))
                 {
@@ -159,7 +178,7 @@ namespace nui
                     }
                     else
                     {
-                        //nelems::RobsFileIO::SaveToFile(*proMesh);
+                        nelems::RobsFileIO::SaveToFile(*proMesh);
                     }
                 }
                 if (ImGui::MenuItem("Save As"))

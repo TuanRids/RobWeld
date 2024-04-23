@@ -31,7 +31,7 @@ namespace nui
 
         // Private constructor to prevent instantiation
         SceneView() :
-            mCamera(nullptr), mFrameBuffer(nullptr), mShader(nullptr),
+            rdMesh(nullptr),mCamera(nullptr), mFrameBuffer(nullptr), mShader(nullptr),
             mLight(nullptr), mSize(800, 600)
         {
             mFrameBuffer = std::make_unique<nrender::OpenGL_FrameBuffer>();
@@ -44,11 +44,7 @@ namespace nui
 
     public:
         // Static method to get the instance of SceneView
-        static SceneView& getInstance()
-        {
-            static SceneView instance;
-            return instance;
-        }
+        static SceneView& getInstance(){ static SceneView instance;  return instance;    }
 
         // Prevent copy and assignment
         SceneView(const SceneView&) = delete;
@@ -57,29 +53,26 @@ namespace nui
         // Destructor
         ~SceneView() { mShader->unload(); rdMesh = nullptr; }
 
+        //=======================================================================================================
+        
         // Public methods
         nelems::Light* get_light() { return mLight.get(); }
-
         void resize(int32_t width, int32_t height);
-
         void render();
-
         void load_mesh(const std::string& filepath);
+        std::shared_ptr<nui::SceneView> get_mesh_scene() { if (mSceneView) {return mSceneView;} else {return nullptr;}}
 
-        std::shared_ptr<nui::SceneView> get_mesh_scene()
-        {
-            if (mSceneView) {
-                return mSceneView;
-            }
-            else {
-                return nullptr;
-            }
-        }
-
+        //=======================================================================================================
         void on_mouse_move(double x, double y, nelems::EInputButton button);
-
         void on_mouse_wheel(double delta);
-
         void reset_view() { mCamera->reset(); }
+
+        //=======================================================================================================
+        void setFov(float newFov);
+        void setAspect(float newAspect);   // Setters Aspect
+        void setNear(float newNear);  // Setters Near
+        void setFar(float newFar);  // Setters Far
+        void setZoom(int newZoom); // Setters Zoom
+
     };
 }

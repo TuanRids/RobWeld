@@ -22,10 +22,25 @@ namespace nwindow
 {
   class GLWindow : public IWindow
   {
+  private:
+
+      GLFWwindow* mWindow;
+
+      // Render contexts
+      std::unique_ptr<UIContext> mUICtx;
+
+      std::unique_ptr<OpenGL_Context> mRenderCtx;
+
+      // UI components
+      std::unique_ptr<Property_Panel> mPropertyPanel;
+
+      nui::SceneView* mSceneView;
+
+      bool mIsRunning;
   public:
 
     GLWindow() :
-      mIsRunning(true), mWindow(nullptr)
+      mSceneView(nullptr), mIsRunning(true), mWindow(nullptr)
     {
       mUICtx = std::make_unique<UIContext>();
       mRenderCtx = std::make_unique<OpenGL_Context>();
@@ -58,21 +73,7 @@ namespace nwindow
     bool is_running() { return mIsRunning; }
 
 
-  private:
 
-    GLFWwindow* mWindow;
-
-    // Render contexts
-    std::unique_ptr<UIContext> mUICtx;
-
-    std::unique_ptr<OpenGL_Context> mRenderCtx;
-
-    // UI components
-    std::unique_ptr<Property_Panel> mPropertyPanel;
-
-    nui::SceneView *mSceneView;
-
-    bool mIsRunning;
 
   };
 }
