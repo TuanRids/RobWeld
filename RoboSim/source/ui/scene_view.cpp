@@ -26,11 +26,13 @@ namespace nui
 
   void SceneView::load_mesh(const std::string& filepath)
   {
-    if(!crMesh)
-        crMesh = std::make_shared<nelems::mMesh>();
+    if(!rdMesh)
+    {
+        rdMesh = &nelems::mMesh::getInstance();
+    }
     try
     {
-        crMesh->load(filepath);
+        rdMesh->load(filepath);
     }
     catch (const std::exception& e)
 	{
@@ -47,9 +49,9 @@ namespace nui
 
     mFrameBuffer->bind();
 
-    if (crMesh)
+    if (rdMesh)
     {
-      crMesh->update(mShader.get());
+        rdMesh->update(mShader.get());
       //crMesh->render();
 
     }

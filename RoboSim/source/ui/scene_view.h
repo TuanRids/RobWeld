@@ -9,89 +9,77 @@
 
 namespace nui
 {
-    class SceneView 
-  {
+    /*
+    Use the Singleton pattern to create a SceneView 
+    MAYBE IT COULD BE USE FOR OTHERS CLASSES
+    */
+    class SceneView
+    {
+    private:
+        nelems::mMesh* rdMesh;
+        std::unique_ptr<nelems::Camera> mCamera;
+        std::unique_ptr<nrender::OpenGL_FrameBuffer> mFrameBuffer;
+        std::unique_ptr<nshaders::Shader> mShader;
+        std::unique_ptr<nelems::Light> mLight;
+        std::shared_ptr<nui::SceneView> mSceneView;
+        glm::vec2 mSize;
+        float Fov = 45.0f;
+        float Aspect = 1.3f;
+        float Near = 0.1f;
+        float Far = 100.0f;
+        int zoom = 1;
 
-  private:
-      float Fov = 45.0f;
-      float Aspect = 1.3f;
-      float Near = 0.1f;
-      float Far = 100.0f;
-      int zoom = 1;
-  public:
-    SceneView() : 
-        mCamera(nullptr), mFrameBuffer(nullptr), mShader(nullptr),
-        mLight(nullptr), mSize(800, 600)
+        // Private constructor to prevent instantiation
+        SceneView() :
+            mCamera(nullptr), mFrameBuffer(nullptr), mShader(nullptr),
+            mLight(nullptr), mSize(800, 600)
         {
             mFrameBuffer = std::make_unique<nrender::OpenGL_FrameBuffer>();
             mFrameBuffer->create_buffers(800, 600);
             mShader = std::make_unique<nshaders::Shader>();
-            ////////// TODOSHADER SAME MATERIALS
             mShader->load("shaders/vs.shader", "shaders/fs_pbr.shader");
             mLight = std::make_unique<nelems::Light>();
-
-            mCamera = std::make_unique<nelems::Camera>(glm::vec3(0, 0, 3), Fov, Aspect,Near,Far);
-            
+            mCamera = std::make_unique<nelems::Camera>(glm::vec3(0, 0, 3), Fov, Aspect, Near, Far);
         }
 
-    ~SceneView()
-    {
-      mShader->unload();
-    }
-
-    nelems::Light* get_light() { return mLight.get(); }
-
-    void resize(int32_t width, int32_t height);
-
-
-    void render();
-
-    void load_mesh(const std::string& filepath);
-
-    bool check_mesh() 
-    { 
-        if (crMesh == nullptr)
-			return false;
-		return true;
-    }
-
-    std::shared_ptr<nelems::mMesh> get_mesh_scene()
-    {
-        if (crMesh) {
-            return crMesh;
+    public:
+        // Static method to get the instance of SceneView
+        static SceneView& getInstance()
+        {
+            static SceneView instance;
+            return instance;
         }
-        else {
-            return nullptr;
+
+        // Prevent copy and assignment
+        SceneView(const SceneView&) = delete;
+        SceneView& operator=(const SceneView&) = delete;
+
+        // Destructor
+        ~SceneView() { mShader->unload(); rdMesh = nullptr; }
+
+        // Public methods
+        nelems::Light* get_light() { return mLight.get(); }
+
+        void resize(int32_t width, int32_t height);
+
+        void render();
+
+        void load_mesh(const std::string& filepath);
+
+        std::shared_ptr<nui::SceneView> get_mesh_scene()
+        {
+            if (mSceneView) {
+                return mSceneView;
+            }
+            else {
+                return nullptr;
+            }
         }
-    }
 
+        void on_mouse_move(double x, double y, nelems::EInputButton button);
 
-    // TODO: return a vector of mesh ids
-    void get_mesh_ids(std::vector<long long> &IDs) { crMesh->get_mesh_ids(IDs); }
+        void on_mouse_wheel(double delta);
 
-    void on_mouse_move(double x, double y, nelems::EInputButton button);
-
-    void on_mouse_wheel(double delta);
-
-    //void on_mouse_click(double x, double y);
-
-
-    void reset_view()
-    {
-      mCamera->reset();
-    }
-    
-  private:
-      /*void set_mesh(std::shared_ptr<nelems::Mesh> mesh)
-      {
-          mMesh = mesh;
-      }*/
-    std::unique_ptr<nelems::Camera> mCamera;
-    std::unique_ptr<nrender::OpenGL_FrameBuffer> mFrameBuffer;
-    std::unique_ptr<nshaders::Shader> mShader;
-    std::unique_ptr<nelems::Light> mLight;
-    std::shared_ptr<nelems::mMesh> crMesh;
-    glm::vec2 mSize;
-  };
+        void reset_view() { mCamera->reset(); }
+    };
 }
-

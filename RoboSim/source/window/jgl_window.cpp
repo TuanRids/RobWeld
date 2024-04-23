@@ -33,11 +33,10 @@ namespace nwindow
 
     mUICtx->init(this);
 
-    mSceneView = std::make_unique<SceneView>();
-
+    mSceneView = &nui::SceneView::getInstance();
     mPropertyPanel = std::make_unique<Property_Panel>();
 
-    mPropertyPanel->set_mesh_load_callback(
+    mPropertyPanel->SetMeshLoadCallback(
       [this](std::string filepath) { mSceneView->load_mesh(filepath); });
 
     return mIsRunning;
@@ -89,7 +88,7 @@ namespace nwindow
     // render scene to framebuffer and add it to scene view
 
     mSceneView->render();
-    mPropertyPanel->render(mSceneView.get());
+    mPropertyPanel->render(mSceneView);
 
 
     // Render the UI 

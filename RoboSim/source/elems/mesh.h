@@ -52,12 +52,16 @@ namespace nelems {
 
     };
 
+    /*
+    This class is using singleton pattern for creating only 1 instance of mMesh
+
+     How to use:
+         std::shared_ptr<nelems::mMesh> newMesh;
+         auto& meshInstance = nui::createMesh::getInstance();
+         newMesh = meshInstance.getMesh();
+    */
     class mMesh {
     public:
-        mMesh() = default;
-
-        virtual ~mMesh() { clear_meshes(); }
-
         bool load(const std::string& filepath) {
             const uint32_t cMeshImportFlags =
                 aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_SortByPType |
@@ -75,10 +79,10 @@ namespace nelems {
                     auto* mesh = pScene->mMeshes[i];
                     oMesh newMesh;
                     newMesh.ID = getCurrentTimeMillis(pScene->mNumMeshes);
-                    load_mesh(mesh, newMesh);
-                    mMeshes.push_back(newMesh);
+                    load_specific_mesh(mesh, newMesh);
+                    mMeshes->push_back(newMesh);
                 }
-                
+
                 return true;
             }
             return false;
@@ -90,11 +94,11 @@ namespace nelems {
             std::tm t;
             localtime_s(&t, &t_c);
 
-            long long millis = (t.tm_mon + 1)   * 100000000000LL +
-                                t.tm_mday       * 1000000000LL +
-                                t.tm_hour       * 10000000LL +
-                                t.tm_min        * 100000LL +
-                                t.tm_sec        * 1000LL;
+            long long millis = (t.tm_mon + 1) * 100000000000LL +
+                t.tm_mday * 1000000000LL +
+                t.tm_hour * 10000000LL +
+                t.tm_min * 100000LL +
+                t.tm_sec * 1000LL;
 
 
             bool uniqueIDFound = false;
@@ -102,7 +106,7 @@ namespace nelems {
             // Generate a random number from the C++11 random environment
             static std::random_device rd;
             static std::mt19937 gen(rd());
-            std::uniform_int_distribution<long long> dis(0, size+2); // Random range 
+            std::uniform_int_distribution<long long> dis(0, size + 2); // Random range 
             do {
                 // Get the current time
                 auto now = std::chrono::system_clock::now();
@@ -110,7 +114,7 @@ namespace nelems {
                 millis = millis + dis(gen);
                 // Check if the new ID already exists in the list of existing IDs
                 bool found = false;
-                for (const auto& mesh : mMeshes) {
+                for (const auto& mesh : *mMeshes) {
                     if (mesh.ID == millis) {
                         found = true;
                         break;
@@ -125,8 +129,7 @@ namespace nelems {
 
             return millis;
         }
-
-        void load_mesh(const aiMesh* mesh, oMesh& outMesh) {
+        void load_specific_mesh(const aiMesh* mesh, oMesh& outMesh) {
             for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
                 VertexHolder vh;
                 vh.mPos = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
@@ -142,50 +145,67 @@ namespace nelems {
 
             outMesh.init();
         }
-
         void clear_meshes() {
-            for (auto& mesh : mMeshes) {
+            if (mMeshes == nullptr) return;
+            for (auto& mesh : *mMeshes) {
                 mesh.delete_buffers();
             }
-            mMeshes.clear();
+            mMeshes->clear();
         }
-
         void update(nshaders::Shader* shader) {
-            for (int i = 0; i < mMeshes.size(); ++i) {
-                auto& mesh = mMeshes[i];
+            for (auto& mesh : *mMeshes) { 
                 shader->set_material(mesh.oMaterial, "materialData");
                 mesh.render();
             }
+
         }
-
-
         void render() {
-            for (auto& mesh : mMeshes) 
+            for (auto& mesh : *mMeshes)
             {
                 // Render each mesh
                 mesh.render();
             }
         }
-        
-        void get_mesh_ids(std::vector<long long> &ids) 
+        void get_mesh_ids(std::vector<long long>& ids)
         {
-            for (auto& mesh : mMeshes) 
+            for (auto& mesh : *mMeshes)
             {
-				ids.push_back(mesh.ID);
-			}
+                ids.push_back(mesh.ID);
+            }
         }
+        void get_mesh_ptr(int& j, oMesh*& mesh) {
+            for (int i = 0; i < mMeshes->size(); ++i) {
+                if (i == j)
+                {
+                    mesh = &(*mMeshes)[i]; //dereference the pointer to get the object
+                    return;
+                }
 
+            }
+        }
         void get_mesh_ptr(long long ids, oMesh*& mesh) {
-            for (auto& m : mMeshes) {
+            for (auto& m : *mMeshes) {
                 if (m.ID == ids) {
                     mesh = &m;
                     return;
-
                 }
             }
         }
+        //mMesh() = default;
+        virtual ~mMesh() { clear_meshes(); }
+        int size() { return mMeshes->size(); }
+        void pushback(oMesh mesh) { mMeshes->push_back(std::move(mesh));  }
+        static mMesh& getInstance() { static mMesh instance; return instance; }
+        std::shared_ptr<std::vector<oMesh>> getMesh() const { return mMeshes; }
     private:
-        std::vector<oMesh> mMeshes;
+        //std::vector<oMesh> mMeshes;
+        std::shared_ptr<std::vector<oMesh>> mMeshes;
+        mMesh()
+        {
+            if (!mMeshes) {
+                mMeshes = std::make_shared<std::vector<oMesh>>();
+            }
+        }
     };
-
 }
+

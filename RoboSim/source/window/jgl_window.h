@@ -70,7 +70,7 @@ namespace nwindow
     // UI components
     std::unique_ptr<Property_Panel> mPropertyPanel;
 
-    std::unique_ptr<SceneView> mSceneView;
+    nui::SceneView *mSceneView;
 
     bool mIsRunning;
 
