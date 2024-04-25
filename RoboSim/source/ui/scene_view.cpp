@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "scene_view.h"
 
-#include "imgui.h"
 
 namespace nui
 {
@@ -85,6 +84,7 @@ namespace nui
 
     ImGui::Begin("ViewPort");
     {
+        nui::FrameManage::setCrActiveGui("ViewPort", ImGui::IsWindowFocused());
         ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
         mSize = { viewportPanelSize.x, viewportPanelSize.y };
         mCamera->set_aspect(mSize.x / mSize.y);

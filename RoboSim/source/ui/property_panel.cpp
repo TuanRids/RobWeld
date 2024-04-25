@@ -10,69 +10,144 @@ namespace nui
         if (!proMesh) {
             proMesh = &nelems::mMesh::getInstance();
         }
+
         //================================================================================================
         /// Main Properties
         MenuBar();
-        std::vector<long long> IDs;
+        static std::vector<long long> IDs;
+        if (proMesh) {proMesh->get_mesh_ids(IDs);}
 
-        ImGui::Begin("Properties");
-        static long long prevSelectedID = 0;
-        ImGui::CollapsingHeader("Layer", ImGuiTreeNodeFlags_DefaultOpen);
+        //****************************************************
+        layer_frame(scene_view, IDs); // define selectedID
+        proMesh->get_mesh_ptr(selectedID, mesh);        // reassigned mesh pointer
 
-        if (proMesh)
+        if (ImGui::Begin("Properties")) 
         {
-            proMesh->get_mesh_ids(IDs);
+            ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen); // settings
+            nui::FrameManage::setCrActiveGui("Properties", ImGui::IsWindowFocused()); // setting
+
+            obInfo_frame(); // show object info such as vertices and vertex indices
+
+            ImGui::Separator();
+            coordinate_frame();
+            material_frame(scene_view); // show material properties
+            ImGui::End();
         }
+
+        // Another Frames
+        camera_frame(scene_view); // show camera properties
+
+    }
+    
+    void Property_Panel::camera_frame(nui::SceneView* scene_view)
+    {
+        ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
+        if (ImGui::Begin("CameraSetting", nullptr))
+            {
+                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
+                ImGui::Separator();
+                static float newfov{ 45.0f }, newnear{ 1.0f }, newfar{ 400.0f };
+                static int newzoom(5);
+                ImGui::SliderFloat("Fov", &newfov, 1.0f, 99.0f, "%.0f");
+                ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f");
+                ImGui::SliderFloat("Far", &newfar, 0.1f, 400.0f, "%.1f");
+                ImGui::SliderInt("ZSp", &newzoom, 0, 20);
+                SceneView::getInstance().setFov(newfov);
+                SceneView::getInstance().setNear(newnear);
+                SceneView::getInstance().setFar(newfar);
+                SceneView::getInstance().setZoom(newzoom);
+                ImGui::End();
+            }
+    }
+
+    void Property_Panel::layer_frame(nui::SceneView* scene_view, std::vector<long long> &IDs)
+    {
+        ImGui::Begin("Layer", nullptr);
+        nui::FrameManage::setCrActiveGui("Layer", ImGui::IsWindowFocused());
         if (IDs.size() > 0)
         {
-            //================================================================================================
-            ImGui::BeginTable("MeshTable", 2, ImGuiTableFlags_Borders);
-            ImGui::TableSetupColumn("IDs");
-            //ImGui::TableSetupColumn("Name");
+            ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
+            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
+            ImGui::BeginTable("Objects", 1, ImGuiTableFlags_Borders);
             for (const auto& id : IDs)
             {
+                nelems::mMesh::getInstance().get_mesh_ptr(id, mesh);
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-                ImGui::Text("%lld", id);
 
-                // Add other columns dynamically here when needed
-
-                if (ImGui::IsItemClicked())
-                {
-                    selectedID = id;
-                }
+                ImGui::Text(mesh->oname);
+                if (ImGui::IsItemClicked()) { selectedID = id; }
                 if (id == selectedID)
                 {
                     ImU32 yellowColorU32 = ImGui::ColorConvertFloat4ToU32(ImVec4(0.25f, 0.42f, 1.0f, 1.0f));
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, yellowColorU32);
-
                 }
-
             }
             ImGui::EndTable();
         }
-        ImGui::Separator();
+        ImGui::End();
+    }
 
-        //---------------------------------------------------------------------------------
-        // get scenemesh for lights and other properties
-        if (proMesh && selectedID != prevSelectedID && selectedID != 0)
+    void Property_Panel::obInfo_frame()
+    {
+        if (proMesh && selectedID != 0)
         {
             proMesh->get_mesh_ptr(selectedID, mesh);
+            ImGui::BeginTable("MeshTable", 2, ImGuiTableFlags_Borders);
+
+            const float totalWidth = ImGui::GetContentRegionAvailWidth();
+
+            ImGui::TableNextRow();
+
+            ImGui::TableNextColumn();
+            ImGui::Text("Name");
+            ImGui::TableNextColumn();
+            ImGui::InputText("##Name", mesh->oname, ImGuiInputTextFlags_EnterReturnsTrue);
+
+            ImGui::TableNextColumn();
+            ImGui::Text("ID");
+            ImGui::TableNextColumn();
+            ImGui::Text("%lld", mesh->ID);
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Vertices");
+            ImGui::TableNextColumn();
+            ImGui::Text("%lld", mesh->mVertices.size());
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("VertexIndices");
+            ImGui::TableNextColumn();
+            ImGui::Text("%lld", mesh->mVertexIndices.size());
+            ImGui::EndTable();
         }
-        prevSelectedID = selectedID;
-        //================================================================================================
-        /// Material
+    }
+
+    void Property_Panel::coordinate_frame()
+    {
+        
+        if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen) ) //&&mesh
+        {
+            ImGui::Separator();
+            ImGui::Text("ADD HISTORY COMMANDS LOGS");
+            ImGui::Text("Add coordinate position, rotation, and scale");
+            ImGui::Text("remove default bar, add new menubar ass a title bar");
+            ImGui::Separator();
+
+        }
+    }
+
+    void Property_Panel::material_frame(nui::SceneView* scene_view) {
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            if (prevSelectedID)
+            if (selectedID)
             {
-                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
                 ImGui::ColorEdit3("Color", (float*)&(mesh->oMaterial.mColor));
                 ImGui::SliderFloat("Roughness", &mesh->oMaterial.roughness, 0.0f, 1.0f);
                 ImGui::SliderFloat("Metallic", &mesh->oMaterial.metallic, 0.0f, 1.0f);
             }
             else {
-                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
                 static ImVec4 disabledColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);// gray out the widgets
                 static float disabledFloat = 0.5f; // 0.5f is the default value
                 ImGui::ColorEdit3("Color", (float*)&disabledColor);
@@ -87,43 +162,10 @@ namespace nui
             nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f);
             ImGui::SliderInt("Light Intensity", &scene_view->get_light()->mStrength, 1, 1000);
         }
-        /// iObject
-        if (ImGui::CollapsingHeader("iObject", ImGuiTreeNodeFlags_DefaultOpen) && mesh)
-        {
-
-            ImGui::Separator();
-            ImGui::Text("Name:          %s", mCurrentFile.c_str());
-            ImGui::Text("ID:            %lld", mesh->ID);
-            ImGui::Text("Indices:       %d", mesh->get_vertex_indices_size());
-            ImGui::Text("Vertices:      %d", mesh->get_vertices_size());
-
-        }
-        ImGui::End();
-
-        // CameraSettings
-
-        //================================================================================================
         
-        ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
-        
-        if (ImGui::Begin("CameraSetting", nullptr))
-        {
-            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
-            ImGui::Separator();
-            static float newfov{ 45.0f }, newnear{ 1.0f }, newfar{ 400.0f };
-            static int newzoom(5);
-            ImGui::SliderFloat("Fov", &newfov, 1.0f, 99.0f, "%.0f");
-            ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f");
-            ImGui::SliderFloat("Far", &newfar, 0.1f, 400.0f, "%.1f");
-            ImGui::SliderInt("ZSp", &newzoom, 0, 20);
-            SceneView::getInstance().setFov(newfov);
-            SceneView::getInstance().setNear(newnear);
-            SceneView::getInstance().setFar(newfar);
-            SceneView::getInstance().setZoom(newzoom);
-            ImGui::End();
-        }
+
     }
-
+    
     void Property_Panel::OpenFileDialog()
     {
         OPENFILENAME ofn;
@@ -151,7 +193,7 @@ namespace nui
         }
     }
 
-    void nui::Property_Panel::MenuBar()
+    void Property_Panel::MenuBar()
     {
         if (ImGui::BeginMainMenuBar())
         {
@@ -191,25 +233,23 @@ namespace nui
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Edit"))
-            {
-                if (ImGui::MenuItem("Undo"))
-                {
-                    //Undo();
+            if (ImGui::BeginMenu("Edit")) {
+                if (ImGui::MenuItem("Undo")) {
+                    obAction.undocmd();
                 }
-                if (ImGui::MenuItem("Redo"))
-                {
-                    //Redo();
+                if (ImGui::MenuItem("Redo")) {
+                    obAction.redocmd();
                 }
-                if (ImGui::MenuItem("Collapse"))
-                {
-                    showMenuBar = false;
+                if (ImGui::MenuItem("Move")) {
+                    proMesh->get_mesh_ptr(selectedID, mesh);
+                    std::unique_ptr<ncommand::Command> moveCmd = std::make_unique<ncommand::MoveOb>(mesh, 10.0f, 10.0f, 10.0f);
+                    obAction.execmd(std::move(moveCmd));
                 }
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
-        }
 
+        }
 
     }
 }

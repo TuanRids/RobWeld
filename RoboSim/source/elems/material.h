@@ -1,6 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
-struct Material {
+typedef struct Material {
     glm::vec3 mColor;
     float metallic;
     float roughness;

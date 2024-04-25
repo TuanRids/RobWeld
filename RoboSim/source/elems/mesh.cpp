@@ -7,6 +7,8 @@
 
 namespace nelems
 {
+    std::mutex nelems::mMesh::mMutex;
+
     bool mMesh::load(const std::string& filepath)
     {
         const uint32_t cMeshImportFlags =
@@ -25,6 +27,7 @@ namespace nelems
                 auto* mesh = pScene->mMeshes[i];
                 oMesh newMesh;
                 newMesh.ID = getCurrentTimeMillis(pScene->mNumMeshes);
+                newMesh.changeName(newMesh.ID);
                 load_specific_mesh(mesh, newMesh);
                 mMeshes->push_back(newMesh);
             }
@@ -97,6 +100,7 @@ namespace nelems
     {
         if (mMeshes == nullptr) return;
         for (auto& mesh : *mMeshes) {
+            std::cout<<mesh.mRenderBufferMgr<<std::endl;
             mesh.delete_buffers();
         }
         mMeshes->clear();
@@ -120,6 +124,7 @@ namespace nelems
     {
         for (auto& mesh : *mMeshes)
         {
+            if (std::find(ids.begin(), ids.end(), mesh.ID) != ids.end()) { continue; }
             ids.push_back(mesh.ID);
         }
     }

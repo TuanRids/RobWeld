@@ -47,8 +47,8 @@ namespace nrender
     colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
 
     colors[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-    colors[ImGuiCol_TabHovered] = ImVec4{ 0.38f, 0.38f, 0.38f, 1.0f };
-    colors[ImGuiCol_TabActive] = ImVec4{ 0.28f, 0.28f, 0.28f, 1.0f };
+    colors[ImGuiCol_TabHovered] = ImVec4{ 0.23f, 0.41f, 0.23f, 1.0f };
+    colors[ImGuiCol_TabActive] = ImVec4{ 0.23f, 0.41f, 0.23f, 1.0f };
     colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
     colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
 

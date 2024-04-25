@@ -131,7 +131,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\Command\cmdManage.cpp" />
+    <ClCompile Include="source\Command\MoveOb.cpp" />
+    <ClCompile Include="source\Command\cmdManage.h" />
     <ClCompile Include="source\elems\boundingbox.cpp" />
+    <ClCompile Include="source\ui\FrameManage.cpp" />
     <ClCompile Include="source\ui\scene_view.cpp" />
     <ClCompile Include="source\ui\property_panel.cpp" />
     <ClCompile Include="source\render\opengl_context.cpp" />
@@ -184,9 +188,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\3rdparty\plugins\imgui\ImFileBrowser.h" />
+    <ClInclude Include="source\Command\dcommand.h" />
+    <ClInclude Include="source\Command\MoveOb.h" />
     <ClInclude Include="source\elems\boundingbox.h" />
     <ClInclude Include="source\elems\material.h" />
     <ClInclude Include="source\elems\stb_image.h" />
+    <ClInclude Include="source\ui\FrameManage.h" />
     <ClInclude Include="source\utils\imgui_widgets.h" />
     <ClInclude Include="source\ui\scene_view.h" />
     <ClInclude Include="source\ui\property_panel.h" />

@@ -160,6 +160,8 @@ namespace nelems
 
 
 	private:
+		std::shared_ptr<std::string> crActiveGui = std::make_shared<std::string>("none"); // check current active gui
+
 		glm::mat4 mViewMatrix;
 		glm::mat4 mProjection = glm::mat4{ 1.0f };
 		glm::vec3 mPosition = { 0.0f, 0.0f, 0.0f };

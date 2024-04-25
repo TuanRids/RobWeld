@@ -13,6 +13,7 @@
 #include <random>
 #include <chrono>
 #include "material.h"
+#include <mutex>
 
 namespace nelems {
 
@@ -22,10 +23,11 @@ namespace nelems {
     */
     struct oMesh {
         // materials with default values
-        Material oMaterial { { 1.0f, 0.0f, 0.0f },
+        Material oMaterial { { 0.33f, 0.82f, 0.33f },
                             0.2f, 0.2f, 1.0f };
         // default object id
         long long ID{ 0 };
+        char oname[256] = { 0 };
         // VAO VBO buffer
         std::vector<VertexHolder> mVertices;
         std::vector<unsigned int> mVertexIndices;
@@ -35,7 +37,11 @@ namespace nelems {
         // create buffers for object to render
         void create_buffers() { mRenderBufferMgr->create_buffers(mVertices, mVertexIndices); }
         // del object buffers
-        void delete_buffers() {  if (mRenderBufferMgr != nullptr)   {mRenderBufferMgr->delete_buffers();}   }
+        void delete_buffers() 
+        {  
+            if (mRenderBufferMgr != nullptr)   
+                {mRenderBufferMgr->delete_buffers();}
+        }
 
         //--------------------------------------------------------------------------------
         // add vertex to object
@@ -56,16 +62,23 @@ namespace nelems {
         // unbind object buffers
         void unbind() { mRenderBufferMgr->unbind(); }
 
-        
+        //--------------------------------------------------------------------------------
+        //  
+        void changeName( long long newvalue) {
+            std::snprintf(oname, sizeof(oname), "%lld", newvalue);
+        }
+        void changeName( std::string newvalue) {
+            strncpy_s(oname, sizeof(oname), newvalue.c_str(), _TRUNCATE);
+        }
     };
 
     /*
     This class is using singleton pattern for creating only 1 instance of mMesh
 
-     How to use:
-         std::shared_ptr<nelems::mMesh> newMesh;
-         auto& meshInstance = nui::createMesh::getInstance();
-         newMesh = meshInstance.getMesh();
+    How to use:
+        std::shared_ptr<nelems::mMesh> newMesh;
+        auto& meshInstance = nui::createMesh::getInstance();
+        newMesh = meshInstance.getMesh();
     */
     class mMesh {
     public:
@@ -93,11 +106,16 @@ namespace nelems {
         // add new mesh to vector
         void pushback(oMesh mesh) { mMeshes->push_back(std::move(mesh));  }
         // create instance
-        static mMesh& getInstance() { static mMesh instance; return instance; }
+        static mMesh& getInstance() 
+        { 
+            std::lock_guard<std::mutex> lock(mMutex);
+            static mMesh instance;
+            return instance; }
         // get address
         std::shared_ptr<std::vector<oMesh>> getMesh() const { return mMeshes; }
 
     private:
+        static std::mutex mMutex;
         //std::vector<oMesh> mMeshes;
         std::shared_ptr<std::vector<oMesh>> mMeshes;
         mMesh()

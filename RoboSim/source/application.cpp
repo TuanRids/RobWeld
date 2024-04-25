@@ -16,4 +16,5 @@ void Application::loop()
   {
     mWindow->render();
   }
+    std::cout<< "Application closed" << std::endl;
 }

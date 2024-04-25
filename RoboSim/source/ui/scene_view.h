@@ -6,6 +6,8 @@
 #include "shader/shader_util.h"
 #include "render/opengl_buffer_manager.h"
 #include "elems/input.h"
+#include "FrameManage.h"
+#include "imgui.h"
 
 namespace nui
 {

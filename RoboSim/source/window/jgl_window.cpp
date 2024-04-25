@@ -2,7 +2,7 @@
 
 #include "jgl_window.h"
 #include "elems/input.h"
-
+#include "Command/cmdManage.h"
 namespace nwindow
 {
   bool GLWindow::init( const std::string& title)
@@ -34,7 +34,9 @@ namespace nwindow
     mUICtx->init(this);
 
     mSceneView = &nui::SceneView::getInstance();
-    mPropertyPanel = std::make_unique<Property_Panel>();
+
+
+    mPropertyPanel = std::make_unique<Property_Panel>(obHistory);
 
     mPropertyPanel->SetMeshLoadCallback(
       [this](std::string filepath) { mSceneView->load_mesh(filepath); });
@@ -45,7 +47,6 @@ namespace nwindow
   GLWindow::~GLWindow()
   {
     mUICtx->end();
-
     mRenderCtx->end();
   }
 
@@ -68,9 +69,12 @@ namespace nwindow
     {
     }
   }
-
+  //TODO CLOSE PROGRAM TODOCLOSE TODOEXIT
   void GLWindow::on_close()
   {
+
+    std::cout<<"Window close event\n"<<std::endl;
+    nelems::mMesh::getInstance().~mMesh();
     mIsRunning = false;
   }
 
@@ -96,26 +100,31 @@ namespace nwindow
 
   void GLWindow::handle_input()
   {
+      
     // TODO: move this and camera to scene UI component?
+    if (nui::FrameManage::getCrActiveGui("ViewPort") == true)
+      {
 
-    if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
-    {
-      mSceneView->on_mouse_wheel(0.4f);
-    }
+          if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
+          {
+              mSceneView->on_mouse_wheel(0.4f);
+          }
 
-    if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
-    {
-      mSceneView->on_mouse_wheel(-0.4f);
-    }
+          if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
+          {
+              mSceneView->on_mouse_wheel(-0.4f);
+          }
 
-    if (glfwGetKey(mWindow, GLFW_KEY_F) == GLFW_PRESS)
-    {
-      mSceneView->reset_view();
-    }
+          if (glfwGetKey(mWindow, GLFW_KEY_F) == GLFW_PRESS)
+          {
+              mSceneView->reset_view();
+          }
 
-    double x, y;
-    glfwGetCursorPos(mWindow, &x, &y);
+          double x, y;
+          glfwGetCursorPos(mWindow, &x, &y);
 
-    mSceneView->on_mouse_move(x, y, Input::GetPressedButton(mWindow));
+          mSceneView->on_mouse_move(x, y, Input::GetPressedButton(mWindow));
+
+      }
   }
 }
