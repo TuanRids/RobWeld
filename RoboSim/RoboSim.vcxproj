@@ -131,9 +131,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="source\Command\cmdManage.cpp" />
+    <ClCompile Include="source\Command\ObHistory.cpp" />
     <ClCompile Include="source\Command\MoveOb.cpp" />
-    <ClCompile Include="source\Command\cmdManage.h" />
+    <ClCompile Include="source\Command\ObHistory.h" />
     <ClCompile Include="source\elems\boundingbox.cpp" />
     <ClCompile Include="source\ui\FrameManage.cpp" />
     <ClCompile Include="source\ui\scene_view.cpp" />
@@ -166,6 +166,7 @@
     <ClCompile Include="source\elems\vertex_holder.cpp" />
     <ClCompile Include="source\render\opengl_buffer_manager.cpp" />
     <ClCompile Include="source\render\ui_context.cpp" />
+    <ClCompile Include="source\ui\uiAction.cpp" />
     <ClCompile Include="source\utils\RobsFileIO.h" />
     <ClCompile Include="source\window\jgl_window.cpp" />
     <ClCompile Include="source\elems\mesh.cpp">
@@ -194,6 +195,7 @@
     <ClInclude Include="source\elems\material.h" />
     <ClInclude Include="source\elems\stb_image.h" />
     <ClInclude Include="source\ui\FrameManage.h" />
+    <ClInclude Include="source\ui\uiAction.h" />
     <ClInclude Include="source\utils\imgui_widgets.h" />
     <ClInclude Include="source\ui\scene_view.h" />
     <ClInclude Include="source\ui\property_panel.h" />

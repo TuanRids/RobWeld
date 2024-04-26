@@ -84,7 +84,7 @@ namespace nui
 
     ImGui::Begin("ViewPort");
     {
-        nui::FrameManage::setCrActiveGui("ViewPort", ImGui::IsWindowFocused());
+        nui::FrameManage::setCrActiveGui("ViewPort", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
         ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
         mSize = { viewportPanelSize.x, viewportPanelSize.y };
         mCamera->set_aspect(mSize.x / mSize.y);

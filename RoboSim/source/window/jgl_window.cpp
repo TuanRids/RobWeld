@@ -1,8 +1,9 @@
 #include "pch.h"
 
 #include "jgl_window.h"
+
 #include "elems/input.h"
-#include "Command/cmdManage.h"
+
 namespace nwindow
 {
   bool GLWindow::init( const std::string& title)
@@ -36,7 +37,7 @@ namespace nwindow
     mSceneView = &nui::SceneView::getInstance();
 
 
-    mPropertyPanel = std::make_unique<Property_Panel>(obHistory);
+    mPropertyPanel = std::make_unique<Property_Panel>();
 
     mPropertyPanel->SetMeshLoadCallback(
       [this](std::string filepath) { mSceneView->load_mesh(filepath); });
@@ -60,7 +61,10 @@ namespace nwindow
 
   void GLWindow::on_scroll(double delta)
   {
-    mSceneView->on_mouse_wheel(delta);
+      if (nui::FrameManage::getCrActiveGui("ViewPort") == true)
+      {
+          mSceneView->on_mouse_wheel(delta);
+      }
   }
 
   void GLWindow::on_key(int key, int scancode, int action, int mods)
@@ -100,7 +104,35 @@ namespace nwindow
 
   void GLWindow::handle_input()
   {
-      
+      static double lastPressTime = 0.0;
+      static const double debounceDelay = 0.1;
+      double currentTime = glfwGetTime();
+      //normal keyboard
+      // m = MoveOb
+      if (glfwGetKey(mWindow, GLFW_KEY_M) == GLFW_PRESS && currentTime - lastPressTime > debounceDelay)
+      {
+          lastPressTime = currentTime;
+          uiaction.MoveOb_uiAction();
+      }
+
+      if (glfwGetKey(mWindow, GLFW_KEY_Y) == GLFW_PRESS && glfwGetKey(mWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && currentTime - lastPressTime > debounceDelay)
+      {
+          lastPressTime = currentTime;
+          uiaction.redocmd();
+      }
+      if (glfwGetKey(mWindow, GLFW_KEY_Y) == GLFW_PRESS && glfwGetKey(mWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && currentTime - lastPressTime > debounceDelay)
+      {
+          lastPressTime = currentTime;
+          uiaction.redocmd();
+      }
+      if (glfwGetKey(mWindow, GLFW_KEY_I) == GLFW_PRESS && glfwGetKey(mWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && currentTime - lastPressTime > debounceDelay)
+      {
+          lastPressTime = currentTime;
+          mPropertyPanel->OpenFileDialog();
+      }
+
+
+
     // TODO: move this and camera to scene UI component?
     if (nui::FrameManage::getCrActiveGui("ViewPort") == true)
       {
@@ -124,7 +156,6 @@ namespace nwindow
           glfwGetCursorPos(mWindow, &x, &y);
 
           mSceneView->on_mouse_move(x, y, Input::GetPressedButton(mWindow));
-
       }
   }
 }

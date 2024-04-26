@@ -12,8 +12,9 @@
 
 #include "ui/property_panel.h"
 #include "ui/scene_view.h"
-#include "ui/FrameManage.h"
+
 #include "elems/mesh.h"
+#include "ui/uiAction.h"
 
 
 using namespace nui;
@@ -34,17 +35,16 @@ namespace nwindow
       std::unique_ptr<OpenGL_Context> mRenderCtx;
 
       // UI components
-      std::unique_ptr<Property_Panel> mPropertyPanel;
+      std::unique_ptr<nui::Property_Panel> mPropertyPanel;
 
       nui::SceneView* mSceneView;
       // Command pattern for all looping
-      ncommand::ObHistory obHistory;
-
+      nui::uiAction uiaction;
       bool mIsRunning;
   public:
-
+      // Obhistory for command logs intro
     GLWindow() :
-      mSceneView(nullptr), mIsRunning(true), mWindow(nullptr)
+      mSceneView(nullptr), mIsRunning(true), mWindow(nullptr),  mPropertyPanel(nullptr)    
     {
       mUICtx = std::make_unique<UIContext>();
       mRenderCtx = std::make_unique<OpenGL_Context>();

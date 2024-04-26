@@ -2,7 +2,7 @@
 #include "mesh.h"
 
 
-
+#include <filesystem>
 #include "render/opengl_buffer_manager.h"
 
 namespace nelems
@@ -20,14 +20,14 @@ namespace nelems
 
         const aiScene* pScene =
             Importer.ReadFile(filepath.c_str(), cMeshImportFlags);
-
+        std::string filename = std::filesystem::path(filepath).filename().stem().string() + " ";
         if (pScene && pScene->HasMeshes()) {
             // Load all meshes
             for (unsigned int i = 0; i < pScene->mNumMeshes; ++i) {
                 auto* mesh = pScene->mMeshes[i];
                 oMesh newMesh;
                 newMesh.ID = getCurrentTimeMillis(pScene->mNumMeshes);
-                newMesh.changeName(newMesh.ID);
+                newMesh.changeName(filename + std::to_string(newMesh.ID % 1000));
                 load_specific_mesh(mesh, newMesh);
                 mMeshes->push_back(newMesh);
             }
@@ -54,14 +54,12 @@ namespace nelems
         bool uniqueIDFound = false;
 
         // Generate a random number from the C++11 random environment
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        std::uniform_int_distribution<long long> dis(0, size + 2); // Random range 
+        
         do {
             // Get the current time
             auto now = std::chrono::system_clock::now();
             // Combine the current time with a random number
-            millis = millis + dis(gen);
+            millis ++;
             // Check if the new ID already exists in the list of existing IDs
             bool found = false;
             for (const auto& mesh : *mMeshes) {
@@ -118,14 +116,6 @@ namespace nelems
         {
             // Render each mesh
             mesh.render();
-        }
-    }
-    void mMesh::get_mesh_ids(std::vector<long long>& ids)
-    {
-        for (auto& mesh : *mMeshes)
-        {
-            if (std::find(ids.begin(), ids.end(), mesh.ID) != ids.end()) { continue; }
-            ids.push_back(mesh.ID);
         }
     }
     void mMesh::get_mesh_ptr(int& j, oMesh*& mesh)

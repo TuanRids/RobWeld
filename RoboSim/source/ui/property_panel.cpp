@@ -5,6 +5,7 @@
 
 namespace nui
 {
+    // long long nui::Property_Panel::selectedID = 0;
     void Property_Panel::render(nui::SceneView* scene_view)
     {
         if (!proMesh) {
@@ -14,17 +15,14 @@ namespace nui
         //================================================================================================
         /// Main Properties
         MenuBar();
-        static std::vector<long long> IDs;
-        if (proMesh) {proMesh->get_mesh_ids(IDs);}
 
         //****************************************************
-        layer_frame(scene_view, IDs); // define selectedID
-        proMesh->get_mesh_ptr(selectedID, mesh);        // reassigned mesh pointer
+        layer_frame(scene_view); // define selectedID
 
         if (ImGui::Begin("Properties")) 
         {
             ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen); // settings
-            nui::FrameManage::setCrActiveGui("Properties", ImGui::IsWindowFocused()); // setting
+            nui::FrameManage::setCrActiveGui("Properties", ImGui::IsWindowFocused() || ImGui::IsWindowHovered()); // setting
 
             obInfo_frame(); // show object info such as vertices and vertex indices
 
@@ -33,7 +31,9 @@ namespace nui
             material_frame(scene_view); // show material properties
             ImGui::End();
         }
-
+        // Another Frame
+        uiaction.Command_Logs();
+        
         // Another Frames
         camera_frame(scene_view); // show camera properties
 
@@ -60,25 +60,38 @@ namespace nui
             }
     }
 
-    void Property_Panel::layer_frame(nui::SceneView* scene_view, std::vector<long long> &IDs)
+    void Property_Panel::layer_frame(nui::SceneView* scene_view)
     {
         ImGui::Begin("Layer", nullptr);
-        nui::FrameManage::setCrActiveGui("Layer", ImGui::IsWindowFocused());
-        if (IDs.size() > 0)
+        nui::FrameManage::setCrActiveGui("Layer", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
+        if (proMesh->size() > 0)
         {
             ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
-            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
-            ImGui::BeginTable("Objects", 1, ImGuiTableFlags_Borders);
-            for (const auto& id : IDs)
-            {
-                nelems::mMesh::getInstance().get_mesh_ptr(id, mesh);
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
+            //ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
+            ImGui::BeginTable("Objects", 2 , ImGuiTableFlags_Resizable);
+            ImGui::TableSetupColumn("Set");
+            ImGui::TableSetupColumn("Name");
+            ImGui::TableHeadersRow();
 
+            for (int i = 0; i < proMesh->size(); i++)
+            {
+                nelems::mMesh::getInstance().get_mesh_ptr(i, mesh);
+                ImGui::TableNextRow();
+
+                ImGui::TableNextColumn();
+                if (ImGui::Checkbox(("##Select" + std::to_string(i)).c_str(), &mesh->selected)) {
+                    if (mesh->selected) {
+                        selectedMeshes.insert(mesh->ID);
+                        
+                    }
+                    else {
+                        selectedMeshes.erase(mesh->ID);
+                    }
+                }
+
+                ImGui::TableNextColumn();
                 ImGui::Text(mesh->oname);
-                if (ImGui::IsItemClicked()) { selectedID = id; }
-                if (id == selectedID)
-                {
+                if (mesh->selected){
                     ImU32 yellowColorU32 = ImGui::ColorConvertFloat4ToU32(ImVec4(0.25f, 0.42f, 1.0f, 1.0f));
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, yellowColorU32);
                 }
@@ -88,14 +101,24 @@ namespace nui
         ImGui::End();
     }
 
+
+        
+
     void Property_Panel::obInfo_frame()
     {
-        if (proMesh && selectedID != 0)
+        if (proMesh)
         {
-            proMesh->get_mesh_ptr(selectedID, mesh);
+            if (proMesh->check_selected()!=1){return;} // 0 select or select more than 1 will return
+            for (int i = 0; i < proMesh->size(); i++)
+			{
+                proMesh->get_mesh_ptr(i, mesh);
+				if (mesh->selected == true)
+				{
+                    break;
+				}
+			}
             ImGui::BeginTable("MeshTable", 2, ImGuiTableFlags_Borders);
 
-            const float totalWidth = ImGui::GetContentRegionAvailWidth();
 
             ImGui::TableNextRow();
 
@@ -141,7 +164,17 @@ namespace nui
     void Property_Panel::material_frame(nui::SceneView* scene_view) {
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            if (selectedID)
+            if (proMesh->check_selected() != 1) { return; } // 0 select or more than 1 will return. 
+
+            for (int i = 0; i < proMesh->size(); i++)
+            {
+                proMesh->get_mesh_ptr(i, mesh);
+                if (mesh->selected == true)
+                {
+                    break;
+                }
+            }
+            if (mesh)
             {
                 ImGui::ColorEdit3("Color", (float*)&(mesh->oMaterial.mColor));
                 ImGui::SliderFloat("Roughness", &mesh->oMaterial.roughness, 0.0f, 1.0f);
@@ -203,16 +236,16 @@ namespace nui
                 {
                     //NewScene();
                 }
-                if (ImGui::MenuItem("Load"))
+                if (ImGui::MenuItem("Load","Ctrl+L"))
                 {
 
                     nelems::RobsFileIO::LoadFromFile(*proMesh);
                 }
-                if (ImGui::MenuItem("Import"))
+                if (ImGui::MenuItem("Import", "Ctrl+I"))
                 {
                     OpenFileDialog();
                 }
-                if (ImGui::MenuItem("Save"))
+                if (ImGui::MenuItem("Save", "Ctrl+S"))
                 {
 
                     if (proMesh->size() == 0) {
@@ -223,7 +256,7 @@ namespace nui
                         nelems::RobsFileIO::SaveToFile(*proMesh);
                     }
                 }
-                if (ImGui::MenuItem("Save As"))
+                if (ImGui::MenuItem("Save As", "Ctrl+Shift+S"))
                 {
                     //SaveSceneAs();
                 }
@@ -234,16 +267,16 @@ namespace nui
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Edit")) {
-                if (ImGui::MenuItem("Undo")) {
-                    obAction.undocmd();
+                if (ImGui::MenuItem("Undo", "Ctrl+Z")) {
+                    uiaction.undocmd();
                 }
-                if (ImGui::MenuItem("Redo")) {
-                    obAction.redocmd();
+                if (ImGui::MenuItem("Redo", "Ctrl+Y")) {
+                    uiaction.redocmd();
                 }
-                if (ImGui::MenuItem("Move")) {
-                    proMesh->get_mesh_ptr(selectedID, mesh);
-                    std::unique_ptr<ncommand::Command> moveCmd = std::make_unique<ncommand::MoveOb>(mesh, 10.0f, 10.0f, 10.0f);
-                    obAction.execmd(std::move(moveCmd));
+                //// LOI FIX BUG!!!!!!!!!!!!!!!
+                if (ImGui::MenuItem("Move", "m")) {
+
+                    uiaction.MoveOb_uiAction();
                 }
                 ImGui::EndMenu();
             }

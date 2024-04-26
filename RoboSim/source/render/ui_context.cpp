@@ -56,6 +56,8 @@ namespace nrender
     colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
     colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
 
+    // customize style for special frame
+    
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {

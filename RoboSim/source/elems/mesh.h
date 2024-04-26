@@ -10,7 +10,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <random>
+
 #include <chrono>
 #include "material.h"
 #include <mutex>
@@ -28,6 +28,7 @@ namespace nelems {
         // default object id
         long long ID{ 0 };
         char oname[256] = { 0 };
+        bool selected{ false };
         // VAO VBO buffer
         std::vector<VertexHolder> mVertices;
         std::vector<unsigned int> mVertexIndices;
@@ -64,9 +65,7 @@ namespace nelems {
 
         //--------------------------------------------------------------------------------
         //  
-        void changeName( long long newvalue) {
-            std::snprintf(oname, sizeof(oname), "%lld", newvalue);
-        }
+        
         void changeName( std::string newvalue) {
             strncpy_s(oname, sizeof(oname), newvalue.c_str(), _TRUNCATE);
         }
@@ -93,8 +92,7 @@ namespace nelems {
         // update for shader
         void update(nshaders::Shader* shader);
         void render();
-        // get list of mesh ids
-        void get_mesh_ids(std::vector<long long>& ids);
+
         // get mesh pointer based on index
         void get_mesh_ptr(int& j, oMesh*& mesh);
         // get mesh pointer based on id
@@ -113,7 +111,22 @@ namespace nelems {
             return instance; }
         // get address
         std::shared_ptr<std::vector<oMesh>> getMesh() const { return mMeshes; }
-
+        //check selected: 0 Not selected, 1 selected, 2 more than 1 selected
+        int check_selected() {
+            if (!mMeshes) {
+				return 0;
+			}
+            int count = 0;
+            for (int i = 0; i < mMeshes->size(); i++) {
+				if (mMeshes->at(i).selected) {
+                    count++;
+                    if (count > 1) {
+						return 2;
+					}
+				}
+			}
+            return count;
+        }
     private:
         static std::mutex mMutex;
         //std::vector<oMesh> mMeshes;
