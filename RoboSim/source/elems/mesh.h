@@ -23,12 +23,13 @@ namespace nelems {
     */
     struct oMesh {
         // materials with default values
-        Material oMaterial { { 0.33f, 0.82f, 0.33f },
+        Material oMaterial { { 0.0f, 1.0f, 1.0f },
                             0.2f, 0.2f, 1.0f };
         // default object id
         long long ID{ 0 };
         char oname[256] = { 0 };
         bool selected{ false };
+        bool hide{false };
         // VAO VBO buffer
         std::vector<VertexHolder> mVertices;
         std::vector<unsigned int> mVertexIndices;
@@ -43,6 +44,11 @@ namespace nelems {
             if (mRenderBufferMgr != nullptr)   
                 {mRenderBufferMgr->delete_buffers();}
         }
+        //-------------------------------------------------------------------------------- 
+        // Transformation Matrix
+            void rotate(float angleX, float angleY, float angleZ);
+            void move(float offsetX, float offsetY, float offsetZ);
+
 
         //--------------------------------------------------------------------------------
         // add vertex to object
@@ -57,19 +63,22 @@ namespace nelems {
         std::vector<unsigned int> get_vertex_indices() { return mVertexIndices; }
 
         //--------------------------------------------------------------------------------
-        void render() { mRenderBufferMgr->draw(static_cast<int>(mVertexIndices.size())); }
+        void render() { if (hide) { return; } mRenderBufferMgr->draw(static_cast<int>(mVertexIndices.size()));}
         // bind object buffers to render
         void bind() { mRenderBufferMgr->bind(); }
         // unbind object buffers
         void unbind() { mRenderBufferMgr->unbind(); }
 
         //--------------------------------------------------------------------------------
-        //  
-        
+
         void changeName( std::string newvalue) {
             strncpy_s(oname, sizeof(oname), newvalue.c_str(), _TRUNCATE);
         }
     };
+
+
+
+
 
     /*
     This class is using singleton pattern for creating only 1 instance of mMesh
@@ -90,8 +99,9 @@ namespace nelems {
         // clear all meshes
         void clear_meshes();
         // update for shader
-        void update(nshaders::Shader* shader);
+        void update(nshaders::Shader* shader, bool lightenable);
         void render();
+
 
         // get mesh pointer based on index
         void get_mesh_ptr(int& j, oMesh*& mesh);

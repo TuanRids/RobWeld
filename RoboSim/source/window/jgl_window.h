@@ -2,7 +2,7 @@
 
 
 #include "elems/camera.h"
-#include "elems/light.h"
+
 
 #include "render/ui_context.h"
 #include "render/opengl_context.h"
@@ -75,9 +75,6 @@ namespace nwindow
     void on_close() override;
 
     bool is_running() { return mIsRunning; }
-
-
-
 
   };
 }

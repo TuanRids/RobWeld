@@ -73,7 +73,11 @@ namespace nrender
   void OpenGL_Context::pre_render()
   {
     glViewport(0, 0, mWindow->Width, mWindow->Height);
-    glClearColor(0.14f, 0.15f, 0.18f, 1.0f);
+
+    std::string theme = nrender::UIContext::get_theme();
+    if (theme == "dark"){glClearColor(0.14f, 0.15f, 0.18f, 1.0f);}
+    else if (theme == "light"){glClearColor(0.95f, 0.95f, 0.95f, 1.0f);}
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 

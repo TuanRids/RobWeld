@@ -1,25 +1,30 @@
 #include "pch.h"
 #include "property_panel.h"
-
-
+#include <filesystem> 
+#include <ctime>
+#include "ui/HotkeyMenubar.h"
 
 namespace nui
 {
     // long long nui::Property_Panel::selectedID = 0;
-    void Property_Panel::render(nui::SceneView* scene_view)
+    void Property_Panel::render(nui::SceneView* scene_view, GLFWwindow* mWindow)
     {
         if (!proMesh) {
             proMesh = &nelems::mMesh::getInstance();
         }
 
-        //================================================================================================
-        /// Main Properties
-        MenuBar();
+        //****************************************************
+        
+        static nui::HotkeyMenubar hotkey_manage;
+        hotkey_manage.mMenuBar(mWindow); 
+        hotkey_manage.mHotkey(mWindow); 
+        hotkey_manage.commandLogs(); // show command logs
 
         //****************************************************
+        //Main Properties
         layer_frame(scene_view); // define selectedID
 
-        if (ImGui::Begin("Properties")) 
+        if (ImGui::Begin("Properties"))
         {
             ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen); // settings
             nui::FrameManage::setCrActiveGui("Properties", ImGui::IsWindowFocused() || ImGui::IsWindowHovered()); // setting
@@ -31,35 +36,31 @@ namespace nui
             material_frame(scene_view); // show material properties
             ImGui::End();
         }
-        // Another Frame
-        uiaction.Command_Logs();
-        
         // Another Frames
         camera_frame(scene_view); // show camera properties
-
     }
-    
+    ////===========================================================================================
+    //// Main Frames 
     void Property_Panel::camera_frame(nui::SceneView* scene_view)
     {
         ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
         if (ImGui::Begin("CameraSetting", nullptr))
-            {
-                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
-                ImGui::Separator();
-                static float newfov{ 45.0f }, newnear{ 1.0f }, newfar{ 400.0f };
-                static int newzoom(5);
-                ImGui::SliderFloat("Fov", &newfov, 1.0f, 99.0f, "%.0f");
-                ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f");
-                ImGui::SliderFloat("Far", &newfar, 0.1f, 400.0f, "%.1f");
-                ImGui::SliderInt("ZSp", &newzoom, 0, 20);
-                SceneView::getInstance().setFov(newfov);
-                SceneView::getInstance().setNear(newnear);
-                SceneView::getInstance().setFar(newfar);
-                SceneView::getInstance().setZoom(newzoom);
-                ImGui::End();
-            }
+        {
+            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
+            ImGui::Separator();
+            static float newfov{ 45.0f }, newnear{ 1.0f }, newfar{ 400.0f };
+            static int newzoom(5);
+            ImGui::SliderFloat("Fov", &newfov, 1.0f, 99.0f, "%.0f");
+            ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f");
+            ImGui::SliderFloat("Far", &newfar, 0.1f, 400.0f, "%.0f");
+            ImGui::SliderInt("ZSp", &newzoom, 0, 20);
+            SceneView::getInstance().setFov(newfov);
+            SceneView::getInstance().setNear(newnear);
+            SceneView::getInstance().setFar(newfar);
+            SceneView::getInstance().setZoom(newzoom);
+            ImGui::End();
+        }
     }
-
     void Property_Panel::layer_frame(nui::SceneView* scene_view)
     {
         ImGui::Begin("Layer", nullptr);
@@ -68,9 +69,10 @@ namespace nui
         {
             ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
             //ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
-            ImGui::BeginTable("Objects", 2 , ImGuiTableFlags_Resizable);
+            ImGui::BeginTable("Objects", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX);
             ImGui::TableSetupColumn("Set");
             ImGui::TableSetupColumn("Name");
+            ImGui::TableSetupColumn("Hide");
             ImGui::TableHeadersRow();
 
             for (int i = 0; i < proMesh->size(); i++)
@@ -79,19 +81,18 @@ namespace nui
                 ImGui::TableNextRow();
 
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox(("##Select" + std::to_string(i)).c_str(), &mesh->selected)) {
-                    if (mesh->selected) {
-                        selectedMeshes.insert(mesh->ID);
-                        
-                    }
-                    else {
-                        selectedMeshes.erase(mesh->ID);
-                    }
+                bool isSelected = ImGui::Checkbox(("##Select" + std::to_string(i)).c_str(), &mesh->selected);
+                // TODO UPDATE LATER FOR THE CTRL SELECT AND SINGLE SELECT
+                if (isSelected) {
+                    if (mesh->selected) { selectedMeshes.insert(mesh->ID); }
+                    else { selectedMeshes.erase(mesh->ID); }
                 }
-
                 ImGui::TableNextColumn();
                 ImGui::Text(mesh->oname);
-                if (mesh->selected){
+                ImGui::TableNextColumn();
+                ImGui::Checkbox(("##Hide" + std::to_string(i)).c_str(), &mesh->hide);
+
+                if (mesh->selected) {
                     ImU32 yellowColorU32 = ImGui::ColorConvertFloat4ToU32(ImVec4(0.25f, 0.42f, 1.0f, 1.0f));
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, yellowColorU32);
                 }
@@ -100,23 +101,19 @@ namespace nui
         }
         ImGui::End();
     }
-
-
-        
-
     void Property_Panel::obInfo_frame()
     {
         if (proMesh)
         {
-            if (proMesh->check_selected()!=1){return;} // 0 select or select more than 1 will return
+            if (proMesh->check_selected() != 1) { return; } // 0 select or select more than 1 will return
             for (int i = 0; i < proMesh->size(); i++)
-			{
+            {
                 proMesh->get_mesh_ptr(i, mesh);
-				if (mesh->selected == true)
-				{
+                if (mesh->selected == true)
+                {
                     break;
-				}
-			}
+                }
+            }
             ImGui::BeginTable("MeshTable", 2, ImGuiTableFlags_Borders);
 
 
@@ -144,48 +141,117 @@ namespace nui
             ImGui::TableNextColumn();
             ImGui::Text("%lld", mesh->mVertexIndices.size());
             ImGui::EndTable();
+
         }
     }
-
     void Property_Panel::coordinate_frame()
     {
-        
-        if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen) ) //&&mesh
+
+        if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen)) //&&mesh
         {
             ImGui::Separator();
-            ImGui::Text("ADD HISTORY COMMANDS LOGS");
-            ImGui::Text("Add coordinate position, rotation, and scale");
+            ImGui::Text("Add rotation, and scale");
+            ImGui::Text("Add 3D grid viewport");
+            ImGui::Text("Add front, right and top view");
             ImGui::Text("remove default bar, add new menubar ass a title bar");
             ImGui::Separator();
+            if (proMesh->check_selected() != 1)
+            {
+                static char aname[10] = "";
+                static float posrot[6];
+                ImGui::Text("Name"); ImGui::SameLine();
+                ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
 
+                ImGui::Text("x_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("y_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("z_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("x_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("y_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("z_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f");
+
+                for (int i = 0; i < proMesh->size(); i++) {
+                    proMesh->get_mesh_ptr(i, mesh); if (!(mesh->selected)) { continue; }
+                    if (posrot[0] != 0) { mesh->oMaterial.position.x += posrot[0]; }
+                    if (posrot[1] != 0) { mesh->oMaterial.position.y += posrot[1]; }
+                    if (posrot[2] != 0) { mesh->oMaterial.position.z += posrot[2]; }
+                    if (posrot[3] != 0) { mesh->oMaterial.rotation.x += posrot[3]; }
+                    if (posrot[4] != 0) { mesh->oMaterial.rotation.y += posrot[4]; }
+                    if (posrot[5] != 0) { mesh->oMaterial.rotation.z += posrot[5]; }
+                    if (strlen(aname) > 0) { strcpy_s(mesh->oname, aname); }
+                }
+                // reset all posrot & aname;
+                std::fill_n(posrot, 6, 0.0f);
+                std::fill_n(aname, sizeof(aname), '\0');
+            }
+            else
+            {
+                for (int i = 0; i < proMesh->size(); i++)
+                {
+                    proMesh->get_mesh_ptr(i, mesh);
+                    if (mesh->selected == true)
+                    {
+                        break;
+                    }
+                }
+                ImGui::Text("Name"); ImGui::SameLine();
+                ImGui::InputText("##Name", mesh->oname, ImGuiInputTextFlags_EnterReturnsTrue);
+
+                ImGui::Text("x_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##xPos", &mesh->oMaterial.position.x, 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("y_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##yPos", &mesh->oMaterial.position.y, 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("z_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##zPos", &mesh->oMaterial.position.z, 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("x_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##xRot", &mesh->oMaterial.rotation.x, 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("y_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##yRot", &mesh->oMaterial.rotation.y, 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("z_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##zRot", &mesh->oMaterial.rotation.z, 0.0f, 0.0f, "%.3f");
+            }
         }
     }
-
     void Property_Panel::material_frame(nui::SceneView* scene_view) {
+        static ImVec4 clor = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);// gray out the widgets
+        static float rness = 0.5f; static float mlic = 0.5f;
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            if (proMesh->check_selected() != 1) { return; } // 0 select or more than 1 will return. 
+            ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
 
+            ImGui::ColorEdit3("Color", (float*)&clor);
+            ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f);
+            ImGui::SliderFloat("Metallic", &mlic, 0.0f, 1.0f);
             for (int i = 0; i < proMesh->size(); i++)
             {
                 proMesh->get_mesh_ptr(i, mesh);
                 if (mesh->selected == true)
                 {
-                    break;
+                    if (!(preClor.x == clor.x && preClor.y == clor.y && preClor.z == clor.z && preClor.w == clor.w)) {
+                        mesh->oMaterial.mColor = glm::vec3(clor.x, clor.y, clor.z);
+                    }
+                    if (prerness != rness) {
+                        mesh->oMaterial.roughness = rness;
+                    }
+                    if (premlic != mlic) {
+                        mesh->oMaterial.metallic = mlic;
+                    }
                 }
-            }
-            if (mesh)
-            {
-                ImGui::ColorEdit3("Color", (float*)&(mesh->oMaterial.mColor));
-                ImGui::SliderFloat("Roughness", &mesh->oMaterial.roughness, 0.0f, 1.0f);
-                ImGui::SliderFloat("Metallic", &mesh->oMaterial.metallic, 0.0f, 1.0f);
-            }
-            else {
-                static ImVec4 disabledColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);// gray out the widgets
-                static float disabledFloat = 0.5f; // 0.5f is the default value
-                ImGui::ColorEdit3("Color", (float*)&disabledColor);
-                ImGui::SliderFloat("Roughness", &disabledFloat, 0.0f, 1.0f);
-                ImGui::SliderFloat("Metallic", &disabledFloat, 0.0f, 1.0f);
             }
         }
         /// Light
@@ -193,96 +259,35 @@ namespace nui
         {
             ImGui::Separator();
             nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f);
-            ImGui::SliderInt("Light Intensity", &scene_view->get_light()->mStrength, 1, 1000);
-        }
-        
-
-    }
-    
-    void Property_Panel::OpenFileDialog()
-    {
-        OPENFILENAME ofn;
-        char szFile[260] = { 0 };
-
-        ZeroMemory(&ofn, sizeof(ofn));
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = NULL;
-        ofn.lpstrFile = szFile;
-        ofn.nMaxFile = sizeof(szFile);
-        ofn.lpstrFilter = "FBX Files (*.fbx)\0*.fbx\0OBJ Files (*.obj)\0*.obj\0STL Files (*.stl)\0*.stl\0All Files (*.*)\0*.*\0";
-        ofn.nFilterIndex = 1;
-        ofn.lpstrFileTitle = NULL;
-        ofn.nMaxFileTitle = 0;
-        ofn.lpstrInitialDir = mCurrentFile.c_str();
-        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-        if (GetOpenFileName(&ofn) == TRUE)
-        {
-            std::string filePath = ofn.lpstrFile;
-            std::cout << filePath << std::endl;
-            mCurrentFile = filePath.substr(filePath.find_last_of("/\\") + 1);
-
-            mMeshLoadCallback(filePath);
-        }
-    }
-
-    void Property_Panel::MenuBar()
-    {
-        if (ImGui::BeginMainMenuBar())
-        {
-            if (ImGui::BeginMenu("File"))
+            ImGui::SliderInt("Light Intensity", &scene_view->get_light()->mStrength, 0, 1000);
+            if (scene_view->get_light()->mStrength == 0)
             {
-                if (ImGui::MenuItem("New"))
-                {
-                    //NewScene();
-                }
-                if (ImGui::MenuItem("Load","Ctrl+L"))
-                {
-
-                    nelems::RobsFileIO::LoadFromFile(*proMesh);
-                }
-                if (ImGui::MenuItem("Import", "Ctrl+I"))
-                {
-                    OpenFileDialog();
-                }
-                if (ImGui::MenuItem("Save", "Ctrl+S"))
-                {
-
-                    if (proMesh->size() == 0) {
-                        std::cout << "Error: Mesh not loaded" << std::endl;
-                    }
-                    else
-                    {
-                        nelems::RobsFileIO::SaveToFile(*proMesh);
-                    }
-                }
-                if (ImGui::MenuItem("Save As", "Ctrl+Shift+S"))
-                {
-                    //SaveSceneAs();
-                }
-                if (ImGui::MenuItem("Exit"))
-                {
-                    //Exit();
-                }
-                ImGui::EndMenu();
+                ImGui::TextWrapped("Light is off. Render by Shaded mode.");
             }
-            if (ImGui::BeginMenu("Edit")) {
-                if (ImGui::MenuItem("Undo", "Ctrl+Z")) {
-                    uiaction.undocmd();
-                }
-                if (ImGui::MenuItem("Redo", "Ctrl+Y")) {
-                    uiaction.redocmd();
-                }
-                //// LOI FIX BUG!!!!!!!!!!!!!!!
-                if (ImGui::MenuItem("Move", "m")) {
-
-                    uiaction.MoveOb_uiAction();
-                }
-                ImGui::EndMenu();
+            else
+            {
+                ImGui::TextWrapped("Light is on. Normal Render mode.");
             }
-            ImGui::EndMainMenuBar();
-
         }
 
+
     }
+    void Property_Panel::SaveIniFile(const std::string& key, const std::string& value) {
+        // save theme to file
+        json j;
+        j[key] = value;
+        std::ofstream file("robosim_ini.dat");
+        if (!file.is_open()) {
+            std::cerr << "Failed to open file for writing: robosim_ini.dat" << std::endl;
+            return;
+        }
+        file << j.dump(4);
+        std::cout << "Theme saved to robosim_ini.dat" << std::endl;
+        // show restart required message
+        MessageBox(NULL, "Please restart the software to apply the new theme.", "Restart required", MB_OK);
+    }
+
+    ////=============================================================================================
+    //// MENUBAR AND HOTKEYS
+    
 }

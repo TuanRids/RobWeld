@@ -38,7 +38,7 @@ namespace nelems
 
     void set_aspect(float aspect)
     {
-      mProjection = glm::perspective(mFOV, aspect, mNear, mFar);
+     // mProjection = glm::perspective(mFOV, aspect, mNear, mFar);
     }
 
 	void set_distance(float offset)

@@ -12,40 +12,35 @@ namespace ncommand
     private:
         nelems::oMesh* mesh;
         nelems::mMesh* proMesh;
-        glm::vec3 originalPosition;
-        glm::vec3 MoveVec3;
+        float mx,my,mz;
     public:
-        MoveOb(nelems::mMesh* obj, float x, float y, float z) : proMesh(obj), originalPosition(0,0,0) {
-            MoveVec3 = glm::vec3(x, y, z);
-        }
+        MoveOb(nelems::mMesh* obj, float x, float y, float z) : proMesh(obj),
+            mesh(nullptr),mx(x),my(y),mz(z) {}
         ~MoveOb() { mesh = nullptr; proMesh = nullptr; }
-        void execute(std::deque<std::string>& cmdlogs) override 
+        void execute(std::deque<std::string>& cmdlogs) override
         {
             std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now(); // Reset startTime
             // Calculate displacement vector
-            glm::vec3 displacementVector = MoveVec3;
-            std::string tempLog = "";
+            std::string tempLog;
             for (int i = 0; i < proMesh->size(); i++)
             {
-				proMesh->get_mesh_ptr(i, mesh);
+                proMesh->get_mesh_ptr(i, mesh);
                 if (mesh->selected)
                 {
-					originalPosition = mesh->mVertices[0].mPos;
-					// Update vertex positions
-                    for (auto& vertex : mesh->mVertices) {
-						vertex.mPos += displacementVector;
-					}
-					// Update buffers
-					mesh->create_buffers();
-					recorded_cmdlogs(mesh, tempLog, startTime);
-				}
-			}
-            cmdlogs.push_back(tempLog);
+                    mesh->move(mx,my,mz);
 
-            
+                    // Update buffers
+                    mesh->create_buffers();
+                    recorded_cmdlogs(mesh, tempLog, startTime);
+                }
+            }
+            if (tempLog.size() > 0)
+            {
+                cmdlogs.push_back(tempLog);
+            }
         }
-        
-        void recorded_cmdlogs(nelems::oMesh* mesh,std::string& tempLog, const std::chrono::steady_clock::time_point startTime) {
+
+        void recorded_cmdlogs(nelems::oMesh* mesh, std::string& tempLog, const std::chrono::steady_clock::time_point startTime) {
             std::string currentTime;
             std::chrono::nanoseconds durationTime;
 
@@ -61,40 +56,42 @@ namespace ncommand
             }
             // Calculate duration time
             durationTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - startTime);
-            
+
             // recored logs
             std::ostringstream oss;
             oss << "Move Object: \t"
                 << "Object ID: " << mesh->ID << "];\t["
                 << "Object Name: " << mesh->oname << "];\t["
-                << "Original Position: (" << originalPosition.x << ", " << originalPosition.y << ", " << originalPosition.z << ")];\t["
-                << "Displacement Vector: (" << MoveVec3.x << ", " << MoveVec3.y << ", " << MoveVec3.z << ")];\t["
+                << "Updated Position: (" << mesh->oMaterial.position.x << ", " << mesh->oMaterial.position.y << ", " << mesh->oMaterial.position.z << ")];\t["
+                << "Displacement Vector: (" << mx << ", " << my << ", " << mz << ")];\t["
                 << "Duration Time (ns): " << durationTime.count() << "];\t["
                 << "Current Time: " << currentTime << "]\n";
             std::string logEntry = oss.str();
-            tempLog+= logEntry;
+            tempLog += logEntry;
         }
 
-        void undo() override {
-            // Restore original position
-            glm::vec3 displacementVector = MoveVec3;
-            // Update vertex positions
-            for (int i = 0; i < proMesh->size(); i++)
-            {
-                proMesh->get_mesh_ptr(i, mesh);
-                if (mesh->selected)
-                {
-                    originalPosition = mesh->mVertices[0].mPos;
-                    // Update vertex positions
-                    for (auto& vertex : mesh->mVertices) {
-                        vertex.mPos -= displacementVector;
+        void undo(const std::string& lastlog) override {
+            if (!lastlog.empty() && lastlog.find("Move Object") != std::string::npos) {
+                // Update vertex positions
+                for (int i = 0; i < proMesh->size(); i++) {
+                    proMesh->get_mesh_ptr(i, mesh);
+                    if (lastlog.find(std::to_string(mesh->ID)) != std::string::npos) {
+                        mesh->move(-mx, -my, -mz);
+                        mesh->create_buffers();
                     }
-                    // Update buffers
-                    mesh->create_buffers();
                 }
             }
         }
-        void redo() override {}
+
+        void redo(const std::string& lastlog) override
+        {
+            for (int i = 0; i < proMesh->size(); i++) {
+                proMesh->get_mesh_ptr(i, mesh);
+                if (lastlog.find(std::to_string(mesh->ID)) != std::string::npos)
+                {mesh->selected = true;}
+                else { mesh->selected = false; }
+            }
+        }
     };
 
 
@@ -102,13 +99,63 @@ namespace ncommand
     {
     private:
         nelems::oMesh* mesh;
-        glm::vec3 rotVec3;
+        nelems::mMesh* proMesh;
+        float rx, ry, rz;
     public:
-        RotateOb(nelems::oMesh* obj, float x) : mesh(obj) {
-            rotVec3 = glm::vec3(x);
+        RotateOb(nelems::mMesh* obj, float x, float y, float z) : mesh(nullptr),rx(x),ry(y),rz(z),proMesh(obj)  {}
+        ~RotateOb() { mesh = nullptr; proMesh = nullptr; }
+        void execute(std::deque<std::string>& cmdlogs) override {
+            std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now(); // Reset startTime
+            // Calculate displacement vector
+            std::string tempLog;
+            for (int i = 0; i < proMesh->size(); i++)
+            {
+                proMesh->get_mesh_ptr(i, mesh);
+                if (mesh->selected)
+                {
+                    mesh->rotate(rx, ry, rz);
+                    // Update buffers
+                    mesh->create_buffers();
+                    recorded_cmdlogs(mesh, tempLog, startTime);
+                }
+            }
+            if (tempLog.size() > 0)
+            {
+                cmdlogs.push_back(tempLog);
+            }
         }
-        void execute(std::deque<std::string>& cmdlogs) override {}
-        void undo() override {}
-        void redo() override {}
+
+        void recorded_cmdlogs(nelems::oMesh* mesh, std::string& tempLog, const std::chrono::steady_clock::time_point startTime) {
+            std::string currentTime;
+            std::chrono::nanoseconds durationTime;
+
+            std::time_t currentTimeStamp = std::time(nullptr);
+            std::tm currentTimeStruct;
+            if (localtime_s(&currentTimeStruct, &currentTimeStamp) == 0) {
+                std::ostringstream currentTimeSS;
+                currentTimeSS << std::put_time(&currentTimeStruct, "%H-%M-%S");
+                currentTime = currentTimeSS.str();
+            }
+            else {
+                currentTime = "Failed to get current time";
+            }
+            // Calculate duration time
+            durationTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - startTime);
+
+            // recored logs
+            std::ostringstream oss;
+            oss << "Rotate Object: \t"
+                << "Object ID: " << mesh->ID << "];\t["
+                << "Object Name: " << mesh->oname << "];\t["
+                << "Original Rotation: (" << mesh->oMaterial.rotation.x << ", " << mesh->oMaterial.rotation.y << ", " << mesh->oMaterial.rotation.z << ")];\t["
+                << "Rotation degree: (" << rx << ", " << ry << ", " << rz << ")];\t["
+                << "Duration Time (ns): " << durationTime.count() << "];\t["
+                << "Current Time: " << currentTime << "]\n";
+            std::string logEntry = oss.str();
+            tempLog += logEntry;
+        }
+
+        void undo(const std::string& lastlog) override {}
+        void redo(const std::string& lastlog) override {}
     };
 }

@@ -17,6 +17,5 @@ void main()
   Color = color;
   WorldPos = vec3(model * vec4(aPosition, 1.0));
   Normal = aNormal;
-
   gl_Position = projection * view * model * vec4(aPosition, 1.0f);
 }

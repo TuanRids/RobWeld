@@ -4,11 +4,60 @@
 
 #include <filesystem>
 #include "render/opengl_buffer_manager.h"
+#include <thread>
 
+
+/// <summary>
+/// oMesh
+/// </summary>
+namespace nelems {
+    void oMesh::rotate(float angleX, float angleY, float angleZ)
+    {
+        // Calculate the rotation matrix
+        glm::mat4 rotationMatrix = glm::mat4(1.0f);
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(angleX), glm::vec3(1.0f, 0.0f, 0.0f));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(angleZ), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        // Translate the vertices to the origin of the coordinate system
+        glm::mat4 translationToOriginMatrix = glm::translate(glm::mat4(1.0f), -oMaterial.position);
+
+        // Translate the vertices back to their original positions after rotation
+        glm::mat4 translationBackMatrix = glm::translate(glm::mat4(1.0f), oMaterial.position);
+
+        // Apply the transformation to each vertex
+        glm::mat4 modelMatrix = translationBackMatrix * rotationMatrix * translationToOriginMatrix;
+
+        for (auto& vertex : mVertices) {
+            glm::vec4 newPosition = modelMatrix * glm::vec4(vertex.mPos, 1.0f);
+            vertex.mPos = glm::vec3(newPosition);
+        }
+    }
+
+    void oMesh::move(float offsetX, float offsetY, float offsetZ)
+    {
+        // Update the center point
+        oMaterial.position.x += offsetX;
+        oMaterial.position.y += offsetY;
+        oMaterial.position.z += offsetZ;
+
+        // Update the positions of all vertices
+        for (auto& vertex : mVertices) {
+            vertex.mPos.x += offsetX;
+            vertex.mPos.y += offsetY;
+            vertex.mPos.z += offsetZ;
+        }
+    }
+}
+
+
+/// <summary>
+/// mMesh
+/// </summary>
 namespace nelems
 {
     std::mutex nelems::mMesh::mMutex;
-
+    //TODO: Load files too slow
     bool mMesh::load(const std::string& filepath)
     {
         const uint32_t cMeshImportFlags =
@@ -36,6 +85,31 @@ namespace nelems
         }
         return false;
     }
+    
+    void mMesh::load_specific_mesh(const aiMesh* mesh, oMesh& outMesh)
+    {
+        for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
+            VertexHolder vh;
+            vh.mPos = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+            vh.mNormal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+            outMesh.mVertices.push_back(vh);
+        }
+
+        for (size_t i = 0; i < mesh->mNumFaces; i++) {
+            aiFace face = mesh->mFaces[i];
+            for (size_t j = 0; j < face.mNumIndices; j++)
+                outMesh.mVertexIndices.push_back(face.mIndices[j]);
+        }
+        // Calculate the center of all vertices
+        glm::vec3 center = glm::vec3(0.0f);
+        for (const auto& vertex : outMesh.mVertices) {
+            center += vertex.mPos;
+        }
+        center /= static_cast<float>(outMesh.mVertices.size());
+        outMesh.oMaterial.position = center;
+
+        outMesh.init();
+    }
     long long mMesh::getCurrentTimeMillis(int size)
     {
         auto now = std::chrono::system_clock::now();
@@ -54,12 +128,12 @@ namespace nelems
         bool uniqueIDFound = false;
 
         // Generate a random number from the C++11 random environment
-        
+
         do {
             // Get the current time
             auto now = std::chrono::system_clock::now();
             // Combine the current time with a random number
-            millis ++;
+            millis++;
             // Check if the new ID already exists in the list of existing IDs
             bool found = false;
             for (const auto& mesh : *mMeshes) {
@@ -77,23 +151,6 @@ namespace nelems
 
         return millis;
     }
-    void mMesh::load_specific_mesh(const aiMesh* mesh, oMesh& outMesh)
-    {
-        for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
-            VertexHolder vh;
-            vh.mPos = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
-            vh.mNormal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
-            outMesh.mVertices.push_back(vh);
-        }
-
-        for (size_t i = 0; i < mesh->mNumFaces; i++) {
-            aiFace face = mesh->mFaces[i];
-            for (size_t j = 0; j < face.mNumIndices; j++)
-                outMesh.mVertexIndices.push_back(face.mIndices[j]);
-        }
-
-        outMesh.init();
-    }
     void mMesh::clear_meshes()
     {
         if (mMeshes == nullptr) return;
@@ -103,8 +160,11 @@ namespace nelems
         }
         mMeshes->clear();
     }
-    void mMesh::update(nshaders::Shader* shader)
+    void mMesh::update(nshaders::Shader* shader, bool lightsEnabled)
     {
+        if (lightsEnabled == 0){shader->set_i1(0, "lightsEnabled");}
+		else {shader->set_i1(1, "lightsEnabled");}
+
         for (auto& mesh : *mMeshes) {
             shader->set_material(mesh.oMaterial, "materialData");
             mesh.render();

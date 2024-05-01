@@ -11,8 +11,13 @@
 #include <Commdlg.h>
 #include "utils/RobsFileIO.h"
 #include "ui/FrameManage.h"
-#include "ui/uiAction.h"
+
 #include <unordered_set>
+#include "nlohmann/json.hpp"
+#include <Windows.h>
+#include "render/ui_context.h"
+
+using json = nlohmann::json;
 
 namespace nui
 {
@@ -28,45 +33,44 @@ namespace nui
         // Transformation
         nelems::mMesh* proMesh; // Mesh Properties
         nelems::oMesh* mesh = nullptr; // for each objects
-        nui::uiAction uiaction;
+        //nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
 
-        //
 
-        // create a file browser instance
-        ImGui::FileBrowser mFileDialog;
-        std::function<void(const std::string&)> mMeshLoadCallback;
-        std::string mCurrentFile;
+
     public:
         Property_Panel():
             proMesh(nullptr),mesh(nullptr)
         {
-                
-            mCurrentFile = "< ... >";
-            mFileDialog.SetTitle("Import Mesh");
-            mFileDialog.SetFileFilters({ ".fbx", ".obj",".stl"});
+            std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
+            if (file.is_open())
+            {
+                json j; file >> j;
+                if (j.find("font") != j.end()) {
+                    content = j["font"].get<std::string>();
+                }
+            }
             ImGuiIO& io = ImGui::GetIO();
-            io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/Arial.ttf", 16.0f);
-
+            std::string fontPath = "C:/Windows/Fonts/" + std::string(content) + ".ttf";
+            io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
         }
 
-        void render(nui::SceneView* mScene);
+        void render(nui::SceneView* mScene, GLFWwindow* mWindow);
         void material_frame(nui::SceneView* scene_view);
         void camera_frame(nui::SceneView* scene_view);
         void layer_frame(nui::SceneView* scene_view);
         void obInfo_frame();
         void coordinate_frame();
 
+        /// mode: dark, light
+
         ~Property_Panel() { 
             mesh = nullptr;
             mesh = nullptr;
-            proMesh = nullptr; 
+            proMesh = nullptr;
         }
-        void SetMeshLoadCallback(const std::function<void(const std::string&)>& callback)
-                        { mMeshLoadCallback = callback;  }
-        void MenuBar();
-        void OpenFileDialog();
         
+        void SaveIniFile(const std::string& key, const std::string& value);
       };
 }
 

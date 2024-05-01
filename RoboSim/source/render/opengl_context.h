@@ -2,6 +2,7 @@
 
 #include "render_base.h"
 #include "GLFW/glfw3.h"
+#include "ui_context.h"
 namespace nrender
 {
   class OpenGL_Context : public RenderContext

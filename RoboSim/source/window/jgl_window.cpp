@@ -39,9 +39,9 @@ namespace nwindow
 
     mPropertyPanel = std::make_unique<Property_Panel>();
 
-    mPropertyPanel->SetMeshLoadCallback(
+    mSceneView->SetMeshLoadCallback(
       [this](std::string filepath) { mSceneView->load_mesh(filepath); });
-
+    
     return mIsRunning;
   }
 
@@ -86,76 +86,21 @@ namespace nwindow
   {
     // Clear the view
     mRenderCtx->pre_render();
-
+    
     // Initialize UI components
     mUICtx->pre_render();
 
+    //handle_input();
     // render scene to framebuffer and add it to scene view
     mSceneView->render();
-    mPropertyPanel->render(mSceneView);
-
+    mPropertyPanel->render(mSceneView,mWindow);
+    
     // Render the UI 
     mUICtx->post_render();
     // Render end, swap buffers
     mRenderCtx->post_render();
-
-    handle_input();
+    
   }
 
-  void GLWindow::handle_input()
-  {
-      static double lastPressTime = 0.0;
-      static const double debounceDelay = 0.1;
-      double currentTime = glfwGetTime();
-      //normal keyboard
-      // m = MoveOb
-      if (glfwGetKey(mWindow, GLFW_KEY_M) == GLFW_PRESS && currentTime - lastPressTime > debounceDelay)
-      {
-          lastPressTime = currentTime;
-          uiaction.MoveOb_uiAction();
-      }
-
-      if (glfwGetKey(mWindow, GLFW_KEY_Y) == GLFW_PRESS && glfwGetKey(mWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && currentTime - lastPressTime > debounceDelay)
-      {
-          lastPressTime = currentTime;
-          uiaction.redocmd();
-      }
-      if (glfwGetKey(mWindow, GLFW_KEY_Y) == GLFW_PRESS && glfwGetKey(mWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && currentTime - lastPressTime > debounceDelay)
-      {
-          lastPressTime = currentTime;
-          uiaction.redocmd();
-      }
-      if (glfwGetKey(mWindow, GLFW_KEY_I) == GLFW_PRESS && glfwGetKey(mWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && currentTime - lastPressTime > debounceDelay)
-      {
-          lastPressTime = currentTime;
-          mPropertyPanel->OpenFileDialog();
-      }
-
-
-
-    // TODO: move this and camera to scene UI component?
-    if (nui::FrameManage::getCrActiveGui("ViewPort") == true)
-      {
-
-          if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
-          {
-              mSceneView->on_mouse_wheel(0.4f);
-          }
-
-          if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
-          {
-              mSceneView->on_mouse_wheel(-0.4f);
-          }
-
-          if (glfwGetKey(mWindow, GLFW_KEY_F) == GLFW_PRESS)
-          {
-              mSceneView->reset_view();
-          }
-
-          double x, y;
-          glfwGetCursorPos(mWindow, &x, &y);
-
-          mSceneView->on_mouse_move(x, y, Input::GetPressedButton(mWindow));
-      }
-  }
+  
 }

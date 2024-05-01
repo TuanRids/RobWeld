@@ -8,7 +8,7 @@
 #include "elems/input.h"
 #include "FrameManage.h"
 #include "imgui.h"
-
+#include "functional"
 namespace nui
 {
     /*
@@ -30,6 +30,11 @@ namespace nui
         float Near = 0.1f;
         float Far = 100.0f;
         int zoom = 1;
+        static std::string arg_render_mode;
+
+        // create a file browser instance
+        std::function<void(const std::string&)> mMeshLoadCallback;
+
 
         // Private constructor to prevent instantiation
         SceneView() :
@@ -59,6 +64,7 @@ namespace nui
         
         // Public methods
         nelems::Light* get_light() { return mLight.get(); }
+        nshaders::Shader* get_shader() { return mShader.get(); }
         void resize(int32_t width, int32_t height);
         void render();
         void load_mesh(const std::string& filepath);
@@ -68,7 +74,11 @@ namespace nui
         void on_mouse_move(double x, double y, nelems::EInputButton button);
         void on_mouse_wheel(double delta);
         void reset_view() { mCamera->reset(); }
-
+        void setlink_meshloadcallback(std::string& fpath) { mMeshLoadCallback(fpath); }
+        void SetMeshLoadCallback(const std::function<void(const std::string&)>& callback){ mMeshLoadCallback = callback; }
+        ///
+        void render_mode();
+        void set_render_mode(const std::string& mode) { arg_render_mode = mode; }
         //=======================================================================================================
         void setFov(float newFov);
         void setAspect(float newAspect);   // Setters Aspect

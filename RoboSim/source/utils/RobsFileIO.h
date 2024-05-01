@@ -1,22 +1,19 @@
 #include <pch.h>
-#include <vector>
 #include "elems/material.h" // Include your Material definition here
 #include "elems/vertex_holder.h" // Include your VertexHolder definition here
-#include <fstream>
-#include <iostream>
 #include "elems/mesh.h"
 #include "imgui.h"
 #include <ImFileBrowser.h>
 #include <Windows.h>
 #include <Commdlg.h>
-namespace nelems
-{
 
+#ifndef ROBSFILEIO_H
+#define ROBSFILEIO_H
+namespace nutils
+{
     class RobsFileIO 
     {
- 
     public:
-        
         static bool SaveToFile(nelems::mMesh& mesh)
         {
             std::string filePath;
@@ -74,7 +71,7 @@ namespace nelems
 
                 uint32_t numVertices = static_cast<uint32_t>(oMesh->mVertices.size());
                 file.write(reinterpret_cast<char*>(&numVertices), sizeof(numVertices));
-                file.write(reinterpret_cast<const char*>(oMesh->mVertices.data()), numVertices * sizeof(VertexHolder));
+                file.write(reinterpret_cast<const char*>(oMesh->mVertices.data()), numVertices * sizeof(nelems::VertexHolder));
 
                 uint32_t numIndices = static_cast<uint32_t>(oMesh->mVertexIndices.size());
                 file.write(reinterpret_cast<char*>(&numIndices), sizeof(numIndices));
@@ -139,7 +136,7 @@ namespace nelems
                 uint32_t numVertices;
                 file.read(reinterpret_cast<char*>(&numVertices), sizeof(numVertices));
                 oMesh.mVertices.resize(numVertices);
-                file.read(reinterpret_cast<char*>(oMesh.mVertices.data()), numVertices * sizeof(VertexHolder));
+                file.read(reinterpret_cast<char*>(oMesh.mVertices.data()), numVertices * sizeof(nelems::VertexHolder));
 
                 // Read indices
                 uint32_t numIndices;
@@ -160,3 +157,5 @@ namespace nelems
         }
     };
 }
+
+#endif // ROBSFILEIO_H

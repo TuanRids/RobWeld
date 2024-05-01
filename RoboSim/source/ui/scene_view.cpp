@@ -4,6 +4,7 @@
 
 namespace nui
 {
+  std::string SceneView::arg_render_mode = "Surface";
   void SceneView::resize(int32_t width, int32_t height)
   {
     mSize.x = float(width);
@@ -76,10 +77,13 @@ namespace nui
   {
 
     mShader->use();
-    mLight->update(mShader.get());
+    //mLight->update(mShader.get());
     mFrameBuffer->bind();
-    if (rdMesh)     { rdMesh->update(mShader.get());}
-    else            { rdMesh = &nelems::mMesh::getInstance();}
+
+    if (!rdMesh) { rdMesh = &nelems::mMesh::getInstance(); }
+    else { render_mode(); } // set rendermode
+    
+
     mFrameBuffer->unbind();
 
     ImGui::Begin("ViewPort");
@@ -94,6 +98,62 @@ namespace nui
         ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
     }
     ImGui::End();
+  }
+  void SceneView::render_mode()
+  {
+      static bool lightmode = false;
+      if (mLight->mStrength == 0) { lightmode = false; }
+	  else { lightmode = true; }
+      /* 
+      "Points", "WireFrame", "Surface"
+      ,"Points-Wire", "Points-Face", "Wire-Face", "Point-Wire-Face"
+      */
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glEnable(GL_BLEND);
+      glEnable(GL_MULTISAMPLE);
+      glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE);
+      glEnable(GL_LINE_SMOOTH);
+
+      glPointSize(2.0f);
+      if (arg_render_mode == "Points") {
+          glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+          rdMesh->update(mShader.get(), lightmode);
+      }
+      else if (arg_render_mode == "WireFrame") {
+          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+          rdMesh->update(mShader.get(), lightmode);
+      }
+      else if (arg_render_mode == "Surface") {
+          glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+          rdMesh->update(mShader.get(), lightmode);
+      }
+      else if (arg_render_mode == "Points-Wire") {
+          glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+          rdMesh->update(mShader.get(), lightmode);
+          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+          rdMesh->update(mShader.get(), lightmode);
+	  }
+      else if (arg_render_mode == "Points-Face") {
+		  glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+		  rdMesh->update(mShader.get(), lightmode);
+		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		  rdMesh->update(mShader.get(), lightmode);
+	  }
+      else if (arg_render_mode == "Wire-Face") {
+		  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		  rdMesh->update(mShader.get(), lightmode);
+		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		  rdMesh->update(mShader.get(), lightmode);
+	  }
+      else if (arg_render_mode == "Point-Wire-Face") {
+		  glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+		  rdMesh->update(mShader.get(), lightmode);
+		  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		  rdMesh->update(mShader.get(), lightmode);
+		  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		  rdMesh->update(mShader.get(), lightmode);
+	  }
+      
 
   }
 }
