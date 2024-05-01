@@ -75,30 +75,33 @@ namespace nui
 
   void SceneView::render()
   {
+      mShader->use();
+      mFrameBuffer->bind();
 
-    mShader->use();
-    //mLight->update(mShader.get());
-    mFrameBuffer->bind();
+      if (!rdMesh) {rdMesh = &nelems::mMesh::getInstance();}
+      else {render_mode(); }
+      rdMesh->createGridSys();
+ 
 
-    if (!rdMesh) { rdMesh = &nelems::mMesh::getInstance(); }
-    else { render_mode(); } // set rendermode
-    
+      mFrameBuffer->unbind();
+      //TODO OBJECTS ARE SCALED WHEN SCREENE IS RESIZED
+      ImGui::Begin("ViewPort");
+      {
+          nui::FrameManage::setCrActiveGui("ViewPort", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
+          ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+          mSize = { viewportPanelSize.x, viewportPanelSize.y };
+          mCamera->set_aspect(mSize.x / mSize.y);
+          mCamera->update(mShader.get());
 
-    mFrameBuffer->unbind();
-
-    ImGui::Begin("ViewPort");
-    {
-        nui::FrameManage::setCrActiveGui("ViewPort", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
-        ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-        mSize = { viewportPanelSize.x, viewportPanelSize.y };
-        mCamera->set_aspect(mSize.x / mSize.y);
-        mCamera->update(mShader.get());
-        // add rendered texture to ImGUI scene window
-        uint64_t textureID = mFrameBuffer->get_texture();
-        ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-    }
-    ImGui::End();
+          // add rendered texture to ImGUI scene window
+          uint64_t textureID = mFrameBuffer->get_texture();
+          ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+      }
+      ImGui::End();
   }
+
+
+
   void SceneView::render_mode()
   {
       static bool lightmode = false;

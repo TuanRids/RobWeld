@@ -23,7 +23,7 @@ namespace nelems {
     */
     struct oMesh {
         // materials with default values
-        Material oMaterial { { 0.0f, 1.0f, 1.0f },
+        Material oMaterial { { 0.0f, 0.0f, 0.0f },
                             0.2f, 0.2f, 1.0f };
         // default object id
         long long ID{ 0 };
@@ -35,7 +35,8 @@ namespace nelems {
         std::vector<unsigned int> mVertexIndices;
         std::shared_ptr<nrender::VertexIndexBuffer> mRenderBufferMgr;
         //--------------------------------------------------------------------------------
-        void init()  { mRenderBufferMgr = std::make_unique<nrender::OpenGL_VertexIndexBuffer>();create_buffers();}
+        void init()  { mRenderBufferMgr = std::make_shared<nrender::OpenGL_VertexIndexBuffer>();create_buffers();}
+
         // create buffers for object to render
         void create_buffers() { mRenderBufferMgr->create_buffers(mVertices, mVertexIndices); }
         // del object buffers
@@ -64,6 +65,7 @@ namespace nelems {
 
         //--------------------------------------------------------------------------------
         void render() { if (hide) { return; } mRenderBufferMgr->draw(static_cast<int>(mVertexIndices.size()));}
+        void render_lines() { if (hide) { return; } mRenderBufferMgr->draw_lines(static_cast<int>(mVertexIndices.size()));}
         // bind object buffers to render
         void bind() { mRenderBufferMgr->bind(); }
         // unbind object buffers
@@ -74,22 +76,17 @@ namespace nelems {
         void changeName( std::string newvalue) {
             strncpy_s(oname, sizeof(oname), newvalue.c_str(), _TRUNCATE);
         }
+
     };
-
-
-
-
 
     /*
     This class is using singleton pattern for creating only 1 instance of mMesh
+    We also use observer pattern to notify the changes to the other classes
 
-    How to use:
-        std::shared_ptr<nelems::mMesh> newMesh;
-        auto& meshInstance = nui::createMesh::getInstance();
-        newMesh = meshInstance.getMesh();
     */
     class mMesh {
     public:
+        // ************** Load & structure mesh **************
         //load mesh from file
         bool load(const std::string& filepath);
         // random number generator based on current time
@@ -100,9 +97,9 @@ namespace nelems {
         void clear_meshes();
         // update for shader
         void update(nshaders::Shader* shader, bool lightenable);
-        void render();
+        void createGridSys();
 
-
+        // ************** Check and get pointer **************
         // get mesh pointer based on index
         void get_mesh_ptr(int& j, oMesh*& mesh);
         // get mesh pointer based on id
@@ -139,14 +136,10 @@ namespace nelems {
         }
     private:
         static std::mutex mMutex;
-        //std::vector<oMesh> mMeshes;
+        // add a var to draw 10x10 grid for coordinate system
+        std::unique_ptr<oMesh> mCoorSystem;
         std::shared_ptr<std::vector<oMesh>> mMeshes;
-        mMesh()
-        {
-            if (!mMeshes) {
-                mMeshes = std::make_shared<std::vector<oMesh>>();
-            }
-        }
+        mMesh(){if (!mMeshes) {mMeshes = std::make_shared<std::vector<oMesh>>();}}
     };
 }
 

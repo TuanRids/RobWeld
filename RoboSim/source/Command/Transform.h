@@ -39,7 +39,7 @@ namespace ncommand
                 cmdlogs.push_back(tempLog);
             }
         }
-
+        bool isValid() const override {return (mx != 0.0f || my != 0.0f || mz != 0.0f);}
         void recorded_cmdlogs(nelems::oMesh* mesh, std::string& tempLog, const std::chrono::steady_clock::time_point startTime) {
             std::string currentTime;
             std::chrono::nanoseconds durationTime;
@@ -124,7 +124,7 @@ namespace ncommand
                 cmdlogs.push_back(tempLog);
             }
         }
-
+        bool isValid() const override { return (rx != 0.0f || ry != 0.0f || rz != 0.0f); }
         void recorded_cmdlogs(nelems::oMesh* mesh, std::string& tempLog, const std::chrono::steady_clock::time_point startTime) {
             std::string currentTime;
             std::chrono::nanoseconds durationTime;
@@ -155,7 +155,27 @@ namespace ncommand
             tempLog += logEntry;
         }
 
-        void undo(const std::string& lastlog) override {}
-        void redo(const std::string& lastlog) override {}
+        void undo(const std::string& lastlog) override 
+        {
+            if (!lastlog.empty() && lastlog.find("Rotate Object") != std::string::npos) {
+                // Update vertex positions
+                for (int i = 0; i < proMesh->size(); i++) {
+                    proMesh->get_mesh_ptr(i, mesh);
+                    if (lastlog.find(std::to_string(mesh->ID)) != std::string::npos) {
+                        mesh->rotate(-rx, -ry, -rz);
+                        mesh->create_buffers();
+                    }
+                }
+            }
+        }
+        void redo(const std::string& lastlog) override 
+        {
+            for (int i = 0; i < proMesh->size(); i++) {
+                proMesh->get_mesh_ptr(i, mesh);
+                if (lastlog.find(std::to_string(mesh->ID)) != std::string::npos)
+                { mesh->selected = true; }
+                else { mesh->selected = false; }
+            }
+        }
     };
 }

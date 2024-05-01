@@ -150,99 +150,66 @@ namespace nui
         if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen)) //&&mesh
         {
             ImGui::Separator();
-            ImGui::Text("Add rotation, and scale");
             ImGui::Text("Add 3D grid viewport");
             ImGui::Text("Add front, right and top view");
-            ImGui::Text("remove default bar, add new menubar ass a title bar");
             ImGui::Separator();
-            if (proMesh->check_selected() != 1)
+            static float posrot[6];
+            
+            static char aname[10] = "";
+            ImGui::Text("Name"); ImGui::SameLine();
+            ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
+
+            ImGui::Text("x_Pos"); ImGui::SameLine();
+            ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f");
+
+            ImGui::Text("y_Pos"); ImGui::SameLine();
+            ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f");
+
+            ImGui::Text("z_Pos"); ImGui::SameLine();
+            ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f");
+
+            ImGui::Text("x_Rot"); ImGui::SameLine();
+            ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f");
+
+            ImGui::Text("y_Rot"); ImGui::SameLine();
+            ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f");
+
+            ImGui::Text("z_Rot"); ImGui::SameLine();
+            ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f");
+            if (proMesh->check_selected() != 0)
             {
-                static char aname[10] = "";
-                static float posrot[6];
-                ImGui::Text("Name"); ImGui::SameLine();
-                ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
-
-                ImGui::Text("x_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("y_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("z_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("x_Rot"); ImGui::SameLine();
-                ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("y_Rot"); ImGui::SameLine();
-                ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("z_Rot"); ImGui::SameLine();
-                ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f");
-
-                for (int i = 0; i < proMesh->size(); i++) {
-                    proMesh->get_mesh_ptr(i, mesh); if (!(mesh->selected)) { continue; }
-                    if (posrot[0] != 0) { mesh->oMaterial.position.x += posrot[0]; }
-                    if (posrot[1] != 0) { mesh->oMaterial.position.y += posrot[1]; }
-                    if (posrot[2] != 0) { mesh->oMaterial.position.z += posrot[2]; }
-                    if (posrot[3] != 0) { mesh->oMaterial.rotation.x += posrot[3]; }
-                    if (posrot[4] != 0) { mesh->oMaterial.rotation.y += posrot[4]; }
-                    if (posrot[5] != 0) { mesh->oMaterial.rotation.z += posrot[5]; }
-                    if (strlen(aname) > 0) { strcpy_s(mesh->oname, aname); }
-                }
-                // reset all posrot & aname;
-                std::fill_n(posrot, 6, 0.0f);
-                std::fill_n(aname, sizeof(aname), '\0');
-            }
-            else
-            {
-                for (int i = 0; i < proMesh->size(); i++)
+                // check if any elements of posrot is not 0
+                bool hasNonZeroElement = std::any_of(std::begin(posrot), std::end(posrot), 
+                                        [](float value) { return value != 0.0f; });
+                if ((hasNonZeroElement) && ImGui::Button("OK"))
                 {
-                    proMesh->get_mesh_ptr(i, mesh);
-                    if (mesh->selected == true)
-                    {
-                        break;
-                    }
+                    uiaction.MoveOb_uiAction(posrot[0], posrot[1], posrot[2]);
+                    uiaction.RotateOb_uiAction(posrot[3], posrot[4], posrot[5]);
+                    // reset all posrot & aname;
+                    std::fill_n(posrot, 6, 0.0f);
+                    std::fill_n(aname, sizeof(aname), '\0');
                 }
-                ImGui::Text("Name"); ImGui::SameLine();
-                ImGui::InputText("##Name", mesh->oname, ImGuiInputTextFlags_EnterReturnsTrue);
-
-                ImGui::Text("x_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##xPos", &mesh->oMaterial.position.x, 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("y_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##yPos", &mesh->oMaterial.position.y, 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("z_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##zPos", &mesh->oMaterial.position.z, 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("x_Rot"); ImGui::SameLine();
-                ImGui::InputFloat("##xRot", &mesh->oMaterial.rotation.x, 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("y_Rot"); ImGui::SameLine();
-                ImGui::InputFloat("##yRot", &mesh->oMaterial.rotation.y, 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("z_Rot"); ImGui::SameLine();
-                ImGui::InputFloat("##zRot", &mesh->oMaterial.rotation.z, 0.0f, 0.0f, "%.3f");
             }
         }
     }
     void Property_Panel::material_frame(nui::SceneView* scene_view) {
-        static ImVec4 clor = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);// gray out the widgets
+        
+        static ImVec4 clor = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
         static float rness = 0.5f; static float mlic = 0.5f;
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
-
             ImGui::ColorEdit3("Color", (float*)&clor);
             ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f);
             ImGui::SliderFloat("Metallic", &mlic, 0.0f, 1.0f);
+
             for (int i = 0; i < proMesh->size(); i++)
             {
                 proMesh->get_mesh_ptr(i, mesh);
                 if (mesh->selected == true)
                 {
-                    if (!(preClor.x == clor.x && preClor.y == clor.y && preClor.z == clor.z && preClor.w == clor.w)) {
+                    if ((preClor.x != clor.x ||  preClor.y != clor.y || preClor.z != clor.z || preClor.w != clor.w)) {
+                        std::cout << mesh->oname << std::endl;
                         mesh->oMaterial.mColor = glm::vec3(clor.x, clor.y, clor.z);
                     }
                     if (prerness != rness) {

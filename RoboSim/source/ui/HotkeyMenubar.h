@@ -11,10 +11,10 @@ namespace nui {
     // all actions will move to uiAction
 	class HotkeyMenubar {
     private:
-        static uiAction uiaction;
+        uiAction uiaction;
         nui::SceneView* scene_view;
         std::string mCurrentFile;
-        
+        static bool waitloop[6];
 
     public:
         HotkeyMenubar() : scene_view(nullptr) {
@@ -71,7 +71,7 @@ namespace nui {
                     }
                     if (ImGui::MenuItem("Rotate", "Ctrl+R")) {
 
-                        uiaction.RotateOb_uiAction();
+                        //uiaction.RotateOb_uiAction(Null);
                     }
                     ImGui::EndMenu();
                 }
@@ -126,22 +126,13 @@ namespace nui {
                     }
                     ImGui::EndMenu();
                 }
-                if (ImGui::BeginMenu("Object"))
-                {
-                    //TODO: UPDATED THIS FEATURE FOR CAMERA ROTATION
-                    if (ImGui::MenuItem("New Coor center point")) {
-
-                    }
-
-                    ImGui::EndMenu();
-                }
                 ImGui::EndMainMenuBar();
 
             }
         }
         void mHotkey(GLFWwindow* mWindow)
         {
-            static bool waitloop[1]{ false }; // Use for mini popup recall the ImGui in main Loops
+            
             static double lastPressTime = 0.0;
             static const double debounceDelay = 0.1;
 
@@ -159,8 +150,10 @@ namespace nui {
                 uiaction.MoveOb_uiAction(waitloop[0]);
             }
 
-            if (glfwGetKey(mWindow, GLFW_KEY_R) == GLFW_PRESS && (lCtr || rCtr) && tdelay)
-            { lastPressTime = currentTime; uiaction.RotateOb_uiAction(); }
+            if (glfwGetKey(mWindow, GLFW_KEY_R) == GLFW_PRESS && (lCtr || rCtr) && tdelay || waitloop[1])
+            { 
+                lastPressTime = currentTime; waitloop[1] = true; 
+                uiaction.RotateOb_uiAction(waitloop[1]); }
 
 
             if (glfwGetKey(mWindow, GLFW_KEY_Z) == GLFW_PRESS && (lCtr || rCtr) && tdelay)

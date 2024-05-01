@@ -14,8 +14,13 @@ out vec4 Color;
 
 void main()
 {
-  Color = color;
-  WorldPos = vec3(model * vec4(aPosition, 1.0));
-  Normal = aNormal;
-  gl_Position = projection * view * model * vec4(aPosition, 1.0f);
+    Color = color;
+    // An undetermined problem cause that the y axis is switched with the z axis.
+    //  ************ Switch y axis and z axis together ************
+    // Transform the vertex position to world space
+    WorldPos = vec3(model * vec4(aPosition.x, aPosition.z, aPosition.y, 1.0));
+    Normal = aNormal;
+
+    // Apply the model-view-projection transformation to the vertex position
+    gl_Position = projection * view * model * vec4(aPosition.x, aPosition.z, aPosition.y, 1.0f);
 }

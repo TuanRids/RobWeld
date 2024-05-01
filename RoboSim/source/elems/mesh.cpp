@@ -63,7 +63,7 @@ namespace nelems
         const uint32_t cMeshImportFlags =
             aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_SortByPType |
             aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes |
-            aiProcess_ValidateDataStructure;
+            aiProcess_ValidateDataStructure ;
 
         Assimp::Importer Importer;
 
@@ -80,7 +80,7 @@ namespace nelems
                 load_specific_mesh(mesh, newMesh);
                 mMeshes->push_back(newMesh);
             }
-
+            std::cout << mCoorSystem->oMaterial.mColor.y << std::endl;  
             return true;
         }
         return false;
@@ -107,7 +107,7 @@ namespace nelems
         }
         center /= static_cast<float>(outMesh.mVertices.size());
         outMesh.oMaterial.position = center;
-
+        outMesh.oMaterial.mColor = glm::vec3(0.0f, 0.5f, 1.0f);
         outMesh.init();
     }
     long long mMesh::getCurrentTimeMillis(int size)
@@ -159,6 +159,10 @@ namespace nelems
             mesh.delete_buffers();
         }
         mMeshes->clear();
+        if (mCoorSystem == nullptr) return;
+        mCoorSystem->delete_buffers();
+        mCoorSystem.reset();
+         
     }
     void mMesh::update(nshaders::Shader* shader, bool lightsEnabled)
     {
@@ -169,15 +173,50 @@ namespace nelems
             shader->set_material(mesh.oMaterial, "materialData");
             mesh.render();
         }
-    }
-    void mMesh::render()
-    {
-        for (auto& mesh : *mMeshes)
+        if (mCoorSystem)
         {
-            // Render each mesh
-            mesh.render();
+            shader->set_material(mCoorSystem->oMaterial, "materialData");
+            mCoorSystem->render_lines();
         }
     }
+    void mMesh::createGridSys()
+    {
+        if (!mCoorSystem)
+        {
+            mCoorSystem = std::make_unique<oMesh>();
+            mCoorSystem->changeName("Coordinate System");
+            mCoorSystem->oMaterial.mColor = glm::vec3(0.0f, 0.0f, 0.0f);
+            mCoorSystem->ID = getCurrentTimeMillis(1);
+
+            const int gridSize = 50; 
+
+            // Create vertices for the grid
+            for (int x = 0; x < gridSize; ++x) {
+                for (int y = 0; y < gridSize; ++y) {
+                    // Create vertices at positions (x, y, 0)
+                    VertexHolder vertex;
+                    vertex.mPos = { static_cast<float>(x), static_cast<float>(y), 0.0f };
+                    vertex.mNormal = { 0.0f, 0.0f, 1.0f };
+                    mCoorSystem->add_vertex(vertex);
+
+                    // Create indices for drawing lines
+                    if (x < gridSize - 1) {
+                        mCoorSystem->add_vertex_index(x * gridSize + y);
+                        mCoorSystem->add_vertex_index((x + 1) * gridSize + y);
+                    }
+                    if (y < gridSize - 1) {
+                        mCoorSystem->add_vertex_index(x * gridSize + y);
+                        mCoorSystem->add_vertex_index(x * gridSize + (y + 1));
+                    }
+                }
+            }
+
+            // Initialize and create buffers for the grid mesh
+            mCoorSystem->init();
+        }
+    }
+
+    
     void mMesh::get_mesh_ptr(int& j, oMesh*& mesh)
     {
         for (int i = 0; i < mMeshes->size(); ++i) {

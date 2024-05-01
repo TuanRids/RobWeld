@@ -16,7 +16,6 @@
 #include "elems/mesh.h"
 #include "ui/uiAction.h"
 
-
 using namespace nui;
 using namespace nelems;
 using namespace nrender;
@@ -37,6 +36,7 @@ namespace nwindow
       // UI components
       std::unique_ptr<nui::Property_Panel> mPropertyPanel;
 
+
       nui::SceneView* mSceneView;
       // Command pattern for all looping
       nui::uiAction uiaction;
@@ -44,7 +44,7 @@ namespace nwindow
   public:
       // Obhistory for command logs intro
     GLWindow() :
-      mSceneView(nullptr), mIsRunning(true), mWindow(nullptr),  mPropertyPanel(nullptr)    
+      mSceneView(nullptr), mIsRunning(true), mWindow(nullptr),  mPropertyPanel(nullptr) 
     {
       mUICtx = std::make_unique<UIContext>();
       mRenderCtx = std::make_unique<OpenGL_Context>();
@@ -57,7 +57,7 @@ namespace nwindow
 
     void render();
 
-    void handle_input();
+
 
     void* get_native_window() override { return mWindow; }
 

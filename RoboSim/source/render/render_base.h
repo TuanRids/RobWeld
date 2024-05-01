@@ -21,6 +21,7 @@ namespace nrender
     virtual void unbind() = 0;
 
     virtual void draw(int index_count) = 0;
+    virtual void draw_lines(int index_count) = 0;
 
   protected:
     GLuint mVBO;

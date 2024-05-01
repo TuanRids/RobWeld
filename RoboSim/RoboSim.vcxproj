@@ -132,7 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\Command\ObHistory.cpp" />
-    <ClCompile Include="source\Command\MoveOb.cpp" />
+    <ClCompile Include="source\Command\Transform.cpp" />
     <ClCompile Include="source\Command\ObHistory.h" />
     <ClCompile Include="source\elems\boundingbox.cpp" />
     <ClCompile Include="source\ui\FrameManage.cpp" />
@@ -191,7 +191,7 @@
   <ItemGroup>
     <ClInclude Include="source\3rdparty\plugins\imgui\ImFileBrowser.h" />
     <ClInclude Include="source\Command\dcommand.h" />
-    <ClInclude Include="source\Command\MoveOb.h" />
+    <ClInclude Include="source\Command\Transform.h" />
     <ClInclude Include="source\elems\boundingbox.h" />
     <ClInclude Include="source\elems\material.h" />
     <ClInclude Include="source\elems\stb_image.h" />

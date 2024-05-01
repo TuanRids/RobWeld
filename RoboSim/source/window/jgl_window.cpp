@@ -36,7 +36,6 @@ namespace nwindow
 
     mSceneView = &nui::SceneView::getInstance();
 
-
     mPropertyPanel = std::make_unique<Property_Panel>();
 
     mSceneView->SetMeshLoadCallback(

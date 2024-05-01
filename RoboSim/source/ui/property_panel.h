@@ -12,6 +12,7 @@
 #include "utils/RobsFileIO.h"
 #include "ui/FrameManage.h"
 
+#include "ui/uiAction.h"
 #include <unordered_set>
 #include "nlohmann/json.hpp"
 #include <Windows.h>
@@ -33,7 +34,7 @@ namespace nui
         // Transformation
         nelems::mMesh* proMesh; // Mesh Properties
         nelems::oMesh* mesh = nullptr; // for each objects
-        //nui::uiAction uiaction;
+        nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
 
 

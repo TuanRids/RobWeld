@@ -29,7 +29,6 @@ namespace nelems
     // TODO
     // glm::vec2 mUV;
 
-
   };
 }
 

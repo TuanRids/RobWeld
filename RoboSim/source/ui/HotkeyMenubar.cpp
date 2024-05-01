@@ -1,5 +1,5 @@
 #include "pch.h"
 #include "HotkeyMenubar.h"
 namespace nui {
-	uiAction HotkeyMenubar::uiaction;
+	bool HotkeyMenubar::waitloop[6] = { false,false,false,false,false,false };
 }
