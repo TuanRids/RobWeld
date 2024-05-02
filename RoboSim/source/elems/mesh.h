@@ -24,7 +24,7 @@ namespace nelems {
     struct oMesh {
         // materials with default values
         Material oMaterial { { 0.0f, 0.0f, 0.0f },
-                            0.2f, 0.2f, 1.0f };
+                            0.2f, 0.2f, 1.0f, 0.5f };
         // default object id
         long long ID{ 0 };
         char oname[256] = { 0 };
@@ -33,6 +33,8 @@ namespace nelems {
         // VAO VBO buffer
         std::vector<VertexHolder> mVertices;
         std::vector<unsigned int> mVertexIndices;
+        // a struct with 3 lines, draw from the center of the object
+
         std::shared_ptr<nrender::VertexIndexBuffer> mRenderBufferMgr;
         //--------------------------------------------------------------------------------
         void init()  { mRenderBufferMgr = std::make_shared<nrender::OpenGL_VertexIndexBuffer>();create_buffers();}
@@ -97,7 +99,7 @@ namespace nelems {
         void clear_meshes();
         // update for shader
         void update(nshaders::Shader* shader, bool lightenable);
-        void createGridSys();
+        void createGridSys(int size, int step);
 
         // ************** Check and get pointer **************
         // get mesh pointer based on index
@@ -137,7 +139,8 @@ namespace nelems {
     private:
         static std::mutex mMutex;
         // add a var to draw 10x10 grid for coordinate system
-        std::unique_ptr<oMesh> mCoorSystem;
+        //std::unique_ptr<oMesh> mCoorSystem, minigrid;
+        std::shared_ptr<std::vector<oMesh>> mCoorSystem;
         std::shared_ptr<std::vector<oMesh>> mMeshes;
         mMesh(){if (!mMeshes) {mMeshes = std::make_shared<std::vector<oMesh>>();}}
     };

@@ -92,9 +92,18 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\libs\YMconnect;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent />
+    <PreBuildEvent>
+      <Command>call "$(ProjectDir)Build_Setup.bat"
+</Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>call "$(ProjectDir)Build_Setup.bat"
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -134,7 +143,7 @@
     <ClCompile Include="source\Command\ObHistory.cpp" />
     <ClCompile Include="source\Command\Transform.cpp" />
     <ClCompile Include="source\Command\ObHistory.h" />
-    <ClCompile Include="source\elems\boundingbox.cpp" />
+    <ClCompile Include="source\elems\arrowCoor.cpp" />
     <ClCompile Include="source\ui\FrameManage.cpp" />
     <ClCompile Include="source\ui\HotkeyMenubar.cpp" />
     <ClCompile Include="source\ui\scene_view.cpp" />
@@ -192,7 +201,7 @@
     <ClInclude Include="source\3rdparty\plugins\imgui\ImFileBrowser.h" />
     <ClInclude Include="source\Command\dcommand.h" />
     <ClInclude Include="source\Command\Transform.h" />
-    <ClInclude Include="source\elems\boundingbox.h" />
+    <ClInclude Include="source\elems\arrowCoor.h" />
     <ClInclude Include="source\elems\material.h" />
     <ClInclude Include="source\elems\stb_image.h" />
     <ClInclude Include="source\ui\FrameManage.h" />

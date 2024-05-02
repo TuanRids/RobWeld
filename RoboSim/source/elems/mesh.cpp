@@ -80,7 +80,6 @@ namespace nelems
                 load_specific_mesh(mesh, newMesh);
                 mMeshes->push_back(newMesh);
             }
-            std::cout << mCoorSystem->oMaterial.mColor.y << std::endl;  
             return true;
         }
         return false;
@@ -160,9 +159,11 @@ namespace nelems
         }
         mMeshes->clear();
         if (mCoorSystem == nullptr) return;
-        mCoorSystem->delete_buffers();
-        mCoorSystem.reset();
-         
+        for (auto& mesh : *mCoorSystem) {
+            std::cout << mesh.mRenderBufferMgr << std::endl;
+            mesh.delete_buffers();
+        }
+         mCoorSystem->clear();
     }
     void mMesh::update(nshaders::Shader* shader, bool lightsEnabled)
     {
@@ -173,50 +174,73 @@ namespace nelems
             shader->set_material(mesh.oMaterial, "materialData");
             mesh.render();
         }
-        if (mCoorSystem)
-        {
-            shader->set_material(mCoorSystem->oMaterial, "materialData");
-            mCoorSystem->render_lines();
-        }
+        shader->set_material(mCoorSystem->at(0).oMaterial, "materialData");
+        mCoorSystem->at(0).render_lines();
+        
     }
-    void mMesh::createGridSys()
+    void mMesh::createGridSys(int gridNo, int step)
     {
         if (!mCoorSystem)
         {
-            mCoorSystem = std::make_unique<oMesh>();
-            mCoorSystem->changeName("Coordinate System");
-            mCoorSystem->oMaterial.mColor = glm::vec3(0.0f, 0.0f, 0.0f);
-            mCoorSystem->ID = getCurrentTimeMillis(1);
+            int mini_no = 2;
+            mCoorSystem = std::make_shared<std::vector<oMesh>>(2);
+            mCoorSystem->at(0).changeName("Coordinate System");
 
-            const int gridSize = 50; 
+            mCoorSystem->at(0).oMaterial.mColor = glm::vec3(0.0f, 0.0f, 0.0f);
+            mCoorSystem->at(0).ID = getCurrentTimeMillis(0);
 
-            // Create vertices for the grid
-            for (int x = 0; x < gridSize; ++x) {
-                for (int y = 0; y < gridSize; ++y) {
-                    // Create vertices at positions (x, y, 0)
+            // Create vertices and indices for the main grid
+            for (float x = -gridNo / 2.0f; x < gridNo / 2.0f; x++) {
+                for (float y = -gridNo / 2.0f; y < gridNo / 2.0f; y++) {
                     VertexHolder vertex;
-                    vertex.mPos = { static_cast<float>(x), static_cast<float>(y), 0.0f };
+                    // Set the position of the vertex
+                    vertex.mPos = { x * step, y * step, 0.0f };
                     vertex.mNormal = { 0.0f, 0.0f, 1.0f };
-                    mCoorSystem->add_vertex(vertex);
-
-                    // Create indices for drawing lines
-                    if (x < gridSize - 1) {
-                        mCoorSystem->add_vertex_index(x * gridSize + y);
-                        mCoorSystem->add_vertex_index((x + 1) * gridSize + y);
+                    mCoorSystem->at(0).add_vertex(vertex);
+                    // Add horizontal index if not at the last column
+                    if (x < gridNo / 2.0f - 1) {
+                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f));
+                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f + 1) * gridNo + (y + gridNo / 2.0f));
                     }
-                    if (y < gridSize - 1) {
-                        mCoorSystem->add_vertex_index(x * gridSize + y);
-                        mCoorSystem->add_vertex_index(x * gridSize + (y + 1));
+                    // Add vertical index if not at the last row
+                    if (y < gridNo / 2.0f - 1) {
+                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f));
+                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f + 1));
                     }
                 }
             }
+            mCoorSystem->at(0).init();
 
-            // Initialize and create buffers for the grid mesh
-            mCoorSystem->init();
         }
+        else {
+            mCoorSystem->at(0).delete_buffers();
+            mCoorSystem->at(0).mVertices.clear();
+            mCoorSystem->at(0).mVertexIndices.clear();
+            // Create vertices and indices for the main grid
+            for (float x = -gridNo / 2.0f; x < gridNo / 2.0f; x++) {
+                for (float y = -gridNo / 2.0f; y < gridNo / 2.0f; y++) {
+                    VertexHolder vertex;
+                    // Set the position of the vertex
+                    vertex.mPos = { x * step, y * step, 0.0f };
+                    vertex.mNormal = { 0.0f, 0.0f, 1.0f };
+                    mCoorSystem->at(0).add_vertex(vertex);
+                    // Add horizontal index if not at the last column
+                    if (x < gridNo / 2.0f - 1) {
+                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f));
+                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f + 1) * gridNo + (y + gridNo / 2.0f));
+                    }
+                    // Add vertical index if not at the last row
+                    if (y < gridNo / 2.0f - 1) {
+                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f));
+                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f + 1));
+                    }
+                }
+            }
+            mCoorSystem->at(0).init();
+        }
+
     }
 
-    
     void mMesh::get_mesh_ptr(int& j, oMesh*& mesh)
     {
         for (int i = 0; i < mMeshes->size(); ++i) {

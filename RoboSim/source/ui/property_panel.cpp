@@ -6,6 +6,7 @@
 
 namespace nui
 {
+    bool Property_Panel::rb_connect = false;
     // long long nui::Property_Panel::selectedID = 0;
     void Property_Panel::render(nui::SceneView* scene_view, GLFWwindow* mWindow)
     {
@@ -14,10 +15,10 @@ namespace nui
         }
 
         //****************************************************
-        
+
         static nui::HotkeyMenubar hotkey_manage;
-        hotkey_manage.mMenuBar(mWindow); 
-        hotkey_manage.mHotkey(mWindow); 
+        hotkey_manage.mMenuBar(mWindow);
+        hotkey_manage.mHotkey(mWindow);
         hotkey_manage.commandLogs(); // show command logs
 
         //****************************************************
@@ -36,6 +37,9 @@ namespace nui
             material_frame(scene_view); // show material properties
             ImGui::End();
         }
+
+
+
         // Another Frames
         camera_frame(scene_view); // show camera properties
     }
@@ -48,17 +52,22 @@ namespace nui
         {
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
             ImGui::Separator();
-            static float newfov{ 45.0f }, newnear{ 1.0f }, newfar{ 400.0f };
-            static int newzoom(5);
-            ImGui::SliderFloat("Fov", &newfov, 1.0f, 99.0f, "%.0f");
+            static float newnear{ 1.0f }, newfar{ 0.0f };
+            static int newzoom(10); static int gridNum(50); static int gridStep(1);
+
             ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f");
-            ImGui::SliderFloat("Far", &newfar, 0.1f, 400.0f, "%.0f");
+            ImGui::SliderFloat("Far", &newfar, 0.0f, 2000.0f, "%.0f");
             ImGui::SliderInt("ZSp", &newzoom, 0, 20);
-            SceneView::getInstance().setFov(newfov);
+            ImGui::SliderInt("GridNum", &gridNum, 0, 100);
+            ImGui::SliderInt("GridStep", &gridStep, 0, 10);
+
             SceneView::getInstance().setNear(newnear);
             SceneView::getInstance().setFar(newfar);
             SceneView::getInstance().setZoom(newzoom);
             ImGui::End();
+            // grid
+            proMesh->createGridSys(gridNum, gridStep);
+
         }
     }
     void Property_Panel::layer_frame(nui::SceneView* scene_view)
@@ -98,6 +107,29 @@ namespace nui
                 }
             }
             ImGui::EndTable();
+        }
+        ImGui::Separator();
+        static bool try_to_connect = false;
+        if (ImGui::Button("OK") || try_to_connect) {
+            try_to_connect = true;
+            char ip_address[] = "192.168.1.1"; // default IP address            
+            ImGui::Begin("Get IP Address", nullptr);
+            ImGui::InputText("", ip_address,20);
+            if (ImGui::Button("OK")) { ImGui::CloseCurrentPopup(); controlRobotArm(ip_address); try_to_connect = false; }
+            ImGui::End();
+        }
+        if (rb_connect == true) {
+            ImGui::Begin("Move Robot");
+            float mover_x=1;
+            ImGui::SliderFloat ("x", &mover_x, 0.01f, 10.0f);       
+            if (ImGui::Button("MOVED: ")) {
+                Motion motion;
+                motion.groupId = ControlGroupId::R1; 
+                motion.interpolationType = MoveInterpolationType::MoveLinear; 
+                motion.position.coordinateType = CoordinateType::Pulse; 
+                motion.position.axisData[0] = mover_x;
+                StatusInfo status = controller->MotionManager->AddPointToTrajectory(motion);
+            }
         }
         ImGui::End();
     }
@@ -150,8 +182,9 @@ namespace nui
         if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen)) //&&mesh
         {
             ImGui::Separator();
-            ImGui::Text("Add 3D grid viewport");
+            ImGui::Text("Add arrow");
             ImGui::Text("Add front, right and top view");
+            ImGui::Text("Add Delete = delete objects");
             ImGui::Separator();
             static float posrot[6];
             
@@ -195,14 +228,14 @@ namespace nui
     void Property_Panel::material_frame(nui::SceneView* scene_view) {
         
         static ImVec4 clor = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
-        static float rness = 0.5f; static float mlic = 0.5f;
+        static float rness = 0.5f; static float mlic = 0.5f; static float mtrans = 0.0f;
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
             ImGui::ColorEdit3("Color", (float*)&clor);
             ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f);
             ImGui::SliderFloat("Metallic", &mlic, 0.0f, 1.0f);
-
+            ImGui::SliderFloat("Transparency", &mtrans, 0.0f, 1.0f);
             for (int i = 0; i < proMesh->size(); i++)
             {
                 proMesh->get_mesh_ptr(i, mesh);
@@ -217,6 +250,9 @@ namespace nui
                     }
                     if (premlic != mlic) {
                         mesh->oMaterial.metallic = mlic;
+                    }
+                    if (mtrans != mtrans) {
+                        mesh->oMaterial.mTransparency = mtrans;
                     }
                 }
             }
@@ -253,6 +289,28 @@ namespace nui
         // show restart required message
         MessageBox(NULL, "Please restart the software to apply the new theme.", "Restart required", MB_OK);
     }
+
+    void Property_Panel::controlRobotArm(char ip_address[]) {
+        StatusInfo status;
+        std::string getip {ip_address};
+        MotomanController* controller = YMConnect::OpenConnection(getip, status);
+
+        if (controller != nullptr && status.StatusCode == 0) {
+            status = controller->ControlCommands->SetServos(SignalStatus::ON);
+            if (status.StatusCode != 0) {
+                std::cerr << "Error: Failed to set Servos. Error code: " << status.StatusCode << std::endl;
+            }
+            else {
+                rb_connect = true;
+            }
+            YMConnect::CloseConnection(controller);
+        }
+        else {
+            std::cerr << "Error: Failed to open connection to the robot." << std::endl;
+        }
+    }
+
+
 
     ////=============================================================================================
     //// MENUBAR AND HOTKEYS

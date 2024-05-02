@@ -107,6 +107,9 @@ namespace nshaders
 
 		myLoc = glGetUniformLocation(get_program_id(), (name + ".mAo").c_str());
 		glUniform1f(myLoc, mat.ao);
+
+		myLoc = glGetUniformLocation(get_program_id(), (name + ".mTransparency").c_str());
+		glUniform1f(myLoc, mat.mTransparency);
 	}
 
   void Shader::set_vec4(const glm::vec4& vec4, const std::string& name)

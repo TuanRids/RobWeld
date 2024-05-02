@@ -15,6 +15,7 @@ namespace nui {
         nui::SceneView* scene_view;
         std::string mCurrentFile;
         static bool waitloop[6];
+        static bool shint;
 
     public:
         HotkeyMenubar() : scene_view(nullptr) {
@@ -25,7 +26,6 @@ namespace nui {
         void commandLogs(){ uiaction.Command_Logs(); }
         void mMenuBar(GLFWwindow* mWindow)
         {
-
             if (ImGui::BeginMainMenuBar())
             {
                 if (ImGui::BeginMenu("File"))
@@ -127,12 +127,13 @@ namespace nui {
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();
-
             }
         }
+
         void mHotkey(GLFWwindow* mWindow)
         {
             
+
             static double lastPressTime = 0.0;
             static const double debounceDelay = 0.1;
 
@@ -170,29 +171,52 @@ namespace nui {
 
             if (glfwGetKey(mWindow, GLFW_KEY_L) == GLFW_PRESS && (lCtr || rCtr) && tdelay)
             { lastPressTime = currentTime;  uiaction.SaveToFile(); }
-
+            if (glfwGetKey(mWindow, GLFW_KEY_DELETE) == GLFW_PRESS )
+            { lastPressTime = currentTime;  uiaction.Del_selected_objects(); }
             // TODO: move this and camera to scene UI component?
             if (nui::FrameManage::getCrActiveGui("ViewPort") == true)
             {
-
+                float panspeed = 0.04f;
                 if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
                 {
-                    scene_view->on_mouse_wheel(0.4f);
+                    scene_view->on_mouse_wheel(panspeed * 3); 
                 }
-
                 if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
                 {
-                    scene_view->on_mouse_wheel(-0.4f);
+                    scene_view->on_mouse_wheel(-1* panspeed*3); 
                 }
-
+                if (glfwGetKey(mWindow, GLFW_KEY_A) == GLFW_PRESS)
+                {
+                    scene_view->on_mouse_move(-1*panspeed, 0, nelems::EInputButton::key_A); 
+                }
+                if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
+                {
+                    scene_view->on_mouse_move(panspeed, 0, nelems::EInputButton::key_D); 
+                }
+                if (glfwGetKey(mWindow, GLFW_KEY_Q) == GLFW_PRESS)
+                {
+                    scene_view->on_mouse_move(0, panspeed, nelems::EInputButton::key_Q); 
+                }
+                if (glfwGetKey(mWindow, GLFW_KEY_E) == GLFW_PRESS)
+                {
+                    scene_view->on_mouse_move(0, -1* panspeed, nelems::EInputButton::key_E); 
+                }
+                if (glfwGetKey(mWindow, GLFW_KEY_R) == GLFW_PRESS)
+                {
+                    scene_view->set_rotation_center();
+                }
                 if (glfwGetKey(mWindow, GLFW_KEY_F) == GLFW_PRESS)
                 {
-                    scene_view->reset_view();
+                    scene_view->reset_view(); 
                 }
-
+                
                 double x, y;
                 glfwGetCursorPos(mWindow, &x, &y);
-                scene_view->on_mouse_move(x, y, nelems::Input::GetPressedButton(mWindow));
+                scene_view->on_mouse_move(x, y, nelems::Input::GetPressedButton(mWindow)); 
+                if (nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Right ||
+                    nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Left ||
+                    nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Middle)
+                        {hint(shint);}
             }
         }
 
@@ -236,5 +260,37 @@ namespace nui {
                 
             }
         }
+        void hint(bool show) {
+            ImGui::SetNextWindowPos(ImVec2(100, 500)); // Set the position of the frame
+            ImGui::Begin("Hint", nullptr,
+                ImGuiWindowFlags_NoTitleBar | // Do not display title bar
+                ImGuiWindowFlags_NoResize | // Cannot resize
+                ImGuiWindowFlags_NoMove | // Cannot move
+                ImGuiWindowFlags_NoCollapse | // Cannot collapse
+                ImGuiWindowFlags_NoFocusOnAppearing | // Does not receive focus when appearing
+                ImGuiWindowFlags_NoNav | // No navigation
+                ImGuiWindowFlags_NoBringToFrontOnFocus | // Does not bring to front on focus
+                ImGuiWindowFlags_NoSavedSettings | // Do not save settings
+                ImGuiWindowFlags_NoDocking | // Cannot be docked
+                ImGuiWindowFlags_NoBackground | // Do not display background
+                ImGuiWindowFlags_NoMouseInputs | // Cannot receive mouse input
+                ImGuiWindowFlags_NoFocusOnAppearing | // Does not receive focus when appearing
+                ImGuiWindowFlags_NoNavFocus | // Does not focus from navigation
+                ImGuiWindowFlags_NoBringToFrontOnFocus); // Does not bring to front on focus
+
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 0.5f)); // Set text color to red and 50% transparent
+            ImGui::Text("Special Hotkey not in MenuBar");
+            ImGui::Text("W: Pan Up");
+            ImGui::Text("S: Pan Down");
+            ImGui::Text("A: Pan Left");
+            ImGui::Text("D: Pan Right");
+            ImGui::Text("Q: Pan Forward");
+            ImGui::Text("E: Pan Backward");
+            ImGui::Text("*R: Focus to Selected Object");
+            ImGui::Text("Delete: Delete Selected Objects");
+            ImGui::PopStyleColor(); 
+            ImGui::End();
+        }
+
 	};
 }

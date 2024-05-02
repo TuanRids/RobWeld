@@ -9,6 +9,7 @@ struct material{
 	float mMetallic;
 	float mRoughness;
 	float mAo;
+	float mTransparency;
 	};
 
 uniform material materialData;
@@ -77,6 +78,7 @@ void main()
 	  float metallic = materialData.mMetallic;
 	  float roughness = materialData.mRoughness;
 	  float ao = materialData.mAo;
+	  float transparency = materialData.mTransparency;
 
 	  F0 = mix(F0, albedo, metallic);
 
@@ -101,23 +103,22 @@ void main()
 
 	  vec3 kS = F;
 
-	  vec3 kD = vec3(1.0) - kS;
+	    vec3 kD = vec3(1.0) - kS;
+		kD *= 1.0 - metallic;
 
-	  kD *= 1.0 - metallic;
+		float NdotL = max(dot(N, L), 0.0);
 
-	  float NdotL = max(dot(N, L), 0.0);
+		vec3 finalColor = mix(albedo, kD * albedo / PI + specular, transparency);
 
-	  // add to outgoing radiance Lo
-	  Lo += (kD * albedo / PI + specular) * radiance * NdotL;  
+		vec3 ambient = vec3(0.03) * albedo * ao;
 
-	  vec3 ambient = vec3(0.03) * albedo * ao;
+		vec3 color = ambient + Lo;
 
-	  vec3 color = ambient + Lo;
+		color = color / (color + vec3(1.0));
 
-	  color = color / (color + vec3(1.0));
+		color = pow(color, vec3(1.0 / 2.2));
 
-	  color = pow(color, vec3(1.0 / 2.2));
+		FragColor = vec4(color, 1.0);
+		}
 
-	  FragColor = vec4(color, 1.0);
-	}
 }

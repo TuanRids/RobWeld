@@ -1,14 +1,13 @@
 #include "pch.h"
 #include "scene_view.h"
 
-
 namespace nui
 {
   std::string SceneView::arg_render_mode = "Surface";
   void SceneView::resize(int32_t width, int32_t height)
   {
-    mSize.x = float(width);
-    mSize.y = float(height);
+      mSize.x = float(width); 
+      mSize.y = float(height);
     mCamera->set_aspect(mSize.x / mSize.y);
     mFrameBuffer->create_buffers((int32_t)mSize.x, (int32_t) mSize.y);
   }
@@ -17,10 +16,22 @@ namespace nui
   {
     mCamera->on_mouse_move(x, y, button);
   }
-
   void SceneView::on_mouse_wheel(double delta)
   {
     mCamera->on_mouse_wheel(delta*double(zoom));
+  }
+  void SceneView::set_rotation_center()
+  {
+      nelems::oMesh* selMesh;
+      for (int i = 0; i < rdMesh->size(); i++)
+      {
+          rdMesh->get_mesh_ptr(i, selMesh);
+          if (selMesh->selected)
+          { mCamera->set_rotation_center(selMesh->oMaterial.position);
+          return; }
+      }
+      // not return that mean there are non selected objects
+      mCamera->set_rotation_center({ 0.0f,0.0f,0.0f });
   }
   //================================================================================================
   void SceneView::setFov(float newFov)
@@ -80,8 +91,7 @@ namespace nui
 
       if (!rdMesh) {rdMesh = &nelems::mMesh::getInstance();}
       else {render_mode(); }
-      rdMesh->createGridSys();
- 
+
 
       mFrameBuffer->unbind();
       //TODO OBJECTS ARE SCALED WHEN SCREENE IS RESIZED

@@ -36,7 +36,6 @@ namespace nui
         // create a file browser instance
         std::function<void(const std::string&)> mMeshLoadCallback;
 
-
         // Private constructor to prevent instantiation
         SceneView() :
             rdMesh(nullptr),mCamera(nullptr), mFrameBuffer(nullptr), mShader(nullptr),
@@ -74,6 +73,7 @@ namespace nui
         //=======================================================================================================
         void on_mouse_move(double x, double y, nelems::EInputButton button);
         void on_mouse_wheel(double delta);
+        void set_rotation_center();
         void reset_view() { mCamera->reset(); }
         void setlink_meshloadcallback(std::string& fpath) { mMeshLoadCallback(fpath); }
         void SetMeshLoadCallback(const std::function<void(const std::string&)>& callback){ mMeshLoadCallback = callback; }

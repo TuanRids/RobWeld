@@ -88,6 +88,27 @@ namespace nelems
 
 		update_view_matrix();
 	}
+	void set_rotation_center(const glm::vec3& position)
+	{
+		// Update the focus to the new position
+		mFocus = {position.x,position.z,position.y};
+
+		// Set the distance to 1 to zoom in to the new position
+		mDistance = 10.0f;
+
+		// Calculate the direction vector from the current position to the new position
+		glm::vec3 direction = mFocus - mPosition;
+
+		// Update the position of the camera along the direction vector
+		mPosition += direction;
+
+		// Update the view matrix to look at the new position
+		glm::quat orientation = get_direction();
+		mViewMatrix = glm::translate(glm::mat4(1.0f), mPosition) * glm::toMat4(orientation);
+		mViewMatrix = glm::inverse(mViewMatrix);
+	}
+
+
 
 	void reset()
 	{
@@ -137,12 +158,38 @@ namespace nelems
 
 			update_view_matrix();
 		}
+		else if (button == EInputButton::key_A)
+		{
+			glm::vec2 delta{x * 0.004f,0 };
+			mFocus += -get_right() * delta.x ;
+			update_view_matrix();
+		}
+		else if (button == EInputButton::key_D)
+		{
+			glm::vec2 delta{ x * 0.004f,0 };
+			mFocus += get_right() * delta.x;
+			update_view_matrix();
+		}
+		else if (button == EInputButton::key_Q)
+		{
+			glm::vec2 delta{ 0,y * 0.004f };
+			mFocus += -get_up() * delta.y;
+			update_view_matrix();
+		}
+		else if (button == EInputButton::key_E)
+		{
+			glm::vec2 delta{ 0,y / 1000 };
+			mFocus += get_up() * delta.y;
+			update_view_matrix();
+		}
+
 
 		mCurrentPos2d = pos2d;
 	}
 	void update_projection_matrix()
 	{
-		mProjection = glm::perspective(mFOV, mAspect, mNear, mFar);
+		// this will be called when the aspect ratio changes
+		//mProjection = glm::perspective(mFOV, mAspect, mNear, mFar);
 	}
 
 	void update_view_matrix()

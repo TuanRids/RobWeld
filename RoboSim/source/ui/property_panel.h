@@ -17,7 +17,7 @@
 #include "nlohmann/json.hpp"
 #include <Windows.h>
 #include "render/ui_context.h"
-
+#include "YMConnect/YMConnect.h"
 using json = nlohmann::json;
 
 namespace nui
@@ -36,12 +36,11 @@ namespace nui
         nelems::oMesh* mesh = nullptr; // for each objects
         nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
-
-
-
+        static bool rb_connect;
+        MotomanController* controller;
     public:
         Property_Panel():
-            proMesh(nullptr),mesh(nullptr)
+            proMesh(nullptr),mesh(nullptr), controller(nullptr)
         {
             std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
             if (file.is_open())
@@ -72,6 +71,8 @@ namespace nui
         }
         
         void SaveIniFile(const std::string& key, const std::string& value);
+
+        void controlRobotArm(char ip_address[]);
       };
 }
 
