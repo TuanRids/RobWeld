@@ -122,10 +122,10 @@ namespace nutils
                 std::cerr << "Failed to open file for reading: " << filePath << std::endl;
                 return false;
             }
-            uint32_t numMeshes;
+            uint32_t numMeshes{ 0 };
             file.read(reinterpret_cast<char*>(&numMeshes), sizeof(numMeshes));
             
-            for (int i = 0; i < numMeshes; ++i)
+            for (uint32_t i = 0; i < numMeshes; ++i)
             {
                 std::cout << "Loading mesh " << i << std::endl;
                 nelems::oMesh oMesh;
@@ -133,13 +133,13 @@ namespace nutils
                 file.read(reinterpret_cast<char*>(&oMesh.ID), sizeof(oMesh.ID));
 
                 // Read vertices
-                uint32_t numVertices;
+                uint32_t numVertices{ 0 };
                 file.read(reinterpret_cast<char*>(&numVertices), sizeof(numVertices));
                 oMesh.mVertices.resize(numVertices);
                 file.read(reinterpret_cast<char*>(oMesh.mVertices.data()), numVertices * sizeof(nelems::VertexHolder));
 
                 // Read indices
-                uint32_t numIndices;
+                uint32_t numIndices{ 0 };
                 file.read(reinterpret_cast<char*>(&numIndices), sizeof(numIndices));
                 oMesh.mVertexIndices.resize(numIndices);
                 file.read(reinterpret_cast<char*>(oMesh.mVertexIndices.data()), numIndices * sizeof(unsigned int));

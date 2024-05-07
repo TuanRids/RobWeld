@@ -119,6 +119,7 @@ namespace nrender
       if (mFBO)
       {
           glDeleteFramebuffers(GL_FRAMEBUFFER, &mFBO);
+          glGetError();
           glDeleteTextures(1, &mTexId);
           glDeleteTextures(1, &mDepthId);
           mTexId = 0;

@@ -6,7 +6,6 @@
 
 namespace nui
 {
-    bool Property_Panel::rb_connect = false;
     // long long nui::Property_Panel::selectedID = 0;
     void Property_Panel::render(nui::SceneView* scene_view, GLFWwindow* mWindow)
     {
@@ -109,28 +108,6 @@ namespace nui
             ImGui::EndTable();
         }
         ImGui::Separator();
-        static bool try_to_connect = false;
-        if (ImGui::Button("OK") || try_to_connect) {
-            try_to_connect = true;
-            char ip_address[] = "192.168.1.1"; // default IP address            
-            ImGui::Begin("Get IP Address", nullptr);
-            ImGui::InputText("", ip_address,20);
-            if (ImGui::Button("OK")) { ImGui::CloseCurrentPopup(); controlRobotArm(ip_address); try_to_connect = false; }
-            ImGui::End();
-        }
-        if (rb_connect == true) {
-            ImGui::Begin("Move Robot");
-            float mover_x=1;
-            ImGui::SliderFloat ("x", &mover_x, 0.01f, 10.0f);       
-            if (ImGui::Button("MOVED: ")) {
-                Motion motion;
-                motion.groupId = ControlGroupId::R1; 
-                motion.interpolationType = MoveInterpolationType::MoveLinear; 
-                motion.position.coordinateType = CoordinateType::Pulse; 
-                motion.position.axisData[0] = mover_x;
-                StatusInfo status = controller->MotionManager->AddPointToTrajectory(motion);
-            }
-        }
         ImGui::End();
     }
     void Property_Panel::obInfo_frame()
@@ -186,43 +163,127 @@ namespace nui
             ImGui::Text("Add front, right and top view");
             ImGui::Text("Add Delete = delete objects");
             ImGui::Separator();
-            static float posrot[6];
-            
-            static char aname[10] = "";
-            ImGui::Text("Name"); ImGui::SameLine();
-            ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
-
-            ImGui::Text("x_Pos"); ImGui::SameLine();
-            ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f");
-
-            ImGui::Text("y_Pos"); ImGui::SameLine();
-            ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f");
-
-            ImGui::Text("z_Pos"); ImGui::SameLine();
-            ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f");
-
-            ImGui::Text("x_Rot"); ImGui::SameLine();
-            ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f");
-
-            ImGui::Text("y_Rot"); ImGui::SameLine();
-            ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f");
-
-            ImGui::Text("z_Rot"); ImGui::SameLine();
-            ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f");
-            if (proMesh->check_selected() != 0)
+            bool pressOk = ImGui::Button("UPDATE");
+            if (proMesh->check_selected() == 1)
             {
-                // check if any elements of posrot is not 0
-                bool hasNonZeroElement = std::any_of(std::begin(posrot), std::end(posrot), 
-                                        [](float value) { return value != 0.0f; });
-                if ((hasNonZeroElement) && ImGui::Button("OK"))
+                static float posrot_obj[7]; static long long PreObId = 0;
+                for (int i = 0; i < proMesh->size(); i++)
                 {
-                    uiaction.MoveOb_uiAction(posrot[0], posrot[1], posrot[2]);
-                    uiaction.RotateOb_uiAction(posrot[3], posrot[4], posrot[5]);
+                    proMesh->get_mesh_ptr(i, mesh);
+                    if (mesh->selected && PreObId != mesh->ID)
+                    {
+                        PreObId = mesh->ID;
+                        posrot_obj[0] = mesh->oMaterial.position.x;
+                        posrot_obj[1] = mesh->oMaterial.position.y;
+                        posrot_obj[2] = mesh->oMaterial.position.z;
+                        posrot_obj[3] = mesh->oMaterial.rotation.x;
+                        posrot_obj[4] = mesh->oMaterial.rotation.y;
+                        posrot_obj[5] = mesh->oMaterial.rotation.z;
+                        break;
+                    }
+                }
+                ImGui::Text("Name"); ImGui::SameLine();
+                ImGui::InputText("##Name", mesh->oname, ImGuiInputTextFlags_EnterReturnsTrue);
+
+                ImGui::Text("x_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##xPos", &posrot_obj[0], 0.0f, 0.0f, "%.3f");
+                
+                ImGui::Text("y_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##yPos", &posrot_obj[1], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("z_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##zPos", &posrot_obj[2], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("x_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##xRot", &posrot_obj[3], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("y_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##yRot", &posrot_obj[4], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("z_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##zRot", &posrot_obj[5], 0.0f, 0.0f, "%.3f");
+                if (pressOk)
+                {
+                    for (int i = 0; i < proMesh->size(); i++)
+                    {
+                        proMesh->get_mesh_ptr(i, mesh);
+                        if (mesh->selected) { break; }
+                    }
+                    float movex = posrot_obj[0] - mesh->oMaterial.position.x;
+                    float movey = posrot_obj[1] - mesh->oMaterial.position.y;
+                    float movez = posrot_obj[2] - mesh->oMaterial.position.z;
+                    float rotatex = posrot_obj[3] - mesh->oMaterial.rotation.x;
+                    float rotatey = posrot_obj[4] - mesh->oMaterial.rotation.y;
+                    float rotatez = posrot_obj[5] - mesh->oMaterial.rotation.z;
+                    if (std::abs(movex) > 0.01 || std::abs(movey) > 0.01 || std::abs(movez) > 0.01 )
+                    {
+                        uiaction.MoveOb_uiAction(movex, movey, movez);
+                    }
+                    if (std::abs(rotatex) > 0.01 || std::abs(rotatey) > 0.01 || std::abs(rotatez) > 0.01)
+                    {
+                        
+                        uiaction.RotateOb_uiAction(rotatex, rotatey, rotatez);
+                    }
                     // reset all posrot & aname;
-                    std::fill_n(posrot, 6, 0.0f);
-                    std::fill_n(aname, sizeof(aname), '\0');
+                    std::fill_n(posrot_obj, 6, 0.0f);
+                    PreObId = 0;
                 }
             }
+            else
+            {
+
+                static float posrot[7];
+                static char aname[50] = "";
+                ImGui::Text("Name"); ImGui::SameLine();
+                ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
+
+                ImGui::Text("x_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("y_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("z_Pos"); ImGui::SameLine();
+                ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("x_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("y_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f");
+
+                ImGui::Text("z_Rot"); ImGui::SameLine();
+                ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f");
+
+                if (proMesh->check_selected() != 0)
+                {
+                    if (strlen(aname) != 0 && pressOk)
+                    {
+                        // change name if aname is not empty
+                        for (int j = 0; j < proMesh->size(); j++)
+                        {
+                            proMesh->get_mesh_ptr(j, mesh);
+                            if (mesh->selected) {
+                                strncpy_s(mesh->oname, aname, sizeof(mesh->oname) - 1);
+                                mesh->oname[sizeof(mesh->oname) - 1] = '\0';
+                            }
+                        }
+                    }
+                    // check if any elements of posrot is not 0
+                    bool hasNonZeroElement = std::any_of(std::begin(posrot), std::end(posrot),
+                        [](float value) { return value != 0.0f; });
+                    if (hasNonZeroElement && pressOk )
+                    {
+                        // move and rotate the object if posrot is not 0
+                        uiaction.MoveOb_uiAction(posrot[0], posrot[1], posrot[2]);
+                        uiaction.RotateOb_uiAction(posrot[3], posrot[4], posrot[5]);
+                        // reset all posrot & aname;
+                        std::fill_n(posrot, 6, 0.0f);
+                        std::fill_n(aname, sizeof(aname), '\0');
+                    }
+                }
+            }
+            
         }
     }
     void Property_Panel::material_frame(nui::SceneView* scene_view) {
@@ -275,44 +336,26 @@ namespace nui
 
 
     }
-    void Property_Panel::SaveIniFile(const std::string& key, const std::string& value) {
-        // save theme to file
+    void SaveIniFile(const std::string& key, const std::string& value) {
+        std::ifstream inputFile("robosim_ini.dat");
         json j;
+        if (inputFile.is_open()) {
+            inputFile >> j;
+            inputFile.close();
+        }
+
         j[key] = value;
-        std::ofstream file("robosim_ini.dat");
-        if (!file.is_open()) {
+
+        std::ofstream outputFile("robosim_ini.dat");
+        if (!outputFile.is_open()) {
             std::cerr << "Failed to open file for writing: robosim_ini.dat" << std::endl;
             return;
         }
-        file << j.dump(4);
+        outputFile << j.dump(4);
+        outputFile.close();
+
         std::cout << "Theme saved to robosim_ini.dat" << std::endl;
-        // show restart required message
         MessageBox(NULL, "Please restart the software to apply the new theme.", "Restart required", MB_OK);
     }
 
-    void Property_Panel::controlRobotArm(char ip_address[]) {
-        StatusInfo status;
-        std::string getip {ip_address};
-        MotomanController* controller = YMConnect::OpenConnection(getip, status);
-
-        if (controller != nullptr && status.StatusCode == 0) {
-            status = controller->ControlCommands->SetServos(SignalStatus::ON);
-            if (status.StatusCode != 0) {
-                std::cerr << "Error: Failed to set Servos. Error code: " << status.StatusCode << std::endl;
-            }
-            else {
-                rb_connect = true;
-            }
-            YMConnect::CloseConnection(controller);
-        }
-        else {
-            std::cerr << "Error: Failed to open connection to the robot." << std::endl;
-        }
-    }
-
-
-
-    ////=============================================================================================
-    //// MENUBAR AND HOTKEYS
-    
 }

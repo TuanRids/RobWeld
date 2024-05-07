@@ -5,7 +5,7 @@ namespace ncommand
 {
     void ObHistory::execmd(std::unique_ptr<Command> cmd) {
         if (cmd && cmd->isValid()) {
-            int sizebf = cmdlogs.size();
+            size_t sizebf = cmdlogs.size();
             cmd->execute(cmdlogs);
             // Check if there are nothing new in the command logs
             if (sizebf == cmdlogs.size()) {
@@ -53,13 +53,9 @@ namespace ncommand
     void ObHistory::Command_Logs() {
         // Can move Begin to the parrent function for checking active viewport 
         // if this is necessary
-        if (nrender::UIContext::get_theme() == "dark") {
-            theme = "dark";
-        }
-        else if (nrender::UIContext::get_theme() == "light")
-        {
-            theme = "light";
-        }
+
+        nrender::UIContext::get_theme(theme) ;
+        
         // Command Logs
         if (ImGui::Begin("Command Logs")) {
             ImVec2 frameSize = ImGui::GetContentRegionAvail();

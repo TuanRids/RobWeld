@@ -1,14 +1,15 @@
 #include "pch.h"
 #include "scene_view.h"
-
+#include <Windows.h>
 namespace nui
 {
-  std::string SceneView::arg_render_mode = "Surface";
+  std::string SceneView::arg_render_mode = "WireFrame";
+
+
   void SceneView::resize(int32_t width, int32_t height)
   {
       mSize.x = float(width); 
       mSize.y = float(height);
-    mCamera->set_aspect(mSize.x / mSize.y);
     mFrameBuffer->create_buffers((int32_t)mSize.x, (int32_t) mSize.y);
   }
 
@@ -92,7 +93,6 @@ namespace nui
       if (!rdMesh) {rdMesh = &nelems::mMesh::getInstance();}
       else {render_mode(); }
 
-
       mFrameBuffer->unbind();
       //TODO OBJECTS ARE SCALED WHEN SCREENE IS RESIZED
       ImGui::Begin("ViewPort");
@@ -108,6 +108,7 @@ namespace nui
           ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
       }
       ImGui::End();
+
   }
 
 
@@ -169,4 +170,7 @@ namespace nui
       
 
   }
+
+
+  
 }

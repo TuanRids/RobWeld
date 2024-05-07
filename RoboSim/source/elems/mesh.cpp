@@ -171,15 +171,24 @@ namespace nelems
 		else {shader->set_i1(1, "lightsEnabled");}
 
         for (auto& mesh : *mMeshes) {
-            shader->set_material(mesh.oMaterial, "materialData");
-            mesh.render();
+            static Material selected_material{ { 0.8f, 0.8f, 0.0f }, 0.2f, 0.2f, 1.0f, 0.5f };
+            if (mesh.selected) {
+                shader->set_material(selected_material, "materialData");
+                mesh.render();
+            }
+            else
+            {
+                shader->set_material(mesh.oMaterial, "materialData");
+                mesh.render();
+            }
         }
         shader->set_material(mCoorSystem->at(0).oMaterial, "materialData");
         mCoorSystem->at(0).render_lines();
         
     }
-    void mMesh::createGridSys(int gridNo, int step)
+    void mMesh::createGridSys(float gridNo, float step)
     {
+        float vlue;
         if (!mCoorSystem)
         {
             int mini_no = 2;
@@ -188,7 +197,7 @@ namespace nelems
 
             mCoorSystem->at(0).oMaterial.mColor = glm::vec3(0.0f, 0.0f, 0.0f);
             mCoorSystem->at(0).ID = getCurrentTimeMillis(0);
-
+            
             // Create vertices and indices for the main grid
             for (float x = -gridNo / 2.0f; x < gridNo / 2.0f; x++) {
                 for (float y = -gridNo / 2.0f; y < gridNo / 2.0f; y++) {
@@ -199,13 +208,17 @@ namespace nelems
                     mCoorSystem->at(0).add_vertex(vertex);
                     // Add horizontal index if not at the last column
                     if (x < gridNo / 2.0f - 1) {
-                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f));
-                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f + 1) * gridNo + (y + gridNo / 2.0f));
+                        vlue = (x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f);
+                        mCoorSystem->at(0).add_vertex_index(static_cast<unsigned int>(vlue));
+                        vlue = (x + gridNo / 2.0f + 1.0f)* gridNo + (y + gridNo / 2.0f);
+                        mCoorSystem->at(0).add_vertex_index(static_cast<unsigned int>(vlue));
                     }
                     // Add vertical index if not at the last row
                     if (y < gridNo / 2.0f - 1) {
-                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f));
-                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f + 1));
+                        vlue = (x + gridNo / 2.0f)* gridNo + (y + gridNo / 2.0f);
+                        mCoorSystem->at(0).add_vertex_index(static_cast<unsigned int>(vlue));
+                        vlue = (x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f + 1.0f);
+                        mCoorSystem->at(0).add_vertex_index(static_cast<unsigned int>(vlue));
                     }
                 }
             }
@@ -226,13 +239,17 @@ namespace nelems
                     mCoorSystem->at(0).add_vertex(vertex);
                     // Add horizontal index if not at the last column
                     if (x < gridNo / 2.0f - 1) {
-                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f));
-                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f + 1) * gridNo + (y + gridNo / 2.0f));
+                        vlue = (x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f);
+                        mCoorSystem->at(0).add_vertex_index(static_cast<unsigned int>(vlue));
+                        vlue = (x + gridNo / 2.0f + 1) * gridNo + (y + gridNo / 2.0f);
+                        mCoorSystem->at(0).add_vertex_index(static_cast<unsigned int>(vlue));
                     }
                     // Add vertical index if not at the last row
                     if (y < gridNo / 2.0f - 1) {
-                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f));
-                        mCoorSystem->at(0).add_vertex_index((x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f + 1));
+                        vlue = (x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f);
+                        mCoorSystem->at(0).add_vertex_index(static_cast<unsigned int>(vlue));
+                        vlue = (x + gridNo / 2.0f) * gridNo + (y + gridNo / 2.0f + 1);
+                        mCoorSystem->at(0).add_vertex_index(static_cast<unsigned int>(vlue));
                     }
                 }
             }

@@ -6,7 +6,11 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "ui\property_panel.h"
+
+#pragma warning( push )
+#pragma warning( disable : 26819) //3rd party library
 #include "nlohmann/json.hpp"
+#pragma warning( pop ) 
 
 namespace nrender
 {

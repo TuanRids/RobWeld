@@ -2,14 +2,13 @@
 #include "pch.h"
 
 
-#include "elems/mesh.h"
 #include <vector>
 #include <deque>
 #include <memory>
 #include <mutex>
 #include "imgui.h"
 #include <typeinfo> // Include for typeid
-#include "Command/dcommand.h"
+
 #include "Command/Transform.h"
 #include "render/ui_context.h"
 namespace ncommand

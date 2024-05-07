@@ -10,6 +10,7 @@
 #include "FrameManage.h"
 #include "imgui.h"
 #include "functional"
+#include "YMConnect/YMConnect.h"
 namespace nui
 {
     /*
@@ -25,6 +26,8 @@ namespace nui
         std::unique_ptr<nshaders::Shader> mShader;
         std::unique_ptr<nelems::Light> mLight;
         std::shared_ptr<nui::SceneView> mSceneView;
+
+        // camera parameters
         glm::vec2 mSize;
         float Fov = 45.0f;
         float Aspect = 1.3f;
@@ -39,7 +42,7 @@ namespace nui
         // Private constructor to prevent instantiation
         SceneView() :
             rdMesh(nullptr),mCamera(nullptr), mFrameBuffer(nullptr), mShader(nullptr),
-            mLight(nullptr), mSize(800, 600)
+            mLight(nullptr), mSize(800, 600),  mSceneView(nullptr)
         {
             mFrameBuffer = std::make_unique<nrender::OpenGL_FrameBuffer>();
             mFrameBuffer->create_buffers(800, 600);
@@ -57,8 +60,8 @@ namespace nui
         SceneView(const SceneView&) = delete;
         SceneView& operator=(const SceneView&) = delete;
 
-        // Destructor
-        ~SceneView() { mShader->unload(); rdMesh = nullptr; }
+        // Destructor to close the connection
+        ~SceneView() {  mShader->unload(); rdMesh = nullptr; }
 
         //=======================================================================================================
         
@@ -86,6 +89,8 @@ namespace nui
         void setNear(float newNear);  // Setters Near
         void setFar(float newFar);  // Setters Far
         void setZoom(int newZoom); // Setters Zoom
+
+
 
     };
 }

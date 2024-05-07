@@ -8,6 +8,7 @@
 namespace nui
 {
 	/*
+	HAVETODO: Make render to jgl_window.cpp to for clearly management
 	Manage UI Actions. set ObHistory at jgl_window.cpp
 	 */
 	class uiAction

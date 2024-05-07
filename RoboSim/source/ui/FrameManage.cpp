@@ -2,6 +2,7 @@
 #include "FrameManage.h"
 
 namespace nui {
+    
     bool FrameManage::getCrActiveGui(const std::string& frameName) {
         return getInstance().crActiveGui[frameName];
     }

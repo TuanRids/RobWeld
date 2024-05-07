@@ -26,6 +26,8 @@ namespace nui {
 
         // crActiveGui variable stored in FrameManage and shared via singleton
         std::unordered_map<std::string, bool> crActiveGui;
+
+        static bool rb_connect;
     };
 
 }

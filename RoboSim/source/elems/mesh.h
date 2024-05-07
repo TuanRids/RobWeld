@@ -7,9 +7,12 @@
 #include "elems/element.h"
 #include "render/opengl_buffer_manager.h"
 
+#pragma warning(push) 
+#pragma warning( disable : 26495) //3rd party library
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#pragma warning(pop)
 
 #include <chrono>
 #include "material.h"
@@ -23,8 +26,7 @@ namespace nelems {
     */
     struct oMesh {
         // materials with default values
-        Material oMaterial { { 0.0f, 0.0f, 0.0f },
-                            0.2f, 0.2f, 1.0f, 0.5f };
+        Material oMaterial ;
         // default object id
         long long ID{ 0 };
         char oname[256] = { 0 };
@@ -99,7 +101,7 @@ namespace nelems {
         void clear_meshes();
         // update for shader
         void update(nshaders::Shader* shader, bool lightenable);
-        void createGridSys(int size, int step);
+        void createGridSys(float size, float step);
 
         // ************** Check and get pointer **************
         // get mesh pointer based on index
@@ -109,7 +111,7 @@ namespace nelems {
         // destructor
         virtual ~mMesh() { clear_meshes(); }
         // get size of mesh
-        int size() { return mMeshes->size(); }
+        size_t size() { return mMeshes->size(); }
         // add new mesh to vector
         void pushback(oMesh mesh) { mMeshes->push_back(std::move(mesh));  }
         // create instance

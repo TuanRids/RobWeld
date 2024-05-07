@@ -2,16 +2,19 @@
 
 #include "jgl_window.h"
 
+
 #include "elems/input.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "elems/stb_image.h"
 namespace nwindow
 {
   bool GLWindow::init( const std::string& title)
   {
-      int offsize = 50;
+    int offsize = 0;
     if (!glfwInit()) {
         Width = 1920 - offsize;
-        Height = 1080 - offsize;
+        Height = 1080 - offsize-30;
         return false;
     }
     else 
@@ -19,16 +22,16 @@ namespace nwindow
         const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         if (!mode) {
             Width = 1920 - offsize;
-            Height = 1080 - offsize;
+            Height = 1080 - offsize - 30;
             glfwTerminate();
         }
 		else {
 			Width = mode->width - offsize;
-			Height = mode->height - offsize;
+			Height = mode->height - offsize - 30;
 		}
     }
-
     Title = title;
+
 
     mRenderCtx->init(this);
 
@@ -40,7 +43,11 @@ namespace nwindow
 
     mSceneView->SetMeshLoadCallback(
       [this](std::string filepath) { mSceneView->load_mesh(filepath); });
+
+    // robotic arm
+    mRobot = &nymrobot::ymconnect::getInstance();
     
+
     return mIsRunning;
   }
 
@@ -52,10 +59,17 @@ namespace nwindow
 
   void GLWindow::on_resize(int width, int height)
   {
-    Width = width;
-    Height = height;
-    mSceneView->resize(Width, Height);
-    render();
+      Width = width;
+      Height = height;
+
+      // Bind the default framebuffer object (FBO) to ensure correct resizing
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+      // Resize the viewport to match the new window size
+      glViewport(0, 0, width, height);
+
+      // Call render to redraw the scene with the new size
+      render();
   }
 
   void GLWindow::on_scroll(double delta)
@@ -81,6 +95,16 @@ namespace nwindow
     mIsRunning = false;
   }
 
+  void GLWindow::set_icon(const char* filename)
+  {
+      GLFWimage images[1];
+      images[0].pixels = stbi_load(filename, &images[0].width, &images[0].height, 0, 4); //rgba channels 
+      glfwSetWindowIcon(mWindow, 1, images);
+      stbi_image_free(images[0].pixels);
+  }
+
+ 
+
   void GLWindow::render()
   {
     // Clear the view
@@ -93,7 +117,8 @@ namespace nwindow
     // render scene to framebuffer and add it to scene view
     mSceneView->render();
     mPropertyPanel->render(mSceneView,mWindow);
-    
+    mRobot->render();
+
     // Render the UI 
     mUICtx->post_render();
     // Render end, swap buffers

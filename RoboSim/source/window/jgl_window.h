@@ -4,6 +4,7 @@
 #include "elems/camera.h"
 
 
+
 #include "render/ui_context.h"
 #include "render/opengl_context.h"
 #include "render/opengl_buffer_manager.h"
@@ -15,7 +16,7 @@
 
 #include "elems/mesh.h"
 #include "ui/uiAction.h"
-
+#include "ymrobot/ymconnect.h"
 using namespace nui;
 using namespace nelems;
 using namespace nrender;
@@ -36,15 +37,16 @@ namespace nwindow
       // UI components
       std::unique_ptr<nui::Property_Panel> mPropertyPanel;
 
+      //robotic 
+      nymrobot::ymconnect* mRobot;
 
       nui::SceneView* mSceneView;
       // Command pattern for all looping
       nui::uiAction uiaction;
       bool mIsRunning;
   public:
-      // Obhistory for command logs intro
     GLWindow() :
-      mSceneView(nullptr), mIsRunning(true), mWindow(nullptr),  mPropertyPanel(nullptr) 
+      mSceneView(nullptr), mIsRunning(true), mWindow(nullptr),  mPropertyPanel(nullptr) , mRobot(nullptr)
     {
       mUICtx = std::make_unique<UIContext>();
       mRenderCtx = std::make_unique<OpenGL_Context>();
@@ -56,7 +58,6 @@ namespace nwindow
     bool init( const std::string& title);
 
     void render();
-
 
 
     void* get_native_window() override { return mWindow; }
@@ -76,6 +77,7 @@ namespace nwindow
 
     bool is_running() { return mIsRunning; }
 
+    void set_icon(const char* filename);
   };
 }
 

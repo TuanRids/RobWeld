@@ -12,7 +12,7 @@ namespace nrender
     bool init(nwindow::IWindow* window) override;
     std::string ReadThemeFromFile();
     void pre_render() override;
-    static std::string get_theme(){return theme;}
+    static void get_theme(std::string& gtheme) { gtheme = theme; }
     void post_render() override;
 
     void end() override;

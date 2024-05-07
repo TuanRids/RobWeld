@@ -70,7 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -92,8 +94,8 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\libs\YMconnect;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)libs\gl;$(ProjectDir)libs\glfw;$(ProjectDir)libs\assimp;$(ProjectDir)libs\YMconnect;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect_D.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
     <PreBuildEvent>
@@ -127,17 +129,24 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\source;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)source;$(ProjectDir)include;$(ProjectDir)source\3rdparty\imgui-docking;$(ProjectDir)source\3rdparty\imgui-docking\backends;$(ProjectDir)source\3rdparty\plugins\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLEW_STATIC;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\libs\YMconnect;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>call "$(ProjectDir)Build_Setup.bat"</Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>call "$(ProjectDir)Build_Setup.bat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\Command\ObHistory.cpp" />
@@ -196,8 +205,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="source\shader\shader_util.cpp" />
+    <ClCompile Include="source\ymrobot\ymconnect.cpp" />
+    <ClCompile Include="source\ymrobot\ymconnect.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="source\3rdparty\plugins\imgui\ImFileBrowser.h" />
     <ClInclude Include="source\Command\dcommand.h" />
     <ClInclude Include="source\Command\Transform.h" />
@@ -230,6 +242,7 @@
     <ClInclude Include="source\pch.h" />
     <ClInclude Include="source\shader\shader_util.h" />
     <ClInclude Include="source\window\window.h" />
+    <ClInclude Include="source\ymrobot\ymmotion.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
@@ -242,6 +255,12 @@
   <ItemGroup>
     <Text Include="include\glm\License.txt" />
     <Text Include="source\3rdparty\imgui\LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RoboSim.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\Robo.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

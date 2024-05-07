@@ -3,6 +3,7 @@
 
 int main(void)
 {
+  //FreeConsole();
   auto app = std::make_unique<Application>("RoboSim");
   app->loop();
 

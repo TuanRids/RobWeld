@@ -40,7 +40,8 @@ namespace nrender
 
     // Create the window and store this window as window pointer
     // so that we can use it in callback functions
-    auto glWindow = glfwCreateWindow(window->Width, window->Height, window->Title.c_str(), nullptr, nullptr);
+    auto glWindow = glfwCreateWindow(window->Width, window->Height, window->Title.c_str(), nullptr, NULL);
+    glfwSetWindowPos(glWindow, 0, 30);
 
     window->set_native_window(glWindow);
 
@@ -74,7 +75,8 @@ namespace nrender
   {
     glViewport(0, 0, mWindow->Width, mWindow->Height);
 
-    std::string theme = nrender::UIContext::get_theme();
+    std::string theme;
+    nrender::UIContext::get_theme(theme);
     if (theme == "dark"){glClearColor(0.14f, 0.15f, 0.18f, 1.0f);}
     else if (theme == "light"){glClearColor(0.95f, 0.95f, 0.95f, 1.0f);}
 

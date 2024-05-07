@@ -10,6 +10,21 @@
 #include <iostream>
 #include <memory>
 
+#include "imgui.h"
+#include <ImFileBrowser.h>
+
+/// SETUP RELEASE
+/// TEST RELEASE
+/// Shader Problems
+/// BIG PROBLEMS: COOR REWITE 2 cases *****************=> Fixed
+/// Check: Rotate original, rotate degree update
+/// Resize Problems			*****************=> Fixed - forget to bind framebuffer
+/// TEST ROBOT
+/// UPDATE DRAW LINES, POINTS
+/// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.
+/// ADD DRAW TEXT
+
+
 // GL includes
 #include <gl/glew.h>
 #include <GLFW/glfw3.h>

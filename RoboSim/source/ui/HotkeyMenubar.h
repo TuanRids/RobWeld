@@ -2,8 +2,13 @@
 #include "pch.h"
 #include "ui/scene_view.h"
 #include "ui/uiAction.h"
-#include "nlohmann/json.hpp"
+#include "render/ui_context.h"
 
+#pragma warning( push )
+#pragma warning( disable : 26819) //3rd party library
+#include "nlohmann/json.hpp"
+#pragma warning( pop )
+#include "ymrobot/ymconnect.h"
 
 using json = nlohmann::json;
 namespace nui {
@@ -16,6 +21,7 @@ namespace nui {
         std::string mCurrentFile;
         static bool waitloop[6];
         static bool shint;
+        std::string theme;
 
     public:
         HotkeyMenubar() : scene_view(nullptr) {
@@ -65,12 +71,11 @@ namespace nui {
                     if (ImGui::MenuItem("Redo", "Ctrl+Y")) {
                         uiaction.redocmd();
                     }
-                    //// LOI FIX BUG!!!!!!!!!!!!!!!
                     if (ImGui::MenuItem("Move", "Ctrl+M") || glfwGetKey(mWindow, GLFW_KEY_M) == GLFW_PRESS) {
                         //uiaction.MoveOb_uiAction(NULL);
                     }
                     if (ImGui::MenuItem("Rotate", "Ctrl+R")) {
-
+                    
                         //uiaction.RotateOb_uiAction(Null);
                     }
                     ImGui::EndMenu();
@@ -126,6 +131,41 @@ namespace nui {
                     }
                     ImGui::EndMenu();
                 }
+                if (ImGui::BeginMenu("View"))
+                {
+                    if (ImGui::BeginMenu("Theme"))
+                    {
+                        if (ImGui::MenuItem("Dark"))
+                        {
+                            SaveIniFile("theme", "dark");
+                        }
+                        if (ImGui::MenuItem("Light"))
+                        {
+                            SaveIniFile("theme", "light");
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if (ImGui::BeginMenu("RenderMode"))
+                    {
+                        const char* menuItems[] = { "Points", "WireFrame", "Surface"
+                                            ,"Points-Wire", "Points-Face", "Wire-Face", "Point-Wire-Face" };
+                        for (int i = 0; i < sizeof(menuItems) / sizeof(menuItems[0]); ++i) {
+                            if (ImGui::MenuItem(menuItems[i])) {
+                                scene_view->set_render_mode(menuItems[i]);
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Robot"))
+                {
+                    if (ImGui::MenuItem("Connect"))
+                    {
+                        nymrobot::ymconnect::set_connect_trigger(true);
+                    }
+                    ImGui::EndMenu();
+                }
                 ImGui::EndMainMenuBar();
             }
         }
@@ -134,11 +174,11 @@ namespace nui {
         {
             
 
-            static double lastPressTime = 0.0;
+            static double lastPressTime{ 0 };
             static const double debounceDelay = 0.1;
 
 
-            std::time_t currentTime = std::time(nullptr);
+            double currentTime = static_cast<double>(std::time(nullptr));
             //normal keyboard
             // m = MoveOb
             bool lCtr = glfwGetKey(mWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
@@ -222,19 +262,27 @@ namespace nui {
 
         ////====    ==============OPEN FILE DIALOG==========
         void SaveIniFile(const std::string& key, const std::string& value) {
-            // save theme to file
+            std::ifstream inputFile("robosim_ini.dat");
             json j;
+            if (inputFile.is_open()) {
+                inputFile >> j; 
+                inputFile.close(); 
+            }
+
             j[key] = value;
-            std::ofstream file("robosim_ini.dat");
-            if (!file.is_open()) {
+
+            std::ofstream outputFile("robosim_ini.dat");
+            if (!outputFile.is_open()) {
                 std::cerr << "Failed to open file for writing: robosim_ini.dat" << std::endl;
                 return;
             }
-            file << j.dump(4);
+            outputFile << j.dump(4); 
+            outputFile.close();
+
             std::cout << "Theme saved to robosim_ini.dat" << std::endl;
-            // show restart required message
             MessageBox(NULL, "Please restart the software to apply the new theme.", "Restart required", MB_OK);
         }
+
         void OpenFileDialog()
         {
             OPENFILENAME ofn;
@@ -261,6 +309,7 @@ namespace nui {
             }
         }
         void hint(bool show) {
+            nrender::UIContext::get_theme(theme);
             ImGui::SetNextWindowPos(ImVec2(100, 500)); // Set the position of the frame
             ImGui::Begin("Hint", nullptr,
                 ImGuiWindowFlags_NoTitleBar | // Do not display title bar
@@ -277,8 +326,10 @@ namespace nui {
                 ImGuiWindowFlags_NoFocusOnAppearing | // Does not receive focus when appearing
                 ImGuiWindowFlags_NoNavFocus | // Does not focus from navigation
                 ImGuiWindowFlags_NoBringToFrontOnFocus); // Does not bring to front on focus
-
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 0.5f)); // Set text color to red and 50% transparent
+            if (theme == "dark")
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 0.6f, 1.0f)); // Set text color to white and 50% transparent
+			else
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f)); // Set text color to red and 50% transparent
             ImGui::Text("Special Hotkey not in MenuBar");
             ImGui::Text("W: Pan Up");
             ImGui::Text("S: Pan Down");
@@ -291,6 +342,8 @@ namespace nui {
             ImGui::PopStyleColor(); 
             ImGui::End();
         }
+
+        ////====    ============== CONNECT TO ROBOT====================
 
 	};
 }

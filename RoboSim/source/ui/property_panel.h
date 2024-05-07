@@ -14,10 +14,16 @@
 
 #include "ui/uiAction.h"
 #include <unordered_set>
+
+#pragma warning( push )
+#pragma warning( disable : 26819) //3rd party library
 #include "nlohmann/json.hpp"
+#pragma warning( pop )
+
+
 #include <Windows.h>
 #include "render/ui_context.h"
-#include "YMConnect/YMConnect.h"
+
 using json = nlohmann::json;
 
 namespace nui
@@ -36,11 +42,9 @@ namespace nui
         nelems::oMesh* mesh = nullptr; // for each objects
         nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
-        static bool rb_connect;
-        MotomanController* controller;
     public:
         Property_Panel():
-            proMesh(nullptr),mesh(nullptr), controller(nullptr)
+            proMesh(nullptr),mesh(nullptr)
         {
             std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
             if (file.is_open())
@@ -72,7 +76,6 @@ namespace nui
         
         void SaveIniFile(const std::string& key, const std::string& value);
 
-        void controlRobotArm(char ip_address[]);
       };
 }
 
