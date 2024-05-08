@@ -57,7 +57,7 @@ namespace nymrobot
         { connect_robot(); }
         if (status.StatusCode != 0 || controller->Status == NULL) { return; }
         move_robot();
-        read_robot();
+        //read_robot();
     }
     void ymconnect::move_robot()
     {
@@ -65,26 +65,49 @@ namespace nymrobot
         ImGui::Begin("Move Robot");
         static float mover_x = 1, mover_y=1, mover_z=1;
         ImGui::SliderFloat("x", &mover_x, 0.01f, 100.0f);
-        ImGui::SliderFloat("x", &mover_y, 0.01f, 100.0f);
-        ImGui::SliderFloat("x", &mover_z, 0.01f, 100.0f);
+        ImGui::SliderFloat("y", &mover_y, 0.01f, 100.0f);
+        ImGui::SliderFloat("z", &mover_z, 0.01f, 100.0f);
         if (ImGui::Button("MOVE")) {
-            // Create a PositionData object with the desired target coordinates
-            PositionData targetPosition(CoordinateType::RobotCoordinate, Figure(), 0, 0, { mover_x, mover_y, mover_z, 0.0, 0.0, 0.0, 0.0, 0.0 });
+            bool te = true;
+            if (te==true)
+            {
+                RobotPositionVariableData r1PositionData{};
+                BaseAxisPositionVariableData b1PositionData{};
 
-            // Create a LinearMotion target with the target position
-            LinearMotion motionTarget(ControlGroupId::R1, targetPosition, 100.0);  // Assuming 100 mm/s speed
+                status = controller->Variables->BasePositionVariable->Read(0, b1PositionData);
+                status = controller->Variables->RobotPositionVariable->Read(0, r1PositionData);
 
-            // Add the motion target to the trajectory
-            if (controller) {
-                status = controller->MotionManager->AddPointToTrajectory(motionTarget);
-                if (status.IsOk()) {
-                    status = controller->MotionManager->MotionStart();
-                    if (!status.IsOk()) {
-                        std::cerr << "Error starting motion: " << status.Message << std::endl;
+                LinearMotion r1Motion(ControlGroupId::R1, r1PositionData.positionData, 25.0);
+                JointMotion b1Motion(ControlGroupId::B1, b1PositionData.positionData, 25.0);
+
+                status = controller->MotionManager->AddPointToTrajectory(r1Motion, b1Motion);
+
+                status = controller->ControlCommands->SetServos(SignalStatus::ON);
+
+                status = controller->MotionManager->MotionStart();
+
+                std::cout << status << std::endl;
+            }
+            else
+            {
+                // Create a PositionData object with the desired target coordinates
+                PositionData targetPosition(CoordinateType::RobotCoordinate, Figure(), 0, 0, { mover_x, mover_y, mover_z, 0.0, 0.0, 0.0, 0.0, 0.0 });
+
+                // Create a LinearMotion target with the target position
+                LinearMotion motionTarget(ControlGroupId::R1, targetPosition, 100.0);  // Assuming 100 mm/s speed
+
+                // Add the motion target to the trajectory
+                if (controller) {
+                    status = controller->MotionManager->AddPointToTrajectory(motionTarget);
+                    if (status.IsOk()) {
+                        status = controller->MotionManager->MotionStart();
+                        if (!status.IsOk()) {
+                            std::cerr << "Error starting motion: " << status.Message << std::endl;
+                        }
                     }
-                }
-                else {
-                    std::cerr << "Error adding point to trajectory: " << status.Message << std::endl;
+                    else {
+                        std::cerr << "Error adding point to trajectory: " << status.Message << std::endl;
+                    }
                 }
             }
         }
@@ -93,12 +116,12 @@ namespace nymrobot
     }
     void ymconnect::read_robot()
     {
-       
-        RobotPositionVariableData robotPositionVariableData{};
-        status = controller->Variables->RobotPositionVariable->Read(1, robotPositionVariableData);
+        
+        PositionData positionData{};
+        status = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, positionData);
 
         std::stringstream ss;
-        ss << status << robotPositionVariableData;
+        ss << status << positionData;
         std::string message = ss.str();
         MessageBox(NULL, message.c_str(), "Information", MB_OK);
     }
