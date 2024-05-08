@@ -18,6 +18,7 @@ namespace nui {
     private:
         uiAction uiaction;
         nui::SceneView* scene_view;
+        nymrobot::ymconnect* ym_con;
         std::string mCurrentFile;
         static bool waitloop[6];
         static bool shint;
@@ -26,6 +27,7 @@ namespace nui {
     public:
         HotkeyMenubar() : scene_view(nullptr) {
             scene_view = &nui::SceneView::getInstance();
+            ym_con = &nymrobot::ymconnect::getInstance();
             
         }
         ////====    ==============MENU BAR==================
@@ -96,9 +98,9 @@ namespace nui {
                     }
                     if (ImGui::BeginMenu("RenderMode"))
                     {
-                        const char* menuItems[] = { "Points", "WireFrame", "Surface"
+                        const char* menuItems[7] = { "Points", "WireFrame", "Surface"
                                             ,"Points-Wire", "Points-Face", "Wire-Face", "Point-Wire-Face" };
-                        for (int i = 0; i < sizeof(menuItems) / sizeof(menuItems[0]); ++i) {
+                        for (int i = 0; i <7 ; ++i) {
                             if (ImGui::MenuItem(menuItems[i])) {
                                 scene_view->set_render_mode(menuItems[i]);
                             }
@@ -131,39 +133,10 @@ namespace nui {
                     }
                     ImGui::EndMenu();
                 }
-                if (ImGui::BeginMenu("View"))
-                {
-                    if (ImGui::BeginMenu("Theme"))
-                    {
-                        if (ImGui::MenuItem("Dark"))
-                        {
-                            SaveIniFile("theme", "dark");
-                        }
-                        if (ImGui::MenuItem("Light"))
-                        {
-                            SaveIniFile("theme", "light");
-                        }
-                        ImGui::EndMenu();
-                    }
-                    if (ImGui::BeginMenu("RenderMode"))
-                    {
-                        const char* menuItems[] = { "Points", "WireFrame", "Surface"
-                                            ,"Points-Wire", "Points-Face", "Wire-Face", "Point-Wire-Face" };
-                        for (int i = 0; i < sizeof(menuItems) / sizeof(menuItems[0]); ++i) {
-                            if (ImGui::MenuItem(menuItems[i])) {
-                                scene_view->set_render_mode(menuItems[i]);
-                            }
-                        }
-                        ImGui::EndMenu();
-                    }
-                    ImGui::EndMenu();
-                }
+                
                 if (ImGui::BeginMenu("Robot"))
                 {
-                    if (ImGui::MenuItem("Connect"))
-                    {
-                        nymrobot::ymconnect::set_connect_trigger(true);
-                    }
+                    if (ImGui::MenuItem("Connect")) { ym_con->set_connect_trigger(true); }
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();

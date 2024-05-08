@@ -16,9 +16,13 @@
 /// SETUP RELEASE
 /// TEST RELEASE
 /// Shader Problems
-/// BIG PROBLEMS: COOR REWITE 2 cases *****************=> Fixed
-/// Check: Rotate original, rotate degree update
-/// Resize Problems			*****************=> Fixed - forget to bind framebuffer
+/// 
+/// BIG PROBLEMS: COOR REWITE 2 cases				=> Fixed
+/// Check: Rotate original, rotate degree update	=> fixed
+/// Resize Problems									=> Fixed
+/// properties to a hint on viewport
+/// camera position on viewport
+/// 
 /// TEST ROBOT
 /// UPDATE DRAW LINES, POINTS
 /// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.

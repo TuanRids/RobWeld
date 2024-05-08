@@ -53,7 +53,7 @@ namespace ncommand
     void ObHistory::Command_Logs() {
         // Can move Begin to the parrent function for checking active viewport 
         // if this is necessary
-
+        return;
         nrender::UIContext::get_theme(theme) ;
         
         // Command Logs

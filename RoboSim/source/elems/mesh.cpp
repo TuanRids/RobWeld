@@ -32,6 +32,10 @@ namespace nelems {
             glm::vec4 newPosition = modelMatrix * glm::vec4(vertex.mPos, 1.0f);
             vertex.mPos = glm::vec3(newPosition);
         }
+        // Update the rotation of the object
+        oMaterial.rotation.x += angleX;
+        oMaterial.rotation.y += angleY;
+        oMaterial.rotation.z += angleZ;
     }
 
     void oMesh::move(float offsetX, float offsetY, float offsetZ)
@@ -106,7 +110,7 @@ namespace nelems
         }
         center /= static_cast<float>(outMesh.mVertices.size());
         outMesh.oMaterial.position = center;
-        outMesh.oMaterial.mColor = glm::vec3(0.0f, 0.5f, 1.0f);
+        //outMesh.oMaterial.mColor = glm::vec3(0.0f, 0.5f, 1.0f);
         outMesh.init();
     }
     long long mMesh::getCurrentTimeMillis(int size)
@@ -195,7 +199,7 @@ namespace nelems
             mCoorSystem = std::make_shared<std::vector<oMesh>>(2);
             mCoorSystem->at(0).changeName("Coordinate System");
 
-            mCoorSystem->at(0).oMaterial.mColor = glm::vec3(0.0f, 0.0f, 0.0f);
+            mCoorSystem->at(0).oMaterial.mColor = glm::vec3(0.5f, 0.5f, 0.5f);
             mCoorSystem->at(0).ID = getCurrentTimeMillis(0);
             
             // Create vertices and indices for the main grid

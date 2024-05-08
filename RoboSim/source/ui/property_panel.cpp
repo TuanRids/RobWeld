@@ -167,12 +167,14 @@ namespace nui
             if (proMesh->check_selected() == 1)
             {
                 static float posrot_obj[7]; static long long PreObId = 0;
+                static char aname[255];
                 for (int i = 0; i < proMesh->size(); i++)
                 {
                     proMesh->get_mesh_ptr(i, mesh);
                     if (mesh->selected && PreObId != mesh->ID)
                     {
                         PreObId = mesh->ID;
+                        strcpy_s(aname, sizeof(aname), mesh->oname);
                         posrot_obj[0] = mesh->oMaterial.position.x;
                         posrot_obj[1] = mesh->oMaterial.position.y;
                         posrot_obj[2] = mesh->oMaterial.position.z;
@@ -183,7 +185,7 @@ namespace nui
                     }
                 }
                 ImGui::Text("Name"); ImGui::SameLine();
-                ImGui::InputText("##Name", mesh->oname, ImGuiInputTextFlags_EnterReturnsTrue);
+                ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
 
                 ImGui::Text("x_Pos"); ImGui::SameLine();
                 ImGui::InputFloat("##xPos", &posrot_obj[0], 0.0f, 0.0f, "%.3f");
