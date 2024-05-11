@@ -65,9 +65,11 @@ namespace nymrobot
     void ymconnect::render()
     {
         // if trigger is true, show the UI to connect to the robot
-        if (connect_trigger) { connect_robot(); }
-        if (call_move)       { move_robot(); }
-		if (call_read)       { read_robot(); }
+        if (connect_trigger)
+        { connect_robot(); }
+        if (status.StatusCode != 0 || controller->Status == NULL) { return; }
+        move_robot();
+        read_robot();
     }
     void ymconnect::move_robot()
     {
@@ -75,34 +77,14 @@ namespace nymrobot
 
         static float mover_x = 1, mover_y=1, mover_z=1;
         ImGui::SliderFloat("x", &mover_x, 0.01f, 100.0f);
-        ImGui::SliderFloat("y", &mover_y, 0.01f, 100.0f);
-        ImGui::SliderFloat("z", &mover_z, 0.01f, 100.0f);
-        if (ImGui::Button("test_mode 1")) 
-        {
-            RobotPositionVariableData r1PositionData{};
-            BaseAxisPositionVariableData b1PositionData{};
-
-            status = controller->Variables->BasePositionVariable->Read(0, b1PositionData);
-            status = controller->Variables->RobotPositionVariable->Read(0, r1PositionData);
-
-            LinearMotion r1Motion(ControlGroupId::R1, r1PositionData.positionData, 25.0);
-            JointMotion b1Motion(ControlGroupId::B1, b1PositionData.positionData, 25.0);
-                
-            status = controller->MotionManager->AddPointToTrajectory(r1Motion, b1Motion);
-
-            status = controller->ControlCommands->SetServos(SignalStatus::ON);
-
-            status = controller->MotionManager->MotionStart();
-
-            std::cout << status << std::endl;
-        }
-        if (ImGui::Button("test_mode 2")) 
-        {
+        ImGui::SliderFloat("x", &mover_y, 0.01f, 100.0f);
+        ImGui::SliderFloat("x", &mover_z, 0.01f, 100.0f);
+        if (ImGui::Button("MOVE")) {
             // Create a PositionData object with the desired target coordinates
             PositionData targetPosition(CoordinateType::RobotCoordinate, Figure(), 0, 0, { mover_x, mover_y, mover_z, 0.0, 0.0, 0.0, 0.0, 0.0 });
 
-            // Create a LinearMotion target with the target position
-            LinearMotion motionTarget(ControlGroupId::R1, targetPosition, 100.0);  // Assuming 100 mm/s speed
+                // Create a LinearMotion target with the target position
+                LinearMotion motionTarget(ControlGroupId::R1, targetPosition, 100.0);  // Assuming 100 mm/s speed
 
             // Add the motion target to the trajectory
             if (controller) {
@@ -118,20 +100,17 @@ namespace nymrobot
                 }
             }
         }
-        if (ImGui::Button("Collapse Move"))
-        {
-			call_move = false;
-		}
+        ImGui::End();
         
     }
     void ymconnect::read_robot()
     {
-        if (status.StatusCode != 0) { MessageBox(NULL, "Disconnected to the ROBOT!", "ERROR", MB_OK); return; }
-        PositionData positionData{};
-        status = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, positionData);
+       
+        RobotPositionVariableData robotPositionVariableData{};
+        status = controller->Variables->RobotPositionVariable->Read(1, robotPositionVariableData);
 
         std::stringstream ss;
-        ss << status << ". \n" << positionData;
+        ss << status << robotPositionVariableData;
         std::string message = ss.str();
         ImGui::Text(message.c_str());
         if (ImGui::Button("Collapse Read"))
