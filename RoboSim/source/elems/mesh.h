@@ -36,6 +36,8 @@ namespace nelems {
         std::vector<VertexHolder> mVertices;
         std::vector<unsigned int> mVertexIndices;
         // a struct with 3 lines, draw from the center of the object
+        std::vector<Line> mLines;
+
 
         std::shared_ptr<nrender::VertexIndexBuffer> mRenderBufferMgr;
         //--------------------------------------------------------------------------------
@@ -80,6 +82,8 @@ namespace nelems {
         void changeName( std::string newvalue) {
             strncpy_s(oname, sizeof(oname), newvalue.c_str(), _TRUNCATE);
         }
+     
+
 
     };
 
@@ -93,28 +97,18 @@ namespace nelems {
         // ************** Load & structure mesh **************
         //load mesh from file
         bool load(const std::string& filepath);
-        // random number generator based on current time
         long long getCurrentTimeMillis(int size);
-        // create mesh from aimesh
         void load_specific_mesh(const aiMesh* mesh, oMesh& outMesh);
-        // clear all meshes
         void clear_meshes();
-        // update for shader
         void update(nshaders::Shader* shader, bool lightenable);
         void createGridSys(float size, float step);
 
         // ************** Check and get pointer **************
-        // get mesh pointer based on index
         void get_mesh_ptr(int& j, oMesh*& mesh);
-        // get mesh pointer based on id
         void get_mesh_ptr(long long ids, oMesh*& mesh);
-        // destructor
         virtual ~mMesh() { clear_meshes(); }
-        // get size of mesh
         size_t size() { return mMeshes->size(); }
-        // add new mesh to vector
         void pushback(oMesh mesh) { mMeshes->push_back(std::move(mesh));  }
-        // create instance
         static mMesh& getInstance() 
         { 
             std::lock_guard<std::mutex> lock(mMutex);
@@ -122,7 +116,6 @@ namespace nelems {
             return instance; }
         // get address
         std::shared_ptr<std::vector<oMesh>> getMesh() const { return mMeshes; }
-        //check selected: 0 Not selected, 1 selected, 2 more than 1 selected
         int check_selected() {
             if (!mMeshes) {
 				return 0;
@@ -138,6 +131,10 @@ namespace nelems {
 			}
             return count;
         }
+        void set_OBxyz(float length,oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz);
+
+        // setter axis length
+        void set_axis_length(const int& length) { axis_length = length; }
     private:
         static std::mutex mMutex;
         // add a var to draw 10x10 grid for coordinate system
@@ -145,6 +142,7 @@ namespace nelems {
         std::shared_ptr<std::vector<oMesh>> mCoorSystem;
         std::shared_ptr<std::vector<oMesh>> mMeshes;
         mMesh(){if (!mMeshes) {mMeshes = std::make_shared<std::vector<oMesh>>();}}
+        int axis_length{ 30 };
     };
 }
 

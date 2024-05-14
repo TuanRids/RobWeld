@@ -53,8 +53,13 @@ namespace nui
             ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f"); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Far", &newfar, 0.0f, 2000.0f, "%.0f"); ImGui::SetNextItemWidth(150);
             ImGui::SliderInt("ZSp", &newzoom, 0, 20); ImGui::SetNextItemWidth(150);
+            ImGui::Separator(); ImGui::SetNextItemWidth(150);
             ImGui::SliderInt("GridNum", &gridNum, 0, 100); ImGui::SetNextItemWidth(150);
-            ImGui::SliderInt("GridStep", &gridStep, 0, 10);
+            ImGui::SliderInt("GridStep", &gridStep, 0, 10); ImGui::SetNextItemWidth(150);
+            ImGui::Separator(); ImGui::SetNextItemWidth(150);
+            static int axisLength{ 30 };
+            ImGui::SliderInt("AxisLength", &axisLength, 0, 100);
+
 
             SceneView::getInstance().setNear(newnear);
             SceneView::getInstance().setFar(newfar);
@@ -62,6 +67,7 @@ namespace nui
             ImGui::End();
             // grid
             proMesh->createGridSys(gridNum, gridStep);
+            proMesh->set_axis_length(axisLength);
 
         }
     }
@@ -181,24 +187,25 @@ namespace nui
                 }
                 ImGui::Text("Name"); ImGui::SameLine();
                 ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
-
-                ImGui::Text("x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                // Text color: Red
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##xPos", &posrot_obj[0], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
-                
-                ImGui::Text("x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-                ImGui::InputFloat("##xRot", &posrot_obj[3], 0.0f, 0.0f, "%.3f");
 
-                ImGui::Text("y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##xRot", &posrot_obj[3], 0.0f, 0.0f, "%.3f");
+                // Text color: Blue
+                ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yPos", &posrot_obj[1], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
 
-                ImGui::Text("y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yRot", &posrot_obj[4], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                // Text color: Purple
+                ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zPos", &posrot_obj[2], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
 
-                ImGui::Text("z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zRot", &posrot_obj[5], 0.0f, 0.0f, "%.3f");
+
                 if (pressOk)
                 {
                     for (int i = 0; i < proMesh->size(); i++)
@@ -233,19 +240,19 @@ namespace nui
                 ImGui::Text("Name"); ImGui::SameLine(); ImGui::SetNextItemWidth(150);
                 ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
 
-                ImGui::Text("x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
-                ImGui::Text("x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f"); 
 
-                ImGui::Text("y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
-                ImGui::Text("y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f"); 
 
-                ImGui::Text("z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
-                ImGui::Text("z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f"); 
 
                 if (proMesh->check_selected() != 0)
