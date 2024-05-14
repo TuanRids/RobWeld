@@ -103,12 +103,14 @@ namespace nui
           mCamera->set_aspect(mSize.x / mSize.y);
           mCamera->update(mShader.get());
 
+          ImVec2 viewportWindowPos = ImGui::GetWindowPos();
+          nui::FrameManage::setViewportSize(viewportWindowPos.x, viewportWindowPos.y);
+
           // add rendered texture to ImGUI scene window
           uint64_t textureID = mFrameBuffer->get_texture();
           ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
       }
       ImGui::End();
-
   }
 
 

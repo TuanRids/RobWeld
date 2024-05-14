@@ -31,9 +31,9 @@ namespace ncommand
 
                     // Update buffers
                     mesh->create_buffers();
-                    recorded_cmdlogs(mesh, tempLog, startTime);
                 }
             }
+            if (proMesh->check_selected()>0){ recorded_cmdlogs(mesh, tempLog, startTime); }
             if (tempLog.size() > 0)
             {
                 cmdlogs.push_back(tempLog);
@@ -60,9 +60,6 @@ namespace ncommand
             // recored logs
             std::ostringstream oss;
             oss << "Move Object: \t"
-                << "Object ID: " << mesh->ID << "];\t["
-                << "Object Name: " << mesh->oname << "];\t["
-                << "Updated Position: (" << mesh->oMaterial.position.x << ", " << mesh->oMaterial.position.y << ", " << mesh->oMaterial.position.z << ")];\t["
                 << "Displacement Vector: (" << mx << ", " << my << ", " << mz << ")];\t["
                 << "Duration Time (ns): " << durationTime.count() << "];\t["
                 << "Current Time: " << currentTime << "]\n";
@@ -116,9 +113,9 @@ namespace ncommand
                     mesh->rotate(rx, ry, rz);
                     // Update buffers
                     mesh->create_buffers();
-                    recorded_cmdlogs(mesh, tempLog, startTime);
                 }
             }
+            if (proMesh->check_selected() > 0) { recorded_cmdlogs(mesh, tempLog, startTime); }
             if (tempLog.size() > 0)
             {
                 cmdlogs.push_back(tempLog);
@@ -145,9 +142,6 @@ namespace ncommand
             // recored logs
             std::ostringstream oss;
             oss << "Rotate Object: \t"
-                << "Object ID: " << mesh->ID << "];\t["
-                << "Object Name: " << mesh->oname << "];\t["
-                << "Original Rotation: (" << mesh->oMaterial.rotation.x << ", " << mesh->oMaterial.rotation.y << ", " << mesh->oMaterial.rotation.z << ")];\t["
                 << "Rotation degree: (" << rx << ", " << ry << ", " << rz << ")];\t["
                 << "Duration Time (ns): " << durationTime.count() << "];\t["
                 << "Current Time: " << currentTime << "]\n";

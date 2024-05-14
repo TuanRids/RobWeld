@@ -44,6 +44,7 @@ namespace nwindow
     mSceneView->SetMeshLoadCallback(
       [this](std::string filepath) { mSceneView->load_mesh(filepath); });
 
+
     // robotic arm
     mRobot = &nymrobot::ymconnect::getInstance();
     
@@ -89,8 +90,6 @@ namespace nwindow
   //TODO CLOSE PROGRAM TODOCLOSE TODOEXIT
   void GLWindow::on_close()
   {
-
-    std::cout<<"Window close event\n"<<std::endl;
     nelems::mMesh::getInstance().~mMesh();
     mIsRunning = false;
   }

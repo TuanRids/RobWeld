@@ -26,13 +26,9 @@ namespace nui
 
         if (ImGui::Begin("Properties"))
         {
-            ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen); // settings
-            nui::FrameManage::setCrActiveGui("Properties", ImGui::IsWindowFocused() || ImGui::IsWindowHovered()); // setting
-
             obInfo_frame(); // show object info such as vertices and vertex indices
-
             ImGui::Separator();
-            coordinate_frame();
+            coordinate_frame(); // show the position
             material_frame(scene_view); // show material properties
             ImGui::End();
         }
@@ -53,11 +49,11 @@ namespace nui
             ImGui::Separator();
             static float newnear{ 1.0f }, newfar{ 0.0f };
             static int newzoom(10); static int gridNum(50); static int gridStep(1);
-
-            ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f");
-            ImGui::SliderFloat("Far", &newfar, 0.0f, 2000.0f, "%.0f");
-            ImGui::SliderInt("ZSp", &newzoom, 0, 20);
-            ImGui::SliderInt("GridNum", &gridNum, 0, 100);
+            ImGui::SetNextItemWidth(150);
+            ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f"); ImGui::SetNextItemWidth(150);
+            ImGui::SliderFloat("Far", &newfar, 0.0f, 2000.0f, "%.0f"); ImGui::SetNextItemWidth(150);
+            ImGui::SliderInt("ZSp", &newzoom, 0, 20); ImGui::SetNextItemWidth(150);
+            ImGui::SliderInt("GridNum", &gridNum, 0, 100); ImGui::SetNextItemWidth(150);
             ImGui::SliderInt("GridStep", &gridStep, 0, 10);
 
             SceneView::getInstance().setNear(newnear);
@@ -112,46 +108,45 @@ namespace nui
     }
     void Property_Panel::obInfo_frame()
     {
-        if (proMesh)
+        static int x{ 200 }, y{ 200 };
+        static float pos_x, pos_y;
+        if (!pos_x || !pos_y) { nui::FrameManage::getViewportSize(pos_x, pos_y); }
+        ImGui::SetNextWindowPos(ImVec2(pos_x+5, pos_y+25)); // Set the position of the frame
+        ImGui::SetNextWindowSize(ImVec2(x, y)); // Set the size of the frame
+        ImGui::Begin("H1", nullptr,
+            ImGuiWindowFlags_NoTitleBar | // Do not display title bar
+            ImGuiWindowFlags_NoCollapse | // Cannot collapse
+            ImGuiWindowFlags_NoDocking | // Cannot be docked
+            ImGuiWindowFlags_NoBackground | // Do not display background
+            ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
+        //if (theme == "dark")
+            //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 0.6f, 1.0f)); // Set text color to white and 50% transparent
+        //elsei
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.3f, 0.0f, 1.0f)); // Set text color to red and 50% transparent
+        ImGui::Text("Vertices & Vertex Indices"); ImGui::Separator();
+        if (proMesh ->check_selected() != 0)
         {
-            if (proMesh->check_selected() != 1) { return; } // 0 select or select more than 1 will return
             for (int i = 0; i < proMesh->size(); i++)
             {
                 proMesh->get_mesh_ptr(i, mesh);
                 if (mesh->selected == true)
                 {
-                    break;
+                    ImGui::Text(mesh->oname); ImGui::SameLine();
+                    ImGui::Text(": %lld - %lld", mesh->mVertices.size(), mesh->mVertexIndices.size());
                 }
             }
-            ImGui::BeginTable("MeshTable", 2, ImGuiTableFlags_Borders);
-
-
-            ImGui::TableNextRow();
-
-            ImGui::TableNextColumn();
-            ImGui::Text("Name");
-            ImGui::TableNextColumn();
-            ImGui::InputText("##Name", mesh->oname, ImGuiInputTextFlags_EnterReturnsTrue);
-
-            ImGui::TableNextColumn();
-            ImGui::Text("ID");
-            ImGui::TableNextColumn();
-            ImGui::Text("%lld", mesh->ID);
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::Text("Vertices");
-            ImGui::TableNextColumn();
-            ImGui::Text("%lld", mesh->mVertices.size());
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::Text("VertexIndices");
-            ImGui::TableNextColumn();
-            ImGui::Text("%lld", mesh->mVertexIndices.size());
-            ImGui::EndTable();
-
         }
+        else
+        {
+            for (int i = 0; i < proMesh->size(); i++) {
+                proMesh->get_mesh_ptr(i, mesh);
+                ImGui::Text(mesh->oname); ImGui::SameLine();
+                ImGui::Text(": %lld - %lld", mesh->mVertices.size(), mesh->mVertexIndices.size());
+            }
+        }
+        ImGui::PopStyleColor();
+        x = ImGui::GetWindowWidth(); y = ImGui::GetWindowHeight();
+        ImGui::End();
     }
     void Property_Panel::coordinate_frame()
     {
@@ -187,22 +182,22 @@ namespace nui
                 ImGui::Text("Name"); ImGui::SameLine();
                 ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
 
-                ImGui::Text("x_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##xPos", &posrot_obj[0], 0.0f, 0.0f, "%.3f");
+                ImGui::Text("x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##xPos", &posrot_obj[0], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
                 
-                ImGui::Text("y_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##yPos", &posrot_obj[1], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("z_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##zPos", &posrot_obj[2], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("x_Rot"); ImGui::SameLine();
+                ImGui::Text("x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##xRot", &posrot_obj[3], 0.0f, 0.0f, "%.3f");
 
-                ImGui::Text("y_Rot"); ImGui::SameLine();
+                ImGui::Text("y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##yPos", &posrot_obj[1], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
+
+                ImGui::Text("y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yRot", &posrot_obj[4], 0.0f, 0.0f, "%.3f");
 
-                ImGui::Text("z_Rot"); ImGui::SameLine();
+                ImGui::Text("z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##zPos", &posrot_obj[2], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
+
+                ImGui::Text("z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zRot", &posrot_obj[5], 0.0f, 0.0f, "%.3f");
                 if (pressOk)
                 {
@@ -233,29 +228,25 @@ namespace nui
             }
             else
             {
-
                 static float posrot[7];
                 static char aname[50] = "";
-                ImGui::Text("Name"); ImGui::SameLine();
+                ImGui::Text("Name"); ImGui::SameLine(); ImGui::SetNextItemWidth(150);
                 ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
 
-                ImGui::Text("x_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f");
+                ImGui::Text("x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
+                ImGui::Text("x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f"); 
 
-                ImGui::Text("y_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f");
+                ImGui::Text("y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
+                ImGui::Text("y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f"); 
 
-                ImGui::Text("z_Pos"); ImGui::SameLine();
-                ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("x_Rot"); ImGui::SameLine();
-                ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("y_Rot"); ImGui::SameLine();
-                ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f");
-
-                ImGui::Text("z_Rot"); ImGui::SameLine();
-                ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f");
+                ImGui::Text("z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
+                ImGui::Text("z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f"); 
 
                 if (proMesh->check_selected() != 0)
                 {
@@ -295,9 +286,10 @@ namespace nui
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
-            ImGui::ColorEdit3("Color", (float*)&clor);
-            ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f);
-            ImGui::SliderFloat("Metallic", &mlic, 0.0f, 1.0f);
+            ImGui::SetNextItemWidth(150);
+            ImGui::ColorEdit3("Color", (float*)&clor); ImGui::SetNextItemWidth(150);
+            ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);
+            ImGui::SliderFloat("Metallic", &mlic, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Transparency", &mtrans, 0.0f, 1.0f);
             for (int i = 0; i < proMesh->size(); i++)
             {
@@ -323,8 +315,8 @@ namespace nui
         /// Light
         if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::Separator();
-            nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f);
+            ImGui::Separator(); ImGui::SetNextItemWidth(150);
+            nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
             ImGui::SliderInt("Light Intensity", &scene_view->get_light()->mStrength, 0, 1000);
             if (scene_view->get_light()->mStrength == 0)
             {

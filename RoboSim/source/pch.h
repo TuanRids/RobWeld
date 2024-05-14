@@ -13,20 +13,18 @@
 #include "imgui.h"
 #include <ImFileBrowser.h>
 
-/// SETUP RELEASE
-/// TEST RELEASE
-/// Shader Problems
+
+/// Shader Problems (Lowest Priority)				=> Fixed
 /// 
 /// BIG PROBLEMS: COOR REWITE 2 cases				=> Fixed
 /// Check: Rotate original, rotate degree update	=> fixed
 /// Resize Problems									=> Fixed
-/// properties to a hint on viewport
-/// camera position on viewport
+/// properties to a hint on viewport				=> Fixed
 /// 
-/// TEST ROBOT
-/// UPDATE DRAW LINES, POINTS
-/// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.
-/// ADD DRAW TEXT
+/// TEST ROBOT										=> 
+/// UPDATE DRAW LINES, POINTS						=> 
+/// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.		=> 
+/// ADD DRAW TEXT									=> 
 
 
 // GL includes

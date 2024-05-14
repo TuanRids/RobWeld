@@ -47,19 +47,17 @@ namespace ncommand
             count++;
             commandStack.push_back(std::move(lastRedoCmd));
             redoStack.pop_back();
-
         }
     }
     void ObHistory::Command_Logs() {
         // Can move Begin to the parrent function for checking active viewport 
         // if this is necessary
-        return;
-        nrender::UIContext::get_theme(theme) ;
-        
+
         // Command Logs
         if (ImGui::Begin("Command Logs")) {
             ImVec2 frameSize = ImGui::GetContentRegionAvail();
             ImVec4 textcolor;
+            nrender::UIContext::get_theme(theme);
             if (theme == "dark")
             {
                 ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos(), ImVec2(ImGui::GetWindowPos().x + frameSize.x + 100, ImGui::GetWindowPos().y + frameSize.y + 100), IM_COL32(0, 0, 0, 255));
@@ -74,7 +72,8 @@ namespace ncommand
             ImGui::BeginChild("ScrollingRegion", ImVec2(0, frameSize.y),
                 false, ImGuiWindowFlags_HorizontalScrollbar |
                 ImGuiWindowFlags_AlwaysVerticalScrollbar);
-            if (cmdlogs.size() > limhit * 10) { cmdlogs.pop_front(); }
+            //font
+            if (cmdlogs.size() > limhit * 30) { cmdlogs.pop_front(); }
             for (int i = 0; i < cmdlogs.size(); i++) {
                 // Title
                 if (cmdlogs[i].find("to RoboSim") != -1)

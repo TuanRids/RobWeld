@@ -29,6 +29,7 @@ namespace nrender
 
   bool OpenGL_Context::init(nwindow::IWindow* window)
   {
+      glEnable(GL_DEPTH_TEST);
     __super::init(window);
 
     /* Initialize the library */
@@ -73,6 +74,7 @@ namespace nrender
   //TODO: SET VIEWPORT COLOR    #TODO VIEWPORT COLOR TODO COLOR TODOCOLOR
   void OpenGL_Context::pre_render()
   {
+
     glViewport(0, 0, mWindow->Width, mWindow->Height);
 
     std::string theme;

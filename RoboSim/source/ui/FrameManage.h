@@ -17,6 +17,15 @@ namespace nui {
         // Setter for crActiveGui variable
         static void setCrActiveGui(const std::string& frameName, bool isActive);
 
+        //getter for viewport position
+        static void getViewportSize(float& x, float& y) {x = viewport_x;y = viewport_y;}
+        //setter for viewport position
+        static void setViewportSize(float& x, float& y) 
+        {
+            viewport_x = x;
+            viewport_y = y;
+        }
+
     private:
         // Private constructor to ensure no other FrameManage objects can be created outside the singleton
         FrameManage() {}
@@ -27,7 +36,8 @@ namespace nui {
         // crActiveGui variable stored in FrameManage and shared via singleton
         std::unordered_map<std::string, bool> crActiveGui;
 
-        static bool rb_connect;
+        // viewport position
+        static float viewport_x, viewport_y;
     };
 
 }

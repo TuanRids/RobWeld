@@ -283,27 +283,18 @@ namespace nui {
         }
         void hint(bool show) {
             nrender::UIContext::get_theme(theme);
-            ImGui::SetNextWindowPos(ImVec2(100, 500)); // Set the position of the frame
+            static float pos_x, pos_y;
+            if (!pos_x || !pos_y) { nui::FrameManage::getViewportSize(pos_x, pos_y); }
+            ImGui::SetNextWindowPos(ImVec2(pos_x + 5, pos_y + 250 + 25));             
             ImGui::Begin("Hint", nullptr,
                 ImGuiWindowFlags_NoTitleBar | // Do not display title bar
-                ImGuiWindowFlags_NoResize | // Cannot resize
-                ImGuiWindowFlags_NoMove | // Cannot move
-                ImGuiWindowFlags_NoCollapse | // Cannot collapse
-                ImGuiWindowFlags_NoFocusOnAppearing | // Does not receive focus when appearing
-                ImGuiWindowFlags_NoNav | // No navigation
-                ImGuiWindowFlags_NoBringToFrontOnFocus | // Does not bring to front on focus
-                ImGuiWindowFlags_NoSavedSettings | // Do not save settings
-                ImGuiWindowFlags_NoDocking | // Cannot be docked
                 ImGuiWindowFlags_NoBackground | // Do not display background
-                ImGuiWindowFlags_NoMouseInputs | // Cannot receive mouse input
-                ImGuiWindowFlags_NoFocusOnAppearing | // Does not receive focus when appearing
-                ImGuiWindowFlags_NoNavFocus | // Does not focus from navigation
                 ImGuiWindowFlags_NoBringToFrontOnFocus); // Does not bring to front on focus
             if (theme == "dark")
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 0.6f, 1.0f)); // Set text color to white and 50% transparent
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 0.6f, 0.3f)); // Set text color to white and 50% transparent
 			else
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f)); // Set text color to red and 50% transparent
-            ImGui::Text("Special Hotkey not in MenuBar");
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.0f, 0.0f, 0.3f)); // Set text color to red and 50% transparent
+            ImGui::Text("Special Hotkey");
             ImGui::Text("W: Pan Up");
             ImGui::Text("S: Pan Down");
             ImGui::Text("A: Pan Left");

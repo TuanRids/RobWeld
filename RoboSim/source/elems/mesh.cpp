@@ -73,7 +73,8 @@ namespace nelems
 
         const aiScene* pScene =
             Importer.ReadFile(filepath.c_str(), cMeshImportFlags);
-        std::string filename = std::filesystem::path(filepath).filename().stem().string() + " ";
+        std::string filename = (std::filesystem::path(filepath).filename().stem().string() + " ") ;
+        filename = filename.substr(0, 10);
         if (pScene && pScene->HasMeshes()) {
             // Load all meshes
             for (unsigned int i = 0; i < pScene->mNumMeshes; ++i) {
@@ -158,13 +159,11 @@ namespace nelems
     {
         if (mMeshes == nullptr) return;
         for (auto& mesh : *mMeshes) {
-            std::cout<<mesh.mRenderBufferMgr<<std::endl;
             mesh.delete_buffers();
         }
         mMeshes->clear();
         if (mCoorSystem == nullptr) return;
         for (auto& mesh : *mCoorSystem) {
-            std::cout << mesh.mRenderBufferMgr << std::endl;
             mesh.delete_buffers();
         }
          mCoorSystem->clear();

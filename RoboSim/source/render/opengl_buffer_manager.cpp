@@ -1,10 +1,11 @@
 #include "pch.h"
 #include "opengl_buffer_manager.h"
-#
+#include "Windows.h"
 namespace nrender
 {
   void OpenGL_VertexIndexBuffer::create_buffers(const std::vector<nelems::VertexHolder>& vertices, const std::vector<unsigned int>& indices)
   {
+
     glGenVertexArrays(1, &mVAO);
 
     glGenBuffers(1, &mIBO);
@@ -132,9 +133,17 @@ namespace nrender
 
   void OpenGL_FrameBuffer::bind()
   {
+    glEnable(GL_DEPTH_TEST);
+
     glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
     glViewport(0, 0, mWidth, mHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // check OpenGL error
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cout << "OpenGL error: " << err << std::endl;
+    }
   }
 
   void OpenGL_FrameBuffer::unbind()

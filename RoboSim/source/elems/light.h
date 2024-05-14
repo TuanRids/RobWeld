@@ -24,7 +24,7 @@ namespace nelems
     {
 
       shader->set_vec3(mPosition, "lightPosition");
-      shader->set_vec3(mColor *static_cast<float>(1000*mStrength), "lightColor");
+      shader->set_vec3(mColor *static_cast<float>(mStrength), "lightColor");
       
     }
 

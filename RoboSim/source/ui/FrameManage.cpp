@@ -2,7 +2,8 @@
 #include "FrameManage.h"
 
 namespace nui {
-    
+    float FrameManage::viewport_x = 10.0f;
+    float FrameManage::viewport_y = 10.0f;
     bool FrameManage::getCrActiveGui(const std::string& frameName) {
         return getInstance().crActiveGui[frameName];
     }
