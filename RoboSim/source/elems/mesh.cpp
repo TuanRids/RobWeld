@@ -62,6 +62,45 @@ namespace nelems {
 namespace nelems
 {
     std::mutex nelems::mMesh::mMutex;
+
+    //Loadsync
+    bool mMesh::load_sync(const std::string& filepath) {
+        static std::ifstream file;
+        static std::streampos last_pos = 0;
+
+        // Open the file
+        if (!file.is_open()) {
+            file.open(filepath, std::ios::binary);
+            if (!file.is_open()) {
+                // Failed to open the file
+                return false;
+            }
+        }
+
+        // Move to the last position
+        file.seekg(last_pos);
+
+        // Read the file
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+
+        // Remember the last position
+        last_pos = file.tellg();
+
+        // Process the data from the buffer
+        
+
+        // Close the file if it's reached the end
+        if (file.eof()) {
+            file.close();
+            // Reset the last position for the next file
+            last_pos = 0;
+        }
+
+        return true;
+    }
+
+
     //TODO: Load files too slow
     bool mMesh::load(const std::string& filepath)
     {

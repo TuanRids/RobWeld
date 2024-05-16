@@ -11,7 +11,7 @@ namespace nymrobot
 	class ymconnect
 	{
 	private:
-		bool call_move, call_read;
+		bool call_move{ false }, call_read{ false };
 		bool connect_trigger = false;
 		StatusInfo status;
 		std::shared_ptr<MotomanController> controller;

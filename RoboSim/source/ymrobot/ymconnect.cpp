@@ -77,17 +77,15 @@ namespace nymrobot
 
         static float mover_x = 1, mover_y=1, mover_z=1;
         ImGui::SliderFloat("x", &mover_x, 0.01f, 100.0f);
-        ImGui::SliderFloat("x", &mover_y, 0.01f, 100.0f);
-        ImGui::SliderFloat("x", &mover_z, 0.01f, 100.0f);
+        ImGui::SliderFloat("Y", &mover_y, 0.01f, 100.0f);
+        ImGui::SliderFloat("Z", &mover_z, 0.01f, 100.0f);
         if (ImGui::Button("MOVE")) {
-            // Create a PositionData object with the desired target coordinates
             PositionData targetPosition(CoordinateType::RobotCoordinate, Figure(), 0, 0, { mover_x, mover_y, mover_z, 0.0, 0.0, 0.0, 0.0, 0.0 });
-
-                // Create a LinearMotion target with the target position
-                LinearMotion motionTarget(ControlGroupId::R1, targetPosition, 100.0);  // Assuming 100 mm/s speed
-
-            // Add the motion target to the trajectory
+            LinearMotion motionTarget(ControlGroupId::R1, targetPosition, 100.0);
             if (controller) {
+                // connect to MotionManager
+                // MotionManagerInterface::AddPointToTrajectory(motionTarget);
+                // add the point to the trajectory
                 status = controller->MotionManager->AddPointToTrajectory(motionTarget);
                 if (status.IsOk()) {
                     status = controller->MotionManager->MotionStart();
@@ -96,12 +94,11 @@ namespace nymrobot
                     }
                 }
                 else {
-                    std::cerr << "Error adding point to trajectory: " << status.Message << std::endl;
+                    std::cerr << "Error to connect with MotionManager: " << status.Message << std::endl;
                 }
             }
         }
         ImGui::End();
-        
     }
     void ymconnect::read_robot()
     {

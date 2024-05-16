@@ -96,6 +96,7 @@ namespace nelems {
     public:
         // ************** Load & structure mesh **************
         //load mesh from file
+        bool load_sync(const std::string& filepath);
         bool load(const std::string& filepath);
         long long getCurrentTimeMillis(int size);
         void load_specific_mesh(const aiMesh* mesh, oMesh& outMesh);
