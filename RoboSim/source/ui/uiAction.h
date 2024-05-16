@@ -77,9 +77,8 @@ namespace nui
 		// ********** Del selected Object **********
 		void Del_selected_objects()
 		{
-
-			// std::unique_ptr<ncommand::Command> moveCmd = std::make_unique<ncommand::RotateOb>(proMesh, rx, ry, rz);
-			// obAction->execmd(std::move(moveCmd));
+			std::unique_ptr<ncommand::Command> moveCmd = std::make_unique<ncommand::delOb>(proMesh);
+			obAction->execmd(std::move(moveCmd));
 		}
 		void undocmd()
 		{

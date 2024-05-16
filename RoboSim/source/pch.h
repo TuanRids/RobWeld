@@ -20,14 +20,15 @@
 /// Check: Rotate original, rotate degree update	=> fixed
 /// Resize Problems									=> Fixed
 /// properties to a hint on viewport				=> Fixed
+/// bug Release, cant show the viewport correct  	=> Fixed
 /// 
 /// TEST ROBOT										=> 
 /// UPDATE DRAW LINES, POINTS						=> 
 /// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.		=> 
 /// ADD DRAW TEXT									=> 
-
-
+/// Add Oxyz										=> Fixed 
 // GL includes
+
 #include <gl/glew.h>
 #include <GLFW/glfw3.h>m
 

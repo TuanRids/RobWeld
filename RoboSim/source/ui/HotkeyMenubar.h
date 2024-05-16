@@ -266,7 +266,11 @@ namespace nui {
             ofn.hwndOwner = NULL;
             ofn.lpstrFile = szFile;
             ofn.nMaxFile = sizeof(szFile);
-            ofn.lpstrFilter = "FBX Files (*.fbx)\0*.fbx\0OBJ Files (*.obj)\0*.obj\0STL Files (*.stl)\0*.stl\0All Files (*.*)\0*.*\0";
+            ofn.lpstrFilter = { "FBX (*.fbx)\0*.fbx\0"
+                                "OBJ (*.obj)\0*.obj\0" 
+                                "STL (*.stl)\0*.stl\0" 
+                                "glTF (*.glTF)\0*.glTF\0" 
+                                "All (*.*)\0*.*\0" };
             ofn.nFilterIndex = 1;
             ofn.lpstrFileTitle = NULL;
             ofn.nMaxFileTitle = 0;

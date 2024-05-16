@@ -59,10 +59,9 @@ namespace ncommand
 
             // recored logs
             std::ostringstream oss;
-            oss << "Move Object: \t"
-                << "Displacement Vector: (" << mx << ", " << my << ", " << mz << ")];\t["
-                << "Duration Time (ns): " << durationTime.count() << "];\t["
-                << "Current Time: " << currentTime << "]\n";
+            oss << "[" << currentTime << "]: "
+                << "Move Object. Displacement Vector: (" << mx << ", " << my << ", " << mz << ");"
+                << "Duration Time - ns: (" << durationTime.count() << ")";
             std::string logEntry = oss.str();
             tempLog += logEntry;
         }
@@ -90,8 +89,6 @@ namespace ncommand
             }
         }
     };
-
-
     class RotateOb : public Command
     {
     private:
@@ -141,10 +138,10 @@ namespace ncommand
 
             // recored logs
             std::ostringstream oss;
-            oss << "Rotate Object: \t"
-                << "Rotation degree: (" << rx << ", " << ry << ", " << rz << ")];\t["
-                << "Duration Time (ns): " << durationTime.count() << "];\t["
-                << "Current Time: " << currentTime << "]\n";
+            oss << "[" << currentTime << "]: "
+                << "Rotate Object. Rotation degree: (" << rx << ", " << ry << ", " << rz << ");"
+                << "Duration Time - ns: (" << durationTime.count() << ")";
+
             std::string logEntry = oss.str();
             tempLog += logEntry;
         }
@@ -170,6 +167,62 @@ namespace ncommand
                 { mesh->selected = true; }
                 else { mesh->selected = false; }
             }
+        }
+    };
+    class delOb : public Command
+    {
+    private:
+        nelems::oMesh* mesh;
+        nelems::mMesh* proMesh;
+    public:
+        delOb(nelems::mMesh* obj) : proMesh(obj),
+            mesh(nullptr) {}
+        ~delOb() { mesh = nullptr; proMesh = nullptr; }
+        void execute(std::deque<std::string>& cmdlogs) override
+        {
+            std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now(); // Reset startTime
+            // Calculate displacement vector
+            std::string tempLog;
+            if (proMesh->check_selected() > 0)
+            {
+                recorded_cmdlogs(mesh, tempLog, startTime);
+                proMesh->delete_selected();
+                cmdlogs.push_back(tempLog);
+            }
+        }
+        void recorded_cmdlogs(nelems::oMesh* mesh, std::string& tempLog, const std::chrono::steady_clock::time_point startTime) {
+            std::string currentTime;
+            std::chrono::nanoseconds durationTime;
+
+            std::time_t currentTimeStamp = std::time(nullptr);
+            std::tm currentTimeStruct;
+            if (localtime_s(&currentTimeStruct, &currentTimeStamp) == 0) {
+                std::ostringstream currentTimeSS;
+                currentTimeSS << std::put_time(&currentTimeStruct, "%H-%M-%S");
+                currentTime = currentTimeSS.str();
+            }
+            else {
+                currentTime = "Failed to get current time";
+            }
+            // Calculate duration time
+            durationTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - startTime);
+
+            // recored logs
+            std::ostringstream oss;
+            oss << "[" << currentTime << "]: "
+                << "Delete Object. Duration Time - ns: (" << durationTime.count() << ")";
+
+            std::string logEntry = oss.str();
+            tempLog += logEntry;
+        }
+
+        void undo(const std::string& lastlog) override
+        {
+            
+        }
+
+        void redo(const std::string& lastlog) override
+        {
         }
     };
 }

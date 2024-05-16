@@ -45,6 +45,7 @@ namespace nrender
   void OpenGL_VertexIndexBuffer::bind()
   {
     glBindVertexArray(mVAO);
+    // check OpenGL error
   }
 
   void OpenGL_VertexIndexBuffer::unbind()
@@ -110,7 +111,7 @@ namespace nrender
       glDrawBuffers(mTexId, buffers);
       //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Set to wireframe mode
      
-
+      // check OpenGL error
       unbind();
   }
 
@@ -138,12 +139,6 @@ namespace nrender
     glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
     glViewport(0, 0, mWidth, mHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // check OpenGL error
-    GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cout << "OpenGL error: " << err << std::endl;
-    }
   }
 
   void OpenGL_FrameBuffer::unbind()
@@ -154,6 +149,7 @@ namespace nrender
   uint32_t OpenGL_FrameBuffer::get_texture()
   {
     return mTexId;
+    // check OpenGL error
   }
 
 

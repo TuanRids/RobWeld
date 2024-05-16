@@ -45,7 +45,7 @@ namespace nui
             mLight(nullptr), mSize(800, 600),  mSceneView(nullptr)
         {
             mFrameBuffer = std::make_unique<nrender::OpenGL_FrameBuffer>();
-            mFrameBuffer->create_buffers(800, 600);
+            mFrameBuffer->create_buffers(800, 600);            
             mShader = std::make_unique<nshaders::Shader>();
             mShader->load("shaders/vs.shader", "shaders/fs_pbr.shader");
             mLight = std::make_unique<nelems::Light>();
@@ -89,8 +89,6 @@ namespace nui
         void setNear(float newNear);  // Setters Near
         void setFar(float newFar);  // Setters Far
         void setZoom(int newZoom); // Setters Zoom
-
-
 
     };
 }

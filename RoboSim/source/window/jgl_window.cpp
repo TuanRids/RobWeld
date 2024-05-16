@@ -44,7 +44,6 @@ namespace nwindow
     mSceneView->SetMeshLoadCallback(
       [this](std::string filepath) { mSceneView->load_mesh(filepath); });
 
-
     // robotic arm
     mRobot = &nymrobot::ymconnect::getInstance();
     
@@ -112,8 +111,10 @@ namespace nwindow
     // Initialize UI components
     mUICtx->pre_render();
 
+    
     //handle_input();
     // render scene to framebuffer and add it to scene view
+
     mSceneView->render();
     mPropertyPanel->render(mSceneView,mWindow);
     mRobot->render();

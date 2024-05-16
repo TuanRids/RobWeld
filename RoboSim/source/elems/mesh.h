@@ -132,6 +132,7 @@ namespace nelems {
             return count;
         }
         void set_OBxyz(float length,oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz);
+        void delete_selected();
 
         // setter axis length
         void set_axis_length(const int& length) { axis_length = length; }

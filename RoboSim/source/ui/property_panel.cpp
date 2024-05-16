@@ -117,7 +117,7 @@ namespace nui
         static int x{ 200 }, y{ 200 };
         static float pos_x, pos_y;
         if (!pos_x || !pos_y) { nui::FrameManage::getViewportSize(pos_x, pos_y); }
-        ImGui::SetNextWindowPos(ImVec2(pos_x+5, pos_y+25)); // Set the position of the frame
+        ImGui::SetNextWindowPos(ImVec2(pos_x+5, pos_y+35)); // Set the position of the frame
         ImGui::SetNextWindowSize(ImVec2(x, y)); // Set the size of the frame
         ImGui::Begin("H1", nullptr,
             ImGuiWindowFlags_NoTitleBar | // Do not display title bar

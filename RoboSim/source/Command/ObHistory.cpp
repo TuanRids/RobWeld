@@ -11,7 +11,6 @@ namespace ncommand
             if (sizebf == cmdlogs.size()) {
                 return;
             }
-            cmdlogs.back().insert(0, std::to_string(count) + " :");
             count++;
             // Store the command in the command stack
             commandStack.push_back(std::move(cmd));
@@ -53,7 +52,6 @@ namespace ncommand
         // Can move Begin to the parrent function for checking active viewport 
         // if this is necessary
 
-        // Command Logs
         if (ImGui::Begin("Command Logs")) {
             ImVec2 frameSize = ImGui::GetContentRegionAvail();
             ImVec4 textcolor;
@@ -78,19 +76,21 @@ namespace ncommand
                 // Title
                 if (cmdlogs[i].find("to RoboSim") != -1)
                 {
-                    ImGui::SetCursorPosX(frameSize.x / 4);
                     ImGui::TextColored(textcolor, cmdlogs[i].c_str());
                     continue;
                 }
                 // Content
-                ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.6f, 1.0f), "Command ");
-                ImGui::SameLine();
-                ImGui::TextColored(textcolor, cmdlogs[i].c_str());
+                //ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.6f, 1.0f), "Command");
+                //ImGui::SameLine();
+                if (ImGui::Selectable(cmdlogs[i].c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
+                    ImGui::SetClipboardText(cmdlogs[i].c_str());
+                }
             }
             // TODO ADJUST AUTO SCROLL LATER
             ImGui::SetScrollHereY(1.0f);
             ImGui::EndChild();
             ImGui::End();
         }
+
     }
 }

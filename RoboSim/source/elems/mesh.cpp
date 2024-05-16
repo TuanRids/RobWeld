@@ -66,9 +66,9 @@ namespace nelems
     bool mMesh::load(const std::string& filepath)
     {
         const uint32_t cMeshImportFlags =
-            aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_SortByPType |
+             aiProcess_Triangulate | 
             aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes |
-            aiProcess_ValidateDataStructure ;
+            aiProcess_ValidateDataStructure ; //aiProcess_CalcTangentSpace | aiProcess_SortByPType |
 
         Assimp::Importer Importer;
 
@@ -291,6 +291,20 @@ namespace nelems
             }
         }
     }
+    void mMesh::delete_selected()
+    {
+        for (auto& mesh : *mMeshes)
+        {
+            if (mesh.selected)
+            {
+                mesh.delete_buffers();
+            }
+        }
+        mMeshes->erase(std::remove_if(mMeshes->begin(), mMeshes->end(),
+            [](const oMesh& mesh) { return mesh.selected; }), mMeshes->end());
+    }
+
+
     void mMesh::set_OBxyz(float length,oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz)
     {
         glm::mat4 rotationMatrix;

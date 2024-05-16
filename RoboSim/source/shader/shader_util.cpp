@@ -44,9 +44,26 @@ namespace nshaders
 
 		glAttachShader(mProgramId, vs);
 		glAttachShader(mProgramId, fs);
-
+		
 		glLinkProgram(mProgramId);
+		GLint success;
+		glGetProgramiv(mProgramId, GL_LINK_STATUS, &success);
+		if (!success) {
+			GLchar infoLog[512];
+			glGetProgramInfoLog(mProgramId, 512, NULL, infoLog);
+			std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+			return false;
+		}
+
 		glValidateProgram(mProgramId);
+
+		glGetProgramiv(mProgramId, GL_VALIDATE_STATUS, &success);
+		if (!success) {
+			GLchar infoLog[512];
+			glGetProgramInfoLog(mProgramId, 512, NULL, infoLog);
+			std::cout << "ERROR::SHADER::PROGRAM::VALIDATION_FAILED\n" << infoLog << std::endl;
+			return false;
+		}
 
 		glDeleteShader(vs);
 		glDeleteShader(fs);
