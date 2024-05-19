@@ -153,6 +153,7 @@
     <ClCompile Include="source\Command\Transform.cpp" />
     <ClCompile Include="source\Command\ObHistory.h" />
     <ClCompile Include="source\elems\arrowCoor.cpp" />
+    <ClCompile Include="source\rigging\rigging.cpp" />
     <ClCompile Include="source\ui\FrameManage.cpp" />
     <ClCompile Include="source\ui\HotkeyMenubar.cpp" />
     <ClCompile Include="source\ui\scene_view.cpp" />
@@ -216,6 +217,7 @@
     <ClInclude Include="source\elems\arrowCoor.h" />
     <ClInclude Include="source\elems\material.h" />
     <ClInclude Include="source\elems\stb_image.h" />
+    <ClInclude Include="source\rigging\rigging.h" />
     <ClInclude Include="source\ui\FrameManage.h" />
     <ClInclude Include="source\ui\HotkeyMenubar.h" />
     <ClInclude Include="source\ui\uiAction.h" />

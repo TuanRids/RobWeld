@@ -139,6 +139,17 @@ namespace nrender
     glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
     glViewport(0, 0, mWidth, mHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // check err gl error
+    GLenum err; static int i = 0;
+    while ((err = glGetError()) != GL_NO_ERROR)
+    {
+        if (i==0)
+        {
+            std::cout << "OpenGL error: " << err <<std::endl; i++;
+        }
+    }
+
+    
   }
 
   void OpenGL_FrameBuffer::unbind()

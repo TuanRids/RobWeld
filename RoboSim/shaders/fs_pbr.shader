@@ -63,58 +63,55 @@ void main()
 {
   if (lightsEnabled == 0)
   {
-		FragColor = vec4(materialData.mColor, 1.0);
-		return;
+	  // render with no lighting, have metallic and roughness values
+		vec3 color = materialData.mColor;
+        float metallic = materialData.mMetallic;
+        vec3 metallicColor = mix(color, vec3(1.0), metallic); 
+        FragColor = vec4(metallicColor, 1.0);
+        return;
+
   }
-	vec3 N = normalize(Normal);
-	vec3 V = normalize(camPos - WorldPos);
- 
-	vec3 F0 =	 vec3(0.04);		//vec3(0.04);
-  
-	//F0 = mix(F0, albedo, metallic);
+
 	vec3 albedo = materialData.mColor;
 	float metallic = materialData.mMetallic;
 	float roughness = materialData.mRoughness;
 	float ao = materialData.mAo;
 	float transparency = materialData.mTransparency;
 
-	F0 = mix(F0, albedo, metallic);
+  vec3 N = normalize(Normal);
+  vec3 V = normalize(camPos - WorldPos);
+  vec3 F0 = vec3(0.04);
+  F0 = mix(F0, albedo, metallic);
 
-	vec3 Lo = vec3(0.0);
+  vec3 Lo = vec3(0.0);
 
+  vec3 L = normalize(lightPosition - WorldPos);
+  vec3 H = normalize(V + L);
+  float distance = length(lightPosition - WorldPos);
+  float attenuation = 1.0 / (distance * distance);
+  vec3 radiance = lightColor * attenuation;
 
-	vec3 L = normalize(lightPosition - WorldPos);
-	vec3 H = normalize(V + L);
-	float distance = length(lightPosition - WorldPos);
-	float attenuation = 1.0 / (distance * distance);
-	vec3 radiance = lightColor * attenuation;
+  float NDF = DistributionGGX(N, H, roughness);
+  float G = GeometrySmith(N, V, L, roughness);
+  vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
+  vec3 nominator = NDF * G * F;
+  float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+  vec3 specular = nominator / max(denominator, 0.001); 
+  vec3 kS = F;
+  vec3 kD = vec3(1.0) - kS;
+  kD *= 1.0 - metallic;
 
-	float NDF = DistributionGGX(N, H, roughness);
-	float G = GeometrySmith(N, V, L, roughness);
-	vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+  float NdotL = max(dot(N, L), 0.0);
 
-	vec3 nominator = NDF * G * F;
-	float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-	vec3 specular = nominator / max(denominator, 0.001); 
+  Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
+  vec3 ambient = vec3(0.03) * albedo * ao;
 
+  vec3 color = ambient + Lo;
 
-	vec3 kS = F;
+  color = color / (color + vec3(1.0));
 
-	vec3 kD = vec3(1.0) - kS;
-	kD *= 1.0 - metallic;
+  color = pow(color, vec3(1.0 / 2.2));
 
-	float NdotL = max(dot(N, L), 0.0);
-
-	//vec3 finalColor = mix(albedo, kD * albedo / PI + specular, transparency);
-
-	vec3 ambient = vec3(0.03) * albedo * ao;
-
-	vec3 color = ambient + Lo;
-
-	color = color / (color + vec3(1.0));
-
-	color = pow(color, vec3(1.0 / 2.2));
-
-	FragColor = vec4(color, 1.0);
+  FragColor = vec4(color, 1.0);
 }

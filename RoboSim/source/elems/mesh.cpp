@@ -346,6 +346,7 @@ namespace nelems
 
     void mMesh::set_OBxyz(float length,oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz)
     {
+
         glm::mat4 rotationMatrix;
 
         glm::vec3 position = mesh.oMaterial.position;
@@ -405,7 +406,6 @@ namespace nelems
         ozMesh.init();
         OBoz = ozMesh;
         OBoz.oMaterial.mColor = glm::vec3(0.5f, 0.0f, 0.5f);
-
     }
 
 }

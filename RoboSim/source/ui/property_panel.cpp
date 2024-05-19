@@ -308,10 +308,10 @@ namespace nui
                         mesh->oMaterial.mColor = glm::vec3(clor.x, clor.y, clor.z);
                     }
                     if (prerness != rness) {
-                        mesh->oMaterial.roughness = rness;
+                        mesh->oMaterial.mRoughness = rness;
                     }
                     if (premlic != mlic) {
-                        mesh->oMaterial.metallic = mlic;
+                        mesh->oMaterial.mMetallic = mlic;
                     }
                     if (mtrans != mtrans) {
                         mesh->oMaterial.mTransparency = mtrans;
@@ -324,7 +324,7 @@ namespace nui
         {
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
             nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
-            ImGui::SliderInt("Light Intensity", &scene_view->get_light()->mStrength, 0, 1000);
+            ImGui::SliderFloat("Light Intensity", &scene_view->get_light()->mStrength, 0.00f, 1000.0f);
             if (scene_view->get_light()->mStrength == 0)
             {
                 ImGui::TextWrapped("Light is off. Render by Shaded mode.");

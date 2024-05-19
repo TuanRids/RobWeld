@@ -82,9 +82,6 @@ namespace nelems {
         void changeName( std::string newvalue) {
             strncpy_s(oname, sizeof(oname), newvalue.c_str(), _TRUNCATE);
         }
-     
-
-
     };
 
     /*

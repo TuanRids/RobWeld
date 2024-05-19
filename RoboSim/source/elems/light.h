@@ -15,7 +15,7 @@ namespace nelems
     {
       mColor = glm::vec3(1.0f, 1.0f, 1.0f);
       mPosition = { 1.5f, 3.5f, 3.0f };
-      mStrength = 0;
+      mStrength = 100.0f;
     }
 
     ~Light() {}
@@ -24,7 +24,7 @@ namespace nelems
     {
 
       shader->set_vec3(mPosition, "lightPosition");
-      shader->set_vec3(mColor *static_cast<float>(mStrength), "lightColor");
+      shader->set_vec3(mColor * mStrength, "lightColor");
       
     }
 
@@ -32,7 +32,7 @@ namespace nelems
 
     glm::vec3 mColor;
 
-    int mStrength;
+    float mStrength;
 
   };
 }

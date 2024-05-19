@@ -3,7 +3,7 @@
 #include <Windows.h>
 namespace nui
 {
-  std::string SceneView::arg_render_mode = "WireFrame";
+  std::string SceneView::arg_render_mode = "Surface";
 
 
   void SceneView::resize(int32_t width, int32_t height)
