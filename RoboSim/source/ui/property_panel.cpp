@@ -75,12 +75,14 @@ namespace nui
     {
         ImGui::Begin("Layer", nullptr);
         nui::FrameManage::setCrActiveGui("Layer", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
+
+        static int lastSelectedIndex = -1; // To remember the last selected index for range selection
+
         if (proMesh->size() > 0)
         {
             ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
-            //ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
             ImGui::BeginTable("Objects", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX);
-            ImGui::TableSetupColumn("Set");
+            ImGui::TableSetupColumn("Sel");
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("Hide");
             ImGui::TableHeadersRow();
@@ -89,20 +91,62 @@ namespace nui
             {
                 nelems::mMesh::getInstance().get_mesh_ptr(i, mesh);
                 ImGui::TableNextRow();
-
                 ImGui::TableNextColumn();
-                bool isSelected = ImGui::Checkbox(("##Select" + std::to_string(i)).c_str(), &mesh->selected);
-                // TODO UPDATE LATER FOR THE CTRL SELECT AND SINGLE SELECT
-                if (isSelected) {
-                    if (mesh->selected) { selectedMeshes.insert(mesh->ID); }
-                    else { selectedMeshes.erase(mesh->ID); }
+
+                bool isSelected = mesh->selected;
+                bool justSelected = false;
+                static bool SeReselect = false;
+                if (ImGui::Checkbox(("##Select" + std::to_string(i)).c_str(), &isSelected))
+                {
+                    if (ImGui::GetIO().KeyShift && lastSelectedIndex != -1)
+                    {
+                        // Shift is held down, select range
+                        int start = (lastSelectedIndex < i) ? lastSelectedIndex : i;
+                        int end = (lastSelectedIndex > i) ? lastSelectedIndex : i;
+                        if (!SeReselect)
+                        {
+                            for (int j = start; j <= end; j++)
+                            {
+                                nelems::mMesh::getInstance().get_mesh_ptr(j, mesh);
+                                mesh->selected = true;
+                                selectedMeshes.insert(mesh->ID);
+                            }
+                            SeReselect = true;
+                        }
+                        else {
+                            for (int j = start; j <= end; j++)
+                            {
+                                nelems::mMesh::getInstance().get_mesh_ptr(j, mesh);
+                                mesh->selected = false;
+                                selectedMeshes.insert(mesh->ID);
+                            }
+                            SeReselect = false;
+                        }
+                    }
+                    else
+                    {
+                        // Normal single selection
+                        mesh->selected = !mesh->selected;
+                        if (mesh->selected)
+                        {
+                            selectedMeshes.insert(mesh->ID);
+                            lastSelectedIndex = i;
+                        }
+                        else
+                        {
+                            selectedMeshes.erase(mesh->ID);
+                        }
+                        justSelected = true;
+                    }
                 }
+
                 ImGui::TableNextColumn();
                 ImGui::Text(mesh->oname);
                 ImGui::TableNextColumn();
                 ImGui::Checkbox(("##Hide" + std::to_string(i)).c_str(), &mesh->hide);
 
-                if (mesh->selected) {
+                if (mesh->selected || justSelected)
+                {
                     ImU32 yellowColorU32 = ImGui::ColorConvertFloat4ToU32(ImVec4(0.25f, 0.42f, 1.0f, 1.0f));
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, yellowColorU32);
                 }
@@ -112,6 +156,7 @@ namespace nui
         ImGui::Separator();
         ImGui::End();
     }
+
     void Property_Panel::obInfo_frame()
     {
         static int x{ 200 }, y{ 200 };

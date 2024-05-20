@@ -19,11 +19,12 @@ namespace ncommand
         std::deque<std::unique_ptr<Command>> commandStack; // Store the command that has been executed
         std::deque<std::unique_ptr<Command>> redoStack; // Store the command that has been undone
         std::deque<std::string> cmdlogs; // Store the command logs
-        int count{ 0 };
+        std::deque<std::string> cmdIDs; // Store the command ID
+        std::deque<std::string> cmdIDs_redo; // Store the command ID for redo
         // Private constructor
 
         std::string theme;
-        ObHistory() { cmdlogs.push_back("Welcome to RoboSim. This Application is developed by OhLab."); }
+        ObHistory() { cmdlogs.push_back("Welcome to RoboSim. This Application is developed by OhLab."); cmdIDs.push_back("Hello"); }
 
     public:
         // Delete copy constructor and assignment operator

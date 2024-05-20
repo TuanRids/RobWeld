@@ -6,32 +6,35 @@ namespace ncommand
     void ObHistory::execmd(std::unique_ptr<Command> cmd) {
         if (cmd && cmd->isValid()) {
             size_t sizebf = cmdlogs.size();
-            cmd->execute(cmdlogs);
+            cmd->execute(cmdlogs, cmdIDs,0, cmdIDs_redo);
             // Check if there are nothing new in the command logs
             if (sizebf == cmdlogs.size()) {
                 return;
             }
-            count++;
             // Store the command in the command stack
             commandStack.push_back(std::move(cmd));
+            std::cout << cmdIDs.back() << cmdlogs.back() << std::endl;
             redoStack.clear(); // Clear redo stack when executing new command
             if (commandStack.size() > limhit) {
                 commandStack.front().reset(); // FOCUS: Reset to avoid Memory Leaks 
                 commandStack.pop_front(); // Remove oldest command if stack size exceeds limit
-                cmdlogs.pop_front();
             }
+            if (cmdlogs.size() > limhit * 30) {
+				cmdlogs.pop_front();
+			}   
         }
     }
     void ObHistory::undocmd() {
         if (!commandStack.empty()) {
+            // check if commandstack is empty
+            if (commandStack.empty()) {
+				return;
+			}
             auto lastCmd = std::move(commandStack.back());
-            lastCmd->undo(cmdlogs.empty() ? "" : cmdlogs.back());
+            lastCmd->execute(cmdlogs, cmdIDs,1, cmdIDs_redo);
+            //lastCmd->undo(cmdlogs.empty() ? "" : cmdlogs.back(), cmdIDs);
             redoStack.push_back(std::move(lastCmd));
             commandStack.pop_back();
-            if (!cmdlogs.empty()) {
-                cmdlogs.pop_back();
-            }
-            count--;
         }
     }
     void ObHistory::redocmd() {
@@ -39,11 +42,7 @@ namespace ncommand
         if (!redoStack.empty()) {
             auto lastRedoCmd = std::move(redoStack.back());
             // Call execute 
-            lastRedoCmd->redo(cmdlogs.empty() ? "" : cmdlogs.back());
-            lastRedoCmd->execute(cmdlogs);
-
-            cmdlogs.back().insert(0, std::to_string(count) + " :");
-            count++;
+            lastRedoCmd->execute(cmdlogs, cmdIDs,2, cmdIDs_redo);
             commandStack.push_back(std::move(lastRedoCmd));
             redoStack.pop_back();
         }

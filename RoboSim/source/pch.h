@@ -13,20 +13,11 @@
 #include "imgui.h"
 #include <ImFileBrowser.h>
 
-
-/// Shader Problems (Lowest Priority)				=> Fixed
-/// 
-/// BIG PROBLEMS: COOR REWITE 2 cases				=> Fixed
-/// Check: Rotate original, rotate degree update	=> fixed
-/// Resize Problems									=> Fixed
-/// properties to a hint on viewport				=> Fixed
-/// bug Release, cant show the viewport correct  	=> Fixed
-/// 
+/// Shader problems: right view - behind objects cover the front objects
 /// TEST ROBOT										=> 
 /// UPDATE DRAW LINES, POINTS						=> 
 /// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.		=> 
 /// ADD DRAW TEXT									=> 
-/// Add Oxyz										=> Fixed 
 // GL includes
 
 #include <gl/glew.h>
