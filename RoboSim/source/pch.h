@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // Std includes
 #include <string>
@@ -18,6 +18,10 @@
 /// UPDATE DRAW LINES, POINTS						=> 
 /// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.		=> 
 /// ADD DRAW TEXT									=> 
+/// 
+/// robot table position: x,y,z,rx,ry,rz + 6 5 4 (3 2 1 expand)
+/// Keyframe: with a,v between keys
+/// 
 // GL includes
 
 #include <gl/glew.h>

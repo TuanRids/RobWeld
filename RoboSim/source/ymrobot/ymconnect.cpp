@@ -14,7 +14,7 @@ namespace nymrobot
         ImGui::SetWindowSize(ImVec2(400, 100));
 
         ImGui::InputText("IP Address", ip_address, sizeof(ip_address));
-        static char connect_content[100] = "connecting to the Robot...";
+        static char connect_content[100] = "Check Pendant Message to Connect...";
         if (status.StatusCode == 0) { strcpy_s(connect_content, "Connected."); }
         ImGui::InputText("Status", connect_content, sizeof(connect_content));
 
@@ -67,25 +67,26 @@ namespace nymrobot
         // if trigger is true, show the UI to connect to the robot
         if (connect_trigger)
         { connect_robot(); }
+        // if connected, expand the UI for working with the Robot
         if (status.StatusCode != 0 || controller->Status == NULL) { return; }
         move_robot();
         read_robot();
     }
     void ymconnect::move_robot()
     {
-        if (status.StatusCode != 0) { MessageBox(NULL, "Disconnected to the ROBOT!", "ERROR", MB_OK); return; }
+        ImGui::Separator();
+        static float mover_x = 1, mover_y=1, mover_z=1;     ImGui::SetNextItemWidth(100);
+        ImGui::InputFloat("X", &mover_x, 0.01f, 100.0f);   ImGui::SetNextItemWidth(100); 
+        ImGui::InputFloat("Y", &mover_y, 0.01f, 100.0f);   ImGui::SetNextItemWidth(100); 
+        ImGui::InputFloat("Z", &mover_z, 0.01f, 100.0f);
+        bool bt_move = ImGui::Button("Move"); ImGui::SameLine();
+        if (ImGui::Button("Collapse Move")) {call_move = false;}
 
-        static float mover_x = 1, mover_y=1, mover_z=1;
-        ImGui::SliderFloat("x", &mover_x, 0.01f, 100.0f);
-        ImGui::SliderFloat("Y", &mover_y, 0.01f, 100.0f);
-        ImGui::SliderFloat("Z", &mover_z, 0.01f, 100.0f);
-        if (ImGui::Button("MOVE")) {
+        if (bt_move) {
             PositionData targetPosition(CoordinateType::RobotCoordinate, Figure(), 0, 0, { mover_x, mover_y, mover_z, 0.0, 0.0, 0.0, 0.0, 0.0 });
             LinearMotion motionTarget(ControlGroupId::R1, targetPosition, 100.0);
             if (controller) {
-                // connect to MotionManager
                 // MotionManagerInterface::AddPointToTrajectory(motionTarget);
-                // add the point to the trajectory
                 status = controller->MotionManager->AddPointToTrajectory(motionTarget);
                 if (status.IsOk()) {
                     status = controller->MotionManager->MotionStart();
@@ -98,21 +99,31 @@ namespace nymrobot
                 }
             }
         }
-        ImGui::End();
     }
     void ymconnect::read_robot()
     {
-       
-        RobotPositionVariableData robotPositionVariableData{};
-        status = controller->Variables->RobotPositionVariable->Read(1, robotPositionVariableData);
+        ImGui::Separator();
+        static unsigned int positionVariableId = 1; ImGui::SetNextItemWidth(100);
+        ImGui::InputInt("Position Variable ID", (int*)&positionVariableId);
 
-        std::stringstream ss;
-        ss << status << robotPositionVariableData;
-        std::string message = ss.str();
-        ImGui::Text(message.c_str());
-        if (ImGui::Button("Collapse Read"))
-        {
-    		call_read = false;
-        }
+        bool bt_read = ImGui::Button("Read"); ImGui::SameLine();
+        if (ImGui::Button("Collapse Read")) { call_read = false;}
+
+        if (bt_read)
+		{
+            RobotPositionVariableData robotPositionVariableData{};
+            try
+            {
+                status = controller->Variables->RobotPositionVariable->Read(positionVariableId, robotPositionVariableData);
+                std::stringstream ss;
+                ss << status << robotPositionVariableData;
+                std::string message = ss.str();
+                ImGui::Text(message.c_str());
+            }
+            catch (std::exception& e)
+			{
+				MessageBox(NULL, e.what(), "Error", MB_OK);
+			}
+		}
     }
 }
