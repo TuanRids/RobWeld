@@ -32,7 +32,6 @@ namespace nymrobot
 
 		//connect & disconnect to robot
 		void connect_robot();
-		void moreUIRB();
 
 		void disconnect_robot(bool showmsg);
 		void render();
@@ -45,6 +44,8 @@ namespace nymrobot
 		void move_robot();
 		void read_robot();
 
+		//format data from position
+		std::string formatNumber( PositionData positionData);
 
 	};
 }

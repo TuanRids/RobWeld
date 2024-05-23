@@ -6,7 +6,7 @@ namespace nymrobot
     //bool ymconnect::connect_trigger = false;
     void ymconnect::connect_robot()
     {
-        static char ip_address[20] = "192.168.10.111"; // Default IP address
+        static char ip_address[20] = "192.168.10.102"; // Default IP address
 
         ImGui::SetNextWindowPos(ImVec2(300, 300));
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.3f, 0.2f, 1.0f));
@@ -40,17 +40,10 @@ namespace nymrobot
             connect_trigger = false;
         }
         ImGui::Separator();
-        if (status.StatusCode == true)
-        { moreUIRB(); }
+        
 
         ImGui::End();
         ImGui::PopStyleColor();
-    }
-
-    void ymconnect::moreUIRB()
-    {
-        if (ImGui::Button("move robot")) { call_move = true; }
-        if (ImGui::Button("read robot")) { call_read = true; }
     }
 
     void ymconnect::disconnect_robot(bool showmsg)
@@ -69,61 +62,111 @@ namespace nymrobot
         { connect_robot(); }
         // if connected, expand the UI for working with the Robot
         if (status.StatusCode != 0 || controller->Status == NULL) { return; }
+		ImGui::Begin("Robot Control", &connect_trigger);
         move_robot();
         read_robot();
+		ImGui::End();
     }
     void ymconnect::move_robot()
     {
+        StatusInfo tpstatus;        std::stringstream ss;
         ImGui::Separator();
-        static float mover_x = 1, mover_y=1, mover_z=1;     ImGui::SetNextItemWidth(100);
+        /*static float mover_x = 0.1, mover_y=0.1, mover_z=0.1;     ImGui::SetNextItemWidth(100);
         ImGui::InputFloat("X", &mover_x, 0.01f, 100.0f);   ImGui::SetNextItemWidth(100); 
         ImGui::InputFloat("Y", &mover_y, 0.01f, 100.0f);   ImGui::SetNextItemWidth(100); 
-        ImGui::InputFloat("Z", &mover_z, 0.01f, 100.0f);
-        bool bt_move = ImGui::Button("Move"); ImGui::SameLine();
-        if (ImGui::Button("Collapse Move")) {call_move = false;}
+        ImGui::InputFloat("Z", &mover_z, 0.01f, 100.0f);*/
 
-        if (bt_move) {
-            PositionData targetPosition(CoordinateType::RobotCoordinate, Figure(), 0, 0, { mover_x, mover_y, mover_z, 0.0, 0.0, 0.0, 0.0, 0.0 });
-            LinearMotion motionTarget(ControlGroupId::R1, targetPosition, 100.0);
-            if (controller) {
-                // MotionManagerInterface::AddPointToTrajectory(motionTarget);
-                status = controller->MotionManager->AddPointToTrajectory(motionTarget);
-                if (status.IsOk()) {
-                    status = controller->MotionManager->MotionStart();
-                    if (!status.IsOk()) {
-                        std::cerr << "Error starting motion: " << status.Message << std::endl;
-                    }
-                }
-                else {
-                    std::cerr << "Error to connect with MotionManager: " << status.Message << std::endl;
-                }
+        if (ImGui::Button("Move")) {
+			RobotPositionVariableData r1PositionData{}; r1PositionData.positionData.coordinateType = CoordinateType::RobotCoordinate;
+			//BaseAxisPositionVariableData b1PositionData{}; b1PositionData.positionData.coordinateType = CoordinateType::RobotCoordinate;
+            //tpstatus = controller->Variables->BasePositionVariable->Read(1, b1PositionData);
+            tpstatus = controller->Variables->RobotPositionVariable->Read(1, r1PositionData);
+
+            LinearMotion r1Motion(ControlGroupId::R1, r1PositionData.positionData, 25.0);
+            //JointMotion b1Motion(ControlGroupId::B1, b1PositionData.positionData, 25.0);
+			std::cout << r1Motion.position << std::endl;
+
+            tpstatus = controller->MotionManager->AddPointToTrajectory(r1Motion);
+
+            tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+
+            tpstatus = controller->MotionManager->MotionStart();
+
+            /*
+            PositionData crposition{};
+            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::RobotCoordinate, 0, 0, crposition);
+            PositionData destination;
+			destination.coordinateType = CoordinateType::RobotCoordinate;
+            //Destination position.
+			destination.axisData = { crposition.axisData[0] + mover_x, crposition.axisData[1] + mover_y, crposition.axisData[2] + mover_z, crposition.axisData[3], crposition.axisData[4], crposition.axisData[5] };
+            //Set coordinate system to RobotCoordinate.
+            destination.coordinateType = CoordinateType::RobotCoordinate;
+
+            //A motion with the default motion attributes using the position data in destination.
+            //Speed of 25.0 mm/s. ControlGroupId R1.
+            LinearMotion r1LinearMotion(ControlGroupId::R1, destination, 25);
+
+            tpstatus = controller->MotionManager->AddPointToTrajectory(r1LinearMotion);
+            tpstatus = controller->MotionManager->MotionStart();*/
+            if (tpstatus.StatusCode!=0)
+            {
+                AlarmHistory alarmHistoryData;
+                controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData);
+				std::cout << alarmHistoryData << std::endl;
             }
         }
     }
     void ymconnect::read_robot()
     {
         ImGui::Separator();
-        static unsigned int positionVariableId = 1; ImGui::SetNextItemWidth(100);
-        ImGui::InputInt("Position Variable ID", (int*)&positionVariableId);
+        std::stringstream ss;
+        StatusInfo tpstatus;
+        if (ImGui::Button("Read Status")) {
+            ControllerStateData stateData{};
+            controller->Status->ReadState(stateData);
+			//TODO: Create getstring function for status
+            ss << stateData;
+			MessageBox(NULL, ss.str().c_str(), "Read Status", MB_OK);
+        }
+        if (ImGui::Button("Read Pos"))
+        {
+			PositionData positionData{};
+            // Position of robot
+            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, positionData);
+            ss << formatNumber(positionData) << "\n~~~DONE~~~\n";
 
-        bool bt_read = ImGui::Button("Read"); ImGui::SameLine();
-        if (ImGui::Button("Collapse Read")) { call_read = false;}
-
-        if (bt_read)
-		{
-            RobotPositionVariableData robotPositionVariableData{};
-            try
-            {
-                status = controller->Variables->RobotPositionVariable->Read(positionVariableId, robotPositionVariableData);
-                std::stringstream ss;
-                ss << status << robotPositionVariableData;
-                std::string message = ss.str();
-                ImGui::Text(message.c_str());
+            /// Rotation of joint angles
+            for (int i = 11; i <= 18; ++i) {
+                ControlGroupId groupId = static_cast<ControlGroupId>(i);
+                tpstatus = controller->ControlGroup->ReadPositionData(groupId, CoordinateType::, 0, 0, positionData);
+                ss << formatNumber(positionData);
             }
-            catch (std::exception& e)
-			{
-				MessageBox(NULL, e.what(), "Error", MB_OK);
-			}
-		}
+
+			MessageBox(NULL, ss.str().c_str(), "Robot Pos", MB_OK);
+
+
+        }
+
     }
+    std::string ymconnect::formatNumber( PositionData positionData) {
+        std::ostringstream oss;
+        std::string name[8] = { "X: ", "Y: ", "Z: ", "Rx: ", "Ry: ", "Rz: ", "Re: ", "Rw: "};
+		for (int i{ 0 }; i < 8; i++) {
+            if (i<3)
+            {
+                oss << "[" << name[i] << std::setw(6) << std::setprecision(3) << std::fixed << positionData.axisData[i] << "] - ";
+			}
+			else if (i==3)
+			{
+				oss << "\n[" << name[i] << std::setw(6) << std::setprecision(3) << std::fixed << positionData.axisData[i] << "] - ";
+			}
+            else
+            {
+				oss << "[" << name[i] << std::setw(6) << std::setprecision(3) << std::fixed << positionData.axisData[i] << "] ";
+            }
+		}
+		oss << "\n";
+        return oss.str();
+    }
+
 }
