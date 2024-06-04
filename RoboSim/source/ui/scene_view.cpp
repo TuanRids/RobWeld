@@ -69,7 +69,7 @@ namespace nui
 	  mCamera->update(mShader.get());
   }
   //================================================================================================
-  void SceneView::load_mesh(const std::string& filepath)
+  void SceneView::load_mesh(const std::string& filepath, bool robot)
   {
     if(!rdMesh)
     {
@@ -77,7 +77,7 @@ namespace nui
     }
     try
     {
-        rdMesh->load(filepath);
+        rdMesh->load(filepath, robot);
     }
     catch (const std::exception& e)
 	{

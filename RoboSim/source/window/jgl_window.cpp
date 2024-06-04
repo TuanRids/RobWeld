@@ -42,7 +42,7 @@ namespace nwindow
     mPropertyPanel = std::make_unique<Property_Panel>();
 
     mSceneView->SetMeshLoadCallback(
-      [this](std::string filepath) { mSceneView->load_mesh(filepath); });
+      [this](std::string filepath) { mSceneView->load_mesh(filepath,0); });
 
     // robotic arm
     mRobot = &nymrobot::ymconnect::getInstance();

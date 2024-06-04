@@ -70,7 +70,7 @@ namespace nui
         nshaders::Shader* get_shader() { return mShader.get(); }
         void resize(int32_t width, int32_t height);
         void render();
-        void load_mesh(const std::string& filepath);
+        void load_mesh(const std::string& filepath, bool robot);
         std::shared_ptr<nui::SceneView> get_mesh_scene() { if (mSceneView) {return mSceneView;} else {return nullptr;}}
 
         //=======================================================================================================

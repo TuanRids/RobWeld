@@ -1,11 +1,10 @@
 #include "pch.h"
 #include "mesh.h"
 
-
+#include "map"
 #include <filesystem>
 #include "render/opengl_buffer_manager.h"
 #include <thread>
-
 
 /// <summary>
 /// oMesh
@@ -102,32 +101,80 @@ namespace nelems
 
 
     //TODO: Load files too slow
-    bool mMesh::load(const std::string& filepath)
+    bool mMesh::load(const std::string& filepath, bool robot)
     {
-        const uint32_t cMeshImportFlags =
-             aiProcess_Triangulate | 
-            aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes |
-            aiProcess_ValidateDataStructure ; //aiProcess_CalcTangentSpace | aiProcess_SortByPType |
+        // Predefined colors for materials
+        static glm::vec3 color[9] = {
+            glm::vec3(0.14, 0.14, 0.14), glm::vec3(0.13, 0.15, 0.17), glm::vec3(0.1, 0.4, 0.7),
+            glm::vec3(0.0, 0.5, 0.0), glm::vec3(1.0, 0.8, 0.2), glm::vec3(0.0, 0.6, 0.4),
+            glm::vec3(0.2, 0.1, 0.1), glm::vec3(0.04, 0.04, 0.4), glm::vec3(0.4, 0.1, 0.7)
+        };
 
+        // Import flags for Assimp
+        const uint32_t cMeshImportFlags =
+            aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes |
+            aiProcess_ValidateDataStructure;
+
+        // Create an Assimp importer instance
         Assimp::Importer Importer;
 
-        const aiScene* pScene =
-            Importer.ReadFile(filepath.c_str(), cMeshImportFlags);
+        // Load the scene
+        const aiScene* pScene = Importer.ReadFile(filepath.c_str(), cMeshImportFlags);
+
+        // Extract filename without extension
         std::string filename = std::filesystem::path(filepath).filename().stem().string() + " ";
+
+        // Check if the scene and meshes exist
         if (pScene && pScene->HasMeshes()) {
+            // Map to store center points of meshes with 'ct' names
+            static std::map<std::string, glm::vec3> ctMap;
+
+            // Processing for robot meshes
+            if (robot)
+            {
+                // Iterate through meshes to find 'ct' named meshes and store their center points
+                for (unsigned int i = 0; i < pScene->mNumMeshes; ++i) {
+                    auto* mesh = pScene->mMeshes[i];
+                    std::string name = mesh->mName.C_Str();
+                    if (name.find("ct") != std::string::npos) {
+                        // Extract the index from mesh name and store the center point
+                        ctMap[name] = glm::vec3(mesh->mVertices[0].x, mesh->mVertices[0].y, mesh->mVertices[0].z);
+                    }
+                }
+            }
+
+            // Counter for color index
+            static int color_idx = 0;
+
             // Load all meshes
             for (unsigned int i = 0; i < pScene->mNumMeshes; ++i) {
                 auto* mesh = pScene->mMeshes[i];
                 oMesh newMesh;
                 newMesh.ID = getCurrentTimeMillis(pScene->mNumMeshes);
-                newMesh.changeName(filename + std::to_string(newMesh.ID % 1000));
                 load_specific_mesh(mesh, newMesh);
+                if (robot)
+                {
+                    std::string name = mesh->mName.C_Str();
+                    if (name.find("ct") != std::string::npos) { continue; } // Skip 'ct' named meshes
+                    // Assign mesh name, color, and position
+                    newMesh.changeName(name);
+                    newMesh.oMaterial.mColor = color[color_idx++];
+                    // Extract index from mesh name and append to 'ct' for position lookup
+                    name = "ct" + name.substr(name.find_last_of(" ") + 1);
+                    // Retrieve center point from ctMap and assign to material position
+                    newMesh.oMaterial.position = ctMap[name];
+                }
+                else {
+                    // Assign default name for non-robot meshes
+                    newMesh.changeName(filename + std::to_string(newMesh.ID % 1000));
+                }
                 mMeshes->push_back(newMesh);
             }
-            return true;
+            return true; // Loading successful
         }
-        return false;
+        return false; // Loading failed
     }
+
     void mMesh::load_specific_mesh(const aiMesh* mesh, oMesh& outMesh)
     {
         for (uint32_t i = 0; i < mesh->mNumVertices; i++) {

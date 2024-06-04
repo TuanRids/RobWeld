@@ -52,7 +52,7 @@ namespace nui
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
             ImGui::Separator();
             static float newnear{ 1.0f }, newfar{ 10000.0f }; // Far =0 => Render error
-            static int newzoom(50); static int gridNum(100); static int gridStep(50);
+            static int newzoom(50); static int gridNum(15); static int gridStep(40);
             ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f"); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Far", &newfar, 1.0f, 20000.0f, "%.0f"); ImGui::SetNextItemWidth(150);
@@ -61,8 +61,8 @@ namespace nui
             ImGui::SliderInt("GridNum", &gridNum, 0, 200); ImGui::SetNextItemWidth(150);
             ImGui::SliderInt("GridStep", &gridStep, 0, 200); ImGui::SetNextItemWidth(150);
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
-            static int axisLength{ 30 };
-            ImGui::SliderInt("AxisLength", &axisLength, 0, 100);
+            static int axisLength{ 1000 };
+            ImGui::SliderInt("AxisLength", &axisLength, 0, 5000);
 
 
             SceneView::getInstance().setNear(newnear);
@@ -342,6 +342,17 @@ namespace nui
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
+            for (int i = 0; i < proMesh->size(); i++)
+            {
+                proMesh->get_mesh_ptr(i, mesh);
+                if (mesh->selected == true)
+                { 
+                    clor = ImVec4(mesh->oMaterial.mColor.x, mesh->oMaterial.mColor.y, mesh->oMaterial.mColor.z, 1.0f);
+                    rness = mesh->oMaterial.mRoughness;
+                    mlic = mesh->oMaterial.mMetallic;
+                }
+            }
+                
             ImGui::SetNextItemWidth(150);
             ImGui::ColorEdit3("Color", (float*)&clor); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);

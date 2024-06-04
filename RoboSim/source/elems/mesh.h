@@ -94,7 +94,7 @@ namespace nelems {
         // ************** Load & structure mesh **************
         //load mesh from file
         bool load_sync(const std::string& filepath);
-        bool load(const std::string& filepath);
+        bool load(const std::string& filepath, bool robot);
         long long getCurrentTimeMillis(int size);
         void load_specific_mesh(const aiMesh* mesh, oMesh& outMesh);
         void clear_meshes();
@@ -141,7 +141,7 @@ namespace nelems {
         std::unique_ptr<oMesh> mCoorSystem;
         std::shared_ptr<std::vector<oMesh>> mMeshes;
         mMesh(){if (!mMeshes) {mMeshes = std::make_shared<std::vector<oMesh>>();}}
-        int axis_length{ 30 };
+        int axis_length{ 1000 };
     };
 }
 

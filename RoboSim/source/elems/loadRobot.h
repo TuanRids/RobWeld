@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui/scene_view.h"
+#include "elems/mesh.h"
 #include <string>
 
 #include <filesystem>
@@ -19,10 +20,11 @@ class LoadRobot
 private:
     nui::SceneView* scene_view;
     std::string mCurrentFile;
-
+    nelems::mMesh* mMesh;
 public:
     LoadRobot() : scene_view(nullptr) {
 		scene_view = &nui::SceneView::getInstance();
+        mMesh = &nelems::mMesh::getInstance();
 	}
     void trigger_GP8()
     {
@@ -32,6 +34,7 @@ public:
 
         std::string filePathStr = filePath.string();
 
-        scene_view->load_mesh(filePathStr);
+        scene_view->load_mesh(filePathStr,1);
+        
     }
 };
