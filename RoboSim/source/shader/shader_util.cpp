@@ -56,7 +56,6 @@ namespace nshaders
 
 	void Shader::use()
 	{
-		glEnable(GL_DEPTH_TEST);
 		glUseProgram(mProgramId);
 	}
 
@@ -98,7 +97,7 @@ namespace nshaders
 	void Shader::set_material(const Material& mat, const std::string& name)
 	{
 		GLint myLoc = glGetUniformLocation(get_program_id(), (name + ".mColor").c_str());
-		glProgramUniform3fv(get_program_id(), myLoc, 1, glm::value_ptr(mat.mColor));
+		glUniform3fv(myLoc, 1, glm::value_ptr(mat.mColor));
 
 		myLoc = glGetUniformLocation(get_program_id(), (name + ".mMetallic").c_str());
 		glUniform1f(myLoc, mat.mMetallic);
@@ -108,9 +107,6 @@ namespace nshaders
 
 		myLoc = glGetUniformLocation(get_program_id(), (name + ".mAo").c_str());
 		glUniform1f(myLoc, mat.mAo);
-
-		myLoc = glGetUniformLocation(get_program_id(), (name + ".mTransparency").c_str());
-		glUniform1f(myLoc, mat.mTransparency);
 	}
 
   void Shader::set_vec4(const glm::vec4& vec4, const std::string& name)

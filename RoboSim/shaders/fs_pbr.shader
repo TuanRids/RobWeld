@@ -4,114 +4,150 @@ out vec4 FragColor;
 in vec3 WorldPos;
 in vec3 Normal;
 
-struct material{
-	vec3 mColor;
-	float mMetallic;
-	float mRoughness;
-	float mAo;
-	float mTransparency;
-	};
+struct material {
+    vec3 mColor;
+    float mMetallic;
+    float mRoughness;
+    float mAo;
+};
 uniform material materialData;
 
 // lights
-uniform int lightsEnabled;
+uniform int LightModes; // 0 = single lights, 1 = world box 8 lights, 2 = no lights
 uniform vec3 lightPosition;
 uniform vec3 lightColor;
 
 uniform vec3 camPos;
 
 const float PI = 3.14159265359;
-// ------------------------------------------------------------------------------
+
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
-  float a = roughness * roughness;
-  float a2 = a * a;
-  float NdotH = max(dot(N, H), 0.0);
-  float NdotH2 = NdotH * NdotH;
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
 
-  float nom = a2;
-  float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-  denom = PI * denom * denom;
+    float nom = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
 
-  return nom / max(denom, 0.0000001); // prevent divide by zero for roughness=0.0 and NdotH=1.0
+    return nom / max(denom, 0.0000001); // prevent divide by zero for roughness=0.0 and NdotH=1.0
 }
+
 float GeometrySchlickGGX(float NdotV, float roughness)
 {
-  float r = (roughness + 1.0);
-  float k = (r * r) / 8.0;
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
 
-  float nom = NdotV;
-  float denom = NdotV * (1.0 - k) + k;
+    float nom = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
 
-  return nom / denom;
+    return nom / denom;
 }
+
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 {
-  float NdotV = max(dot(N, V), 0.0);
-  float NdotL = max(dot(N, L), 0.0);
-  float ggx2 = GeometrySchlickGGX(NdotV, roughness);
-  float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
 
-  return ggx1 * ggx2;
+    return ggx1 * ggx2;
 }
+
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
-  return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+    return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
 void main()
 {
-  if (lightsEnabled == 0)
-  {
-	  // render with no lighting, have metallic and roughness values
-		vec3 color = materialData.mColor;
-        float metallic = materialData.mMetallic;
-        vec3 metallicColor = mix(color, vec3(1.0), metallic); 
-        FragColor = vec4(metallicColor, 1.0);
-        return;
+    vec3 N = normalize(Normal);
+    vec3 V = normalize(camPos - WorldPos);
+    vec3 albedo = materialData.mColor;
+    float metallic = materialData.mMetallic;
+    float roughness = materialData.mRoughness;
+    float ao = materialData.mAo;
 
-  }
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, albedo, metallic);
 
-	vec3 albedo = materialData.mColor;
-	float metallic = materialData.mMetallic;
-	float roughness = materialData.mRoughness;
-	float ao = materialData.mAo;
-	float transparency = materialData.mTransparency;
+    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 Lo = vec3(0.0);
 
-  vec3 N = normalize(Normal);
-  vec3 V = normalize(camPos - WorldPos);
-  vec3 F0 = vec3(0.04);
-  F0 = mix(F0, albedo, metallic);
+    if (LightModes == 1)
+    {
+        vec3 lightPositions[8] = vec3[](
+            vec3(1000, 1000, 1000),
+            vec3(1000, 1000, -1000),
+            vec3(-1000, 1000, 1000),
+            vec3(-1000, 1000, -1000),
+            vec3(1000, -1000, 1000),
+            vec3(1000, -1000, -1000),
+            vec3(-1000, -1000, 1000),
+            vec3(-1000, -1000, -1000)
+        );
 
-  vec3 Lo = vec3(0.0);
+        for (int i = 0; i < 8; ++i)
+        {
+            vec3 L = normalize(lightPositions[i] - WorldPos);
+            vec3 H = normalize(V + L);
+            float distance = length(lightPositions[i] - WorldPos);
+            float attenuation = 1.0 / (distance * distance);
+            vec3 radiance = lightColor * attenuation*100;
 
-  vec3 L = normalize(lightPosition - WorldPos);
-  vec3 H = normalize(V + L);
-  float distance = length(lightPosition - WorldPos);
-  float attenuation = 1.0 / (distance * distance);
-  vec3 radiance = lightColor * attenuation;
+            float NDF = DistributionGGX(N, H, roughness);
+            float G = GeometrySmith(N, V, L, roughness);
+            vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
-  float NDF = DistributionGGX(N, H, roughness);
-  float G = GeometrySmith(N, V, L, roughness);
-  vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+            vec3 nominator = NDF * G * F;
+            float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+            vec3 specular = nominator / max(denominator, 0.001); 
 
-  vec3 nominator = NDF * G * F;
-  float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-  vec3 specular = nominator / max(denominator, 0.001); 
-  vec3 kS = F;
-  vec3 kD = vec3(1.0) - kS;
-  kD *= 1.0 - metallic;
+            vec3 kS = F;
+            vec3 kD = vec3(1.0) - kS;
+            kD *= 1.0 - metallic;
 
-  float NdotL = max(dot(N, L), 0.0);
+            float NdotL = max(dot(N, L), 0.0);
+            Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+        }
+    }
+    else if (LightModes == 2)
+    {
+        //color and light intensity
+        vec3 ambientLight = vec3(0.2, 0.2, 0.2); 
+        Lo += ambientLight * albedo;
 
-  Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
-  vec3 ambient = vec3(0.03) * albedo * ao;
+    }
+        
+    else
+    {
+        vec3 L = normalize(lightPosition - WorldPos);
+        vec3 H = normalize(V + L);
+        float distance = length(lightPosition - WorldPos);
+        float attenuation = 1.0 / (distance * distance);
+        vec3 radiance = lightColor * attenuation;
 
-  vec3 color = ambient + Lo;
+        float NDF = DistributionGGX(N, H, roughness);
+        float G = GeometrySmith(N, V, L, roughness);
+        vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
-  color = color / (color + vec3(1.0));
+        vec3 nominator = NDF * G * F;
+        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+        vec3 specular = nominator / max(denominator, 0.001); 
 
-  color = pow(color, vec3(1.0 / 2.2));
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metallic;
 
-  FragColor = vec4(color, 1.0);
+        float NdotL = max(dot(N, L), 0.0);
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+    }
+
+    vec3 color = ambient + Lo;
+    color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0 / 2.2));
+
+    FragColor = vec4(color, 1.0);
 }

@@ -12,6 +12,16 @@
 
 #include "imgui.h"
 #include <ImFileBrowser.h>
+/// 1. Robot Moving (R1 & O1 -> O6)
+/// 2. The same UI as RoboDk
+/// 3. 3D Scanner showing results
+/// 
+
+
+
+
+
+
 
 /// Shader problems: right view - behind objects cover the front objects
 /// TEST ROBOT										=> 

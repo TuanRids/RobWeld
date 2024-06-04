@@ -46,7 +46,7 @@ namespace nwindow
 
     // robotic arm
     mRobot = &nymrobot::ymconnect::getInstance();
-    
+
 
     return mIsRunning;
   }
@@ -105,6 +105,7 @@ namespace nwindow
 
   void GLWindow::render()
   {
+    
     // Clear the view
     mRenderCtx->pre_render();
     
@@ -124,6 +125,11 @@ namespace nwindow
     // Render end, swap buffers
     mRenderCtx->post_render();
     
+    if (!mLoadRobot)
+    {
+        mLoadRobot = std::make_unique<LoadRobot>();
+        mLoadRobot->trigger_GP8();
+    }
   }
 
   

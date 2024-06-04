@@ -5,7 +5,6 @@ namespace nrender
 {
   void OpenGL_VertexIndexBuffer::create_buffers(const std::vector<nelems::VertexHolder>& vertices, const std::vector<unsigned int>& indices)
   {
-
     glGenVertexArrays(1, &mVAO);
 
     glGenBuffers(1, &mIBO);
@@ -26,6 +25,7 @@ namespace nrender
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(nelems::VertexHolder), (void*)offsetof(nelems::VertexHolder, mNormal));
 
     glBindVertexArray(0);
+
 
   }
 
@@ -120,35 +120,20 @@ namespace nrender
       if (mFBO)
       {
           glDeleteFramebuffers(GL_FRAMEBUFFER, &mFBO);
-          glGetError();
           glDeleteTextures(1, &mTexId);
           glDeleteTextures(1, &mDepthId);
           mTexId = 0;
           mDepthId = 0;
       }
 
-      // Reset polygon mode to default (solid)
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
 
 
   void OpenGL_FrameBuffer::bind()
   {
-    glEnable(GL_DEPTH_TEST);
-
     glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
     glViewport(0, 0, mWidth, mHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // check err gl error
-    GLenum err; static int i = 0;
-    while ((err = glGetError()) != GL_NO_ERROR)
-    {
-        if (i==0)
-        {
-            std::cout << "OpenGL error: " << err <<std::endl; i++;
-        }
-    }
-
     
   }
 

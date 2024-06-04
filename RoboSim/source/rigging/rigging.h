@@ -1,41 +1,125 @@
 #pragma once
 
 #include <vector>
+#include <optional>
 #include <glm/glm.hpp>
+#include <cmath>
+#include "rigging/point.h"
+#include "elems/mesh.h"
 
-struct Bone {
-    glm::vec3 position; 
-    glm::vec3 rotation; 
-    std::vector<Bone*> children; 
-};
+bool pt_dis(nelems::oMesh& target, Point& point)
+{
+    // Calculate distance between target and point
+    float distance = sqrt(pow(target.oMaterial.position.x - point.x, 2) + pow(target.oMaterial.position.y - point.y, 2) + pow(target.oMaterial.position.z - point.z, 2));
+    return distance < 0.1;
+}
 
-class RiggingSystem {
+class RiggedObject
+{
 private:
-    std::vector<Bone> bones; 
+    std::vector<Point> points{};
+    nelems::oMesh* target;
+    nelems::mMesh* proMesh;
+    // Speed [0.01 to 0.99];
+    float speed{ 0.1 };
+    float delay{ 0.1 };
+    float progress{ 0.0f };
+    int currentPointIndex{ 0 };
+
 public:
-    RiggingSystem() {}
-
-    void addBone(const glm::vec3& position, const glm::vec3& rotation) {
-        Bone newBone;
-        newBone.position = position;
-        newBone.rotation = rotation;
-        bones.push_back(newBone);
+    RiggedObject() : proMesh(nullptr), target(nullptr)
+    {
+        points.push_back(Point{ 100.0f, 0.0f, 100.0f });
+        points.push_back(Point{ 200.0f, 0.0f, 100.0f });
     }
-
-    void setBoneHierarchy(int parentIndex, int childIndex) {
-        if (parentIndex >= 0 && parentIndex < bones.size() &&
-            childIndex >= 0 && childIndex < bones.size()) {
-            bones[parentIndex].children.push_back(&bones[childIndex]);
+    void add_point(Point& addpt) { points.push_back(addpt); }
+    void rem_point(Point& rempt) { points.erase(std::remove(points.begin(), points.end(), rempt), points.end()); }
+    ~RiggedObject() { points.clear(); }
+    void set_speed(float spd)
+    {
+        if (spd <= 0.99 && spd >= 0.01)
+            speed = spd;
+        else
+            throw std::invalid_argument("Speed must be between 0.01 and 0.99");
+    }
+    void set_target()
+    {
+        if (proMesh)
+        {
+            for (int i{ 0 }; i < proMesh->size(); i++)
+            {
+                proMesh->get_mesh_ptr(i, target);
+                if (target->selected)
+                {
+                    return;
+                }
+            }
+        }
+        target = nullptr; // No target found
+    }
+    void move_to_pointA(int ptA)
+    {
+        if (target)
+        {
+            target->move(points[ptA].x, points[ptA].y, points[ptA].z);
         }
     }
 
-    void controlBone(int boneIndex, const glm::vec3& newPosition, const glm::vec3& newRotation) {
-        if (boneIndex >= 0 && boneIndex < bones.size()) {
-            bones[boneIndex].position = newPosition;
-            bones[boneIndex].rotation = newRotation;
+    void update(float deltaTime, bool& move_trigger)
+    {
+        if (!proMesh)
+        {
+            proMesh = &nelems::mMesh::getInstance();
+            set_target();
+        }
+
+        if (!target)
+        {
+            return; // No target to move
+        }
+
+        if (currentPointIndex < points.size())
+        {
+            const Point& targetPoint = points[currentPointIndex];
+
+            glm::vec3 direction = glm::vec3(targetPoint.x - target->oMaterial.position.x,
+                targetPoint.y - target->oMaterial.position.y,
+                targetPoint.z - target->oMaterial.position.z);
+            float distance = glm::length(direction);
+            direction = glm::normalize(direction);
+
+            float step = speed * deltaTime;
+            if (distance < step)
+            {
+                target->move(targetPoint.x, targetPoint.y, targetPoint.z);
+                currentPointIndex++;
+                progress = 0.0f;
+            }
+            else
+            {
+                target->move(target->oMaterial.position.x + direction.x * step,
+                    target->oMaterial.position.y + direction.y * step,
+                    target->oMaterial.position.z + direction.z * step);
+                progress += step;
+            }
+        }
+        else
+        {
+            if (move_trigger)
+            {
+                currentPointIndex = 0;
+                move_trigger = false;
+            }
         }
     }
-
-    void applyRiggingToMeshes() {
+    void render_target()
+    {
+        if (target)
+        {
+            std::cout << "rendering"
+                << target->oMaterial.position.x << ","
+                << target->oMaterial.position.y << ","
+                << target->oMaterial.position.z << std::endl;
+        }
     }
 };

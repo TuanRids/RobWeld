@@ -4,6 +4,10 @@
 #include <ctime>
 #include "ui/HotkeyMenubar.h"
 
+#include "rigging/rigging.h"
+#include "rigging/point.h"
+
+
 namespace nui
 {
     // long long nui::Property_Panel::selectedID = 0;
@@ -33,10 +37,10 @@ namespace nui
             ImGui::End();
         }
 
-
-
-        // Another Frames
         camera_frame(scene_view); // show camera properties
+
+
+
     }
     ////===========================================================================================
     //// Main Frames 
@@ -47,15 +51,15 @@ namespace nui
         {
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
             ImGui::Separator();
-            static float newnear{ 1.0f }, newfar{ 0.0f };
-            static int newzoom(10); static int gridNum(50); static int gridStep(1);
+            static float newnear{ 1.0f }, newfar{ 10000.0f }; // Far =0 => Render error
+            static int newzoom(50); static int gridNum(100); static int gridStep(50);
             ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f"); ImGui::SetNextItemWidth(150);
-            ImGui::SliderFloat("Far", &newfar, 0.0f, 2000.0f, "%.0f"); ImGui::SetNextItemWidth(150);
-            ImGui::SliderInt("ZSp", &newzoom, 0, 20); ImGui::SetNextItemWidth(150);
+            ImGui::SliderFloat("Far", &newfar, 1.0f, 20000.0f, "%.0f"); ImGui::SetNextItemWidth(150);
+            ImGui::SliderInt("ZSp", &newzoom, 0, 200); ImGui::SetNextItemWidth(150);
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
-            ImGui::SliderInt("GridNum", &gridNum, 0, 100); ImGui::SetNextItemWidth(150);
-            ImGui::SliderInt("GridStep", &gridStep, 0, 10); ImGui::SetNextItemWidth(150);
+            ImGui::SliderInt("GridNum", &gridNum, 0, 200); ImGui::SetNextItemWidth(150);
+            ImGui::SliderInt("GridStep", &gridStep, 0, 200); ImGui::SetNextItemWidth(150);
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
             static int axisLength{ 30 };
             ImGui::SliderInt("AxisLength", &axisLength, 0, 100);
@@ -162,7 +166,7 @@ namespace nui
         static int x{ 200 }, y{ 200 };
         static float pos_x, pos_y;
         if (!pos_x || !pos_y) { nui::FrameManage::getViewportSize(pos_x, pos_y); }
-        ImGui::SetNextWindowPos(ImVec2(pos_x+5, pos_y+35)); // Set the position of the frame
+        ImGui::SetNextWindowPos(ImVec2(pos_x + 5, pos_y + 35)); // Set the position of the frame
         ImGui::SetNextWindowSize(ImVec2(x, y)); // Set the size of the frame
         ImGui::Begin("H1", nullptr,
             ImGuiWindowFlags_NoTitleBar | // Do not display title bar
@@ -175,7 +179,7 @@ namespace nui
         //elsei
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.3f, 0.0f, 1.0f)); // Set text color to red and 50% transparent
         ImGui::Text("Vertices & Vertex Indices"); ImGui::Separator();
-        if (proMesh ->check_selected() != 0)
+        if (proMesh->check_selected() != 0)
         {
             for (int i = 0; i < proMesh->size(); i++)
             {
@@ -264,13 +268,13 @@ namespace nui
                     float rotatex = posrot_obj[3] - mesh->oMaterial.rotation.x;
                     float rotatey = posrot_obj[4] - mesh->oMaterial.rotation.y;
                     float rotatez = posrot_obj[5] - mesh->oMaterial.rotation.z;
-                    if (std::abs(movex) > 0.01 || std::abs(movey) > 0.01 || std::abs(movez) > 0.01 )
+                    if (std::abs(movex) > 0.01 || std::abs(movey) > 0.01 || std::abs(movez) > 0.01)
                     {
                         uiaction.MoveOb_uiAction(movex, movey, movez);
                     }
                     if (std::abs(rotatex) > 0.01 || std::abs(rotatey) > 0.01 || std::abs(rotatez) > 0.01)
                     {
-                        
+
                         uiaction.RotateOb_uiAction(rotatex, rotatey, rotatez);
                     }
                     // reset all posrot & aname;
@@ -288,17 +292,17 @@ namespace nui
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-                ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f"); 
+                ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f");
 
                 ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
                 ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-                ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f"); 
+                ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f");
 
                 ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
                 ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-                ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f"); 
+                ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f");
 
                 if (proMesh->check_selected() != 0)
                 {
@@ -317,7 +321,7 @@ namespace nui
                     // check if any elements of posrot is not 0
                     bool hasNonZeroElement = std::any_of(std::begin(posrot), std::end(posrot),
                         [](float value) { return value != 0.0f; });
-                    if (hasNonZeroElement && pressOk )
+                    if (hasNonZeroElement && pressOk)
                     {
                         // move and rotate the object if posrot is not 0
                         uiaction.MoveOb_uiAction(posrot[0], posrot[1], posrot[2]);
@@ -328,13 +332,13 @@ namespace nui
                     }
                 }
             }
-            
+
         }
     }
     void Property_Panel::material_frame(nui::SceneView* scene_view) {
-        
+
         static ImVec4 clor = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
-        static float rness = 0.5f; static float mlic = 0.5f; static float mtrans = 0.0f;
+        static float rness = 0.5f; static float mlic = 0.5f;
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
@@ -342,13 +346,12 @@ namespace nui
             ImGui::ColorEdit3("Color", (float*)&clor); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Metallic", &mlic, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);
-            ImGui::SliderFloat("Transparency", &mtrans, 0.0f, 1.0f);
             for (int i = 0; i < proMesh->size(); i++)
             {
                 proMesh->get_mesh_ptr(i, mesh);
                 if (mesh->selected == true)
                 {
-                    if ((preClor.x != clor.x ||  preClor.y != clor.y || preClor.z != clor.z || preClor.w != clor.w)) {
+                    if ((preClor.x != clor.x || preClor.y != clor.y || preClor.z != clor.z || preClor.w != clor.w)) {
                         std::cout << mesh->oname << std::endl;
                         mesh->oMaterial.mColor = glm::vec3(clor.x, clor.y, clor.z);
                     }
@@ -358,9 +361,6 @@ namespace nui
                     if (premlic != mlic) {
                         mesh->oMaterial.mMetallic = mlic;
                     }
-                    if (mtrans != mtrans) {
-                        mesh->oMaterial.mTransparency = mtrans;
-                    }
                 }
             }
         }
@@ -369,6 +369,8 @@ namespace nui
         {
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
             nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
+            static const char* items[] = { "Single Point Light", "WorldBox 8 Lights", "NoLights"};
+            ImGui::Combo("SetLight", &scene_view->get_light()->lightmode, items, IM_ARRAYSIZE(items)); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Light Intensity", &scene_view->get_light()->mStrength, 0.00f, 1000.0f);
             if (scene_view->get_light()->mStrength == 0)
             {
@@ -403,5 +405,11 @@ namespace nui
         std::cout << "Theme saved to robosim_ini.dat" << std::endl;
         MessageBox(NULL, "Please restart the software to apply the new theme.", "Restart required", MB_OK);
     }
+    void Property_Panel::draft_chart()
+    {
+        ImGui::Begin("Draft Chart", nullptr);
+        ImGui::Text("Draft Chart");
 
+        ImGui::End();
+    }
 }

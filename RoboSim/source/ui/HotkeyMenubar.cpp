@@ -74,9 +74,8 @@ namespace nui {
                 }
                 if (ImGui::BeginMenu("RenderMode"))
                 {
-                    const char* menuItems[7] = { "Points", "WireFrame", "Surface"
-                                        ,"Points-Wire", "Points-Face", "Wire-Face", "Point-Wire-Face" };
-                    for (int i = 0; i < 7; ++i) {
+                    const char* menuItems[7] = { "Points", "WireFrame", "Surface" };
+                    for (int i = 0; i < 3; ++i) {
                         if (ImGui::MenuItem(menuItems[i])) {
                             scene_view->set_render_mode(menuItems[i]);
                         }

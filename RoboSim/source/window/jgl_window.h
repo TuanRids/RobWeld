@@ -13,7 +13,7 @@
 
 #include "ui/property_panel.h"
 #include "ui/scene_view.h"
-
+#include "elems/loadRobot.h"
 #include "elems/mesh.h"
 #include "ui/uiAction.h"
 #include "ymrobot/ymconnect.h"
@@ -28,7 +28,7 @@ namespace nwindow
   private:
 
       GLFWwindow* mWindow;
-
+      std::unique_ptr<LoadRobot> mLoadRobot;
       // Render contexts
       std::unique_ptr<UIContext> mUICtx;
 

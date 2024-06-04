@@ -138,7 +138,7 @@ namespace nymrobot
             /// Rotation of joint angles
             for (int i = 11; i <= 18; ++i) {
                 ControlGroupId groupId = static_cast<ControlGroupId>(i);
-                tpstatus = controller->ControlGroup->ReadPositionData(groupId, CoordinateType::, 0, 0, positionData);
+                tpstatus = controller->ControlGroup->ReadPositionData(groupId, CoordinateType::BaseCoordinate, 0, 0, positionData);
                 ss << formatNumber(positionData);
             }
 

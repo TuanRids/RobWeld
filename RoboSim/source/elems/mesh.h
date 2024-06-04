@@ -98,7 +98,7 @@ namespace nelems {
         long long getCurrentTimeMillis(int size);
         void load_specific_mesh(const aiMesh* mesh, oMesh& outMesh);
         void clear_meshes();
-        void update(nshaders::Shader* shader, bool lightenable);
+        void update(nshaders::Shader* shader, int lightmode);
         void createGridSys(float size, float step);
 
         // ************** Check and get pointer **************
@@ -138,7 +138,7 @@ namespace nelems {
         static std::mutex mMutex;
         // add a var to draw 10x10 grid for coordinate system
         //std::unique_ptr<oMesh> mCoorSystem, minigrid;
-        std::shared_ptr<std::vector<oMesh>> mCoorSystem;
+        std::unique_ptr<oMesh> mCoorSystem;
         std::shared_ptr<std::vector<oMesh>> mMeshes;
         mMesh(){if (!mMeshes) {mMeshes = std::make_shared<std::vector<oMesh>>();}}
         int axis_length{ 30 };

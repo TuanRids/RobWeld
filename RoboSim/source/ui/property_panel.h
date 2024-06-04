@@ -65,7 +65,7 @@ namespace nui
         void layer_frame(nui::SceneView* scene_view);
         void obInfo_frame();
         void coordinate_frame();
-
+        void draft_chart();
         /// mode: dark, light
 
         ~Property_Panel() { 
