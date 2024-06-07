@@ -31,11 +31,19 @@ namespace nui
 
         if (ImGui::Begin("Properties"))
         {
+            if (!mRobocn) { mRobocn = std::make_unique<robocn>(); }
+            if (ImGui::Button("pytest")) 
+            { 
+                mRobocn->connect();
+                mRobocn->get_pos();
+                mRobocn->get_tor();
+            }
             obInfo_frame(); // show object info such as vertices and vertex indices
             ImGui::Separator();
             coordinate_frame(); // show the position
             material_frame(scene_view); // show material properties
             ImGui::End();
+
         }
 
         camera_frame(scene_view); // show camera properties

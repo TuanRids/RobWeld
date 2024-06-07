@@ -20,7 +20,7 @@
 #include "nlohmann/json.hpp"
 #pragma warning( pop )
 
-
+#include "fs100/robotcn.h"
 #include <Windows.h>
 #include "render/ui_context.h"
 
@@ -43,9 +43,10 @@ namespace nui
         nelems::oMesh* base1, * base2, * base3, * base4, * base5, * base6;
         nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
+        std::unique_ptr<robocn> mRobocn;
     public:
         Property_Panel():
-            proMesh(nullptr),mesh(nullptr), base1(nullptr),base2(nullptr),base3(nullptr),base4(nullptr),base5(nullptr),base6(nullptr)
+            proMesh(nullptr),mesh(nullptr), base1(nullptr),base2(nullptr),base3(nullptr),base4(nullptr),base5(nullptr),base6(nullptr),mRobocn(std::make_unique<robocn>())
         {
             std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
             if (file.is_open())

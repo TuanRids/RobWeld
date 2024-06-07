@@ -166,14 +166,14 @@ namespace nymrobot
         {
 			PositionData rData{};
             // Position of robot
-            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, positionData);
-            ss << formatNumber(positionData) << "\n~~~DONE~~~\n";
+            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, rData);
+            ss << formatNumber(rData) << "\n~~~DONE~~~\n";
 
             /// Rotation of joint angles
             for (int i = 11; i <= 18; ++i) {
                 ControlGroupId groupId = static_cast<ControlGroupId>(i);
-                tpstatus = controller->ControlGroup->ReadPositionData(groupId, CoordinateType::BaseCoordinate, 0, 0, positionData);
-                ss << formatNumber(positionData);
+                tpstatus = controller->ControlGroup->ReadPositionData(groupId, CoordinateType::BaseCoordinate, 0, 0, rData);
+                ss << formatNumber(rData);
             }
 			MessageBox(NULL, ss.str().c_str(), "Robot Pos", MB_OK);
         }

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "scene_view.h"
 #include <Windows.h>
+
 namespace nui
 {
   std::string SceneView::arg_render_mode = "Surface";
@@ -95,6 +96,9 @@ namespace nui
       else {render_mode(); }
 
       mFrameBuffer->unbind();
+
+      
+
       ImGui::Begin("ViewPort");
       {
           nui::FrameManage::setCrActiveGui("ViewPort", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
@@ -109,6 +113,7 @@ namespace nui
           // Add rendered texture to ImGUI scene window
           uint64_t textureID = mFrameBuffer->get_texture();
           ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+          
       }
       ImGui::End();
   }
