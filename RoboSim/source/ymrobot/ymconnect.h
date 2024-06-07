@@ -2,6 +2,8 @@
 #include "pch.h"
 #include "YMConnect/YMConnect.h"
 #include "imgui.h"
+#include "elems/mesh.h"
+
 namespace nymrobot
 {
 	/// <summary>
@@ -16,9 +18,20 @@ namespace nymrobot
 		StatusInfo status;
 		std::shared_ptr<MotomanController> controller;
 		UINT32 restime = 10;
+		
+		// Singleton pattern to prevent instantiation
+		ymconnect(const ymconnect&) = delete;
+		ymconnect(ymconnect&&) = delete;
+		ymconnect& operator=(const ymconnect&) = delete;
+		ymconnect& operator=(ymconnect&&) = delete;
+
+		// pointer to Robot's mesh
+		nelems::mMesh* proMeshRb;
+		// based ptr
+		nelems::oMesh* base1, * base2, * base3, * base4, * base5, * base6;
 
 		// Private constructor to prevent instantiation
-		ymconnect() : controller(nullptr)
+		ymconnect() : controller(nullptr), proMeshRb(nullptr), base1(nullptr), base2(nullptr), base3(nullptr), base4(nullptr), base5(nullptr), base6(nullptr)
 		{ 
 			controller = std::make_shared<MotomanController>();
 			YMConnect::OpenConnection("192.0.0.0", status, restime); // Fake Login for destroy status

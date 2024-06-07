@@ -49,7 +49,7 @@ namespace nui
             mShader = std::make_unique<nshaders::Shader>();
             mShader->load("shaders/vs.shader", "shaders/fs_pbr.shader");
             mLight = std::make_unique<nelems::Light>();
-            mCamera = std::make_unique<nelems::Camera>(glm::vec3(0, 0, 3), Fov, Aspect, Near, Far);
+            mCamera = std::make_unique<nelems::Camera>(Fov, Aspect, Near, Far);
         }
 
     public:

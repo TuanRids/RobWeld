@@ -40,11 +40,12 @@ namespace nui
         // Transformation
         nelems::mMesh* proMesh; // Mesh Properties
         nelems::oMesh* mesh = nullptr; // for each objects
+        nelems::oMesh* base1, * base2, * base3, * base4, * base5, * base6;
         nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
     public:
         Property_Panel():
-            proMesh(nullptr),mesh(nullptr)
+            proMesh(nullptr),mesh(nullptr), base1(nullptr),base2(nullptr),base3(nullptr),base4(nullptr),base5(nullptr),base6(nullptr)
         {
             std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
             if (file.is_open())
@@ -63,6 +64,7 @@ namespace nui
         void material_frame(nui::SceneView* scene_view);
         void camera_frame(nui::SceneView* scene_view);
         void layer_frame(nui::SceneView* scene_view);
+        void Robot_Controls_table();
         void obInfo_frame();
         void coordinate_frame();
         void draft_chart();

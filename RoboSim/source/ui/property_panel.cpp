@@ -6,6 +6,7 @@
 
 #include "rigging/rigging.h"
 #include "rigging/point.h"
+#include <cmath>
 
 
 namespace nui
@@ -38,9 +39,8 @@ namespace nui
         }
 
         camera_frame(scene_view); // show camera properties
-
-
-
+        
+        Robot_Controls_table();
     }
     ////===========================================================================================
     //// Main Frames 
@@ -420,6 +420,121 @@ namespace nui
     {
         ImGui::Begin("Draft Chart", nullptr);
         ImGui::Text("Draft Chart");
+
+        ImGui::End();
+    }
+
+    //================================================================================================
+    void nui::Property_Panel::Robot_Controls_table()
+    {
+        // get base objects
+        for (int i{ 0 }; i < proMesh->size(); i++)
+        {
+            // Error when taking base1, base2, base3, base4, base5, base6
+            proMesh->get_mesh_ptr(i, mesh);
+            std::string name = std::string(mesh->oname);
+            if (name.find("base 1") != std::string::npos) 
+            { proMesh->get_mesh_ptr(i, base1); }
+            else if (name.find("base 2") != std::string::npos) 
+            { proMesh->get_mesh_ptr(i, base2); }
+			else if (name.find("base 3") != std::string::npos) 
+            { proMesh->get_mesh_ptr(i, base3); }
+			else if (name.find("base 4") != std::string::npos) 
+            { proMesh->get_mesh_ptr(i, base4); }
+			else if (name.find("base 5") != std::string::npos) 
+            { proMesh->get_mesh_ptr(i, base5); }
+			else if (name.find("base 6") != std::string::npos) 
+            { proMesh->get_mesh_ptr(i, base6); }
+        }
+        static float tolerance = 0.1f;
+        if (!base1) { return; }
+        ImGui::Begin("Robot Controls", nullptr);
+        // base 1 - z 
+
+        static float base1_rot_prev = base1->oMaterial.rotation.z;
+        ImGui::SliderFloat("Base1 Deg", &base1_rot_prev, -180.0f, 180.0f, "%.1f");
+        // Check the absolute value of the difference
+        if (std::abs(base1_rot_prev - base1->oMaterial.rotation.z) > tolerance)
+        {
+            float diff = base1_rot_prev - base1->oMaterial.rotation.z;
+            base1->rotate(0, 0, diff);
+            base2->rotate(0, 0, diff, base1->oMaterial.position);
+            base3->rotate(0, 0, diff, base1->oMaterial.position);
+            base4->rotate(0, 0, diff, base1->oMaterial.position);
+            base5->rotate(0, 0, diff, base1->oMaterial.position);
+            base6->rotate(0, 0, diff, base1->oMaterial.position);
+            base1->create_buffers(); base2->create_buffers(); base3->create_buffers();
+            base4->create_buffers(); base5->create_buffers(); base6->create_buffers();
+            base1_rot_prev = base1->oMaterial.rotation.z;
+        }
+
+        // base 2 - y
+        static float base2_rot_prev = base2->oMaterial.rotation.y;
+        ImGui::SliderFloat("Base2 Deg", &base2_rot_prev, -180.0f, 180.0f, "%.1f");
+        // Check the absolute value of the difference
+        if (std::abs(base2_rot_prev - base2->oMaterial.rotation.y) > tolerance)
+        {
+			float diff = base2_rot_prev - base2->oMaterial.rotation.y;
+			base2->rotate(0, diff, 0);
+			base3->rotate(0, diff, 0, base2->oMaterial.position);
+			base4->rotate(0, diff, 0, base2->oMaterial.position);
+			base5->rotate(0, diff, 0, base2->oMaterial.position);
+			base6->rotate(0, diff, 0, base2->oMaterial.position);
+			base2->create_buffers(); base3->create_buffers(); base4->create_buffers();
+			base5->create_buffers(); base6->create_buffers();
+			base2_rot_prev = base2->oMaterial.rotation.y;
+		}
+        // base 3 - y
+        static float base3_rot_prev = base3->oMaterial.rotation.y;
+        ImGui::SliderFloat("Base3 Deg", &base3_rot_prev, -180.0f, 180.0f, "%.1f");
+        // Check the absolute value of the difference
+        if (std::abs(base3_rot_prev - base3->oMaterial.rotation.y) > tolerance)
+        {
+            float diff = base3_rot_prev - base3->oMaterial.rotation.y;
+            base3->rotate(0, diff, 0);
+            base4->rotate(0, diff, 0, base3->oMaterial.position);
+            base5->rotate(0, diff, 0, base3->oMaterial.position);
+            base6->rotate(0, diff, 0, base3->oMaterial.position);
+            base3->create_buffers(); base4->create_buffers(); base5->create_buffers(); base6->create_buffers();
+            base3_rot_prev = base3->oMaterial.rotation.y;
+        }
+        // base 4 - x
+        static float base4_rot_prev = base4->oMaterial.rotation.x;
+        ImGui::SliderFloat("Base4 Deg", &base4_rot_prev, -180.0f, 180.0f, "%.1f");
+        // Check the absolute value of the difference
+        if (std::abs(base4_rot_prev - base4->oMaterial.rotation.x) > tolerance)
+        {
+			float diff = base4_rot_prev - base4->oMaterial.rotation.x;
+			base4->rotate(diff, 0, 0);
+			base5->rotate(diff, 0, 0, base4->oMaterial.position);
+			base6->rotate(diff, 0, 0, base4->oMaterial.position);
+			base4->create_buffers(); base5->create_buffers(); base6->create_buffers();
+			base4_rot_prev = base4->oMaterial.rotation.x;
+		}
+        // base 5 - y
+        static float base5_rot_prev = base5->oMaterial.rotation.y;
+        ImGui::SliderFloat("Base5 Deg", &base5_rot_prev, -180.0f, 180.0f, "%.1f");
+        // Check the absolute value of the difference
+        if (std::abs(base5_rot_prev - base5->oMaterial.rotation.y) > tolerance)
+        {
+            float diff = base5_rot_prev - base5->oMaterial.rotation.y;
+            base5->rotate(0, diff, 0);
+            base6->rotate(0, diff, 0, base5->oMaterial.position);
+            base5->create_buffers(); base6->create_buffers();
+            base5_rot_prev = base5->oMaterial.rotation.y;
+        }
+        // base 6 - x
+        static float base6_rot_prev = base6->oMaterial.rotation.x;
+        ImGui::SliderFloat("Base6 Deg", &base6_rot_prev, -180.0f, 180.0f, "%.1f");
+        // Check the absolute value of the difference
+        if (std::abs(base6_rot_prev - base6->oMaterial.rotation.x) > tolerance)
+        {
+			float diff = base6_rot_prev - base6->oMaterial.rotation.x;
+			base6->rotate(diff, 0, 0);
+			base6->create_buffers();
+			base6_rot_prev = base6->oMaterial.rotation.x;
+		}
+
 
         ImGui::End();
     }

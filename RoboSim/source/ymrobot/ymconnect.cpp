@@ -6,6 +6,7 @@ namespace nymrobot
     //bool ymconnect::connect_trigger = false;
     void ymconnect::connect_robot()
     {
+        
         static char ip_address[20] = "192.168.10.102"; // Default IP address
 
         ImGui::SetNextWindowPos(ImVec2(300, 300));
@@ -57,13 +58,44 @@ namespace nymrobot
     }
     void ymconnect::render()
     {
+        //  =========================================================================================================
+        // get ptr to the robot mesh
+        if (!proMeshRb)
+        {
+            proMeshRb = &nelems::mMesh::getInstance();
+        }
+        // get ptr to the base of the robot
+        if (!base1 || !base2 || !base3 || !base4 || !base5 || !base6)
+        {
+            nelems::oMesh* mesh;
+            for (int i{ 0 }; i < proMeshRb->size(); i++)
+            {
+                // Error when taking base1, base2, base3, base4, base5, base6
+                proMeshRb->get_mesh_ptr(i, mesh);
+                std::string name = std::string(mesh->oname);
+                if (name.find("base 1") != std::string::npos)
+                { proMeshRb->get_mesh_ptr(i, base1); }
+                else if (name.find("base 2") != std::string::npos)
+                { proMeshRb->get_mesh_ptr(i, base2); }
+                else if (name.find("base 3") != std::string::npos)
+                { proMeshRb->get_mesh_ptr(i, base3); }
+                else if (name.find("base 4") != std::string::npos)
+                { proMeshRb->get_mesh_ptr(i, base4); }
+                else if (name.find("base 5") != std::string::npos)
+                { proMeshRb->get_mesh_ptr(i, base5); }
+                else if (name.find("base 6") != std::string::npos)
+                { proMeshRb->get_mesh_ptr(i, base6); }
+            }
+        }
+        //  =========================================================================================================
+
         // if trigger is true, show the UI to connect to the robot
-        if (connect_trigger)
-        { connect_robot(); }
+        if (connect_trigger) { connect_robot(); }
         // if connected, expand the UI for working with the Robot
         if (status.StatusCode != 0 || controller->Status == NULL) { return; }
-		ImGui::Begin("Robot Control", &connect_trigger);
-        move_robot();
+        
+        ImGui::Begin("Robot Control", &connect_trigger);
+        //move_robot();
         read_robot();
 		ImGui::End();
     }
@@ -141,10 +173,7 @@ namespace nymrobot
                 tpstatus = controller->ControlGroup->ReadPositionData(groupId, CoordinateType::BaseCoordinate, 0, 0, positionData);
                 ss << formatNumber(positionData);
             }
-
 			MessageBox(NULL, ss.str().c_str(), "Robot Pos", MB_OK);
-
-
         }
 
     }

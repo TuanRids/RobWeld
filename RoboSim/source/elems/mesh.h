@@ -32,12 +32,10 @@ namespace nelems {
         char oname[256] = { 0 };
         bool selected{ false };
         bool hide{false };
+        
         // VAO VBO buffer
         std::vector<VertexHolder> mVertices;
         std::vector<unsigned int> mVertexIndices;
-        // a struct with 3 lines, draw from the center of the object
-        std::vector<Line> mLines;
-
 
         std::shared_ptr<nrender::VertexIndexBuffer> mRenderBufferMgr;
         //--------------------------------------------------------------------------------
@@ -54,8 +52,8 @@ namespace nelems {
         //-------------------------------------------------------------------------------- 
         // Transformation Matrix
             void rotate(float angleX, float angleY, float angleZ);
+            void rotate(float angleX, float angleY, float angleZ, const glm::vec3 pt_center);
             void move(float offsetX, float offsetY, float offsetZ);
-
 
         //--------------------------------------------------------------------------------
         // add vertex to object
