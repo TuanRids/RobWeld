@@ -150,6 +150,7 @@ namespace nymrobot
     }
     void ymconnect::read_robot()
     {
+        // Setup for reading status
         ImGui::Separator();
         std::stringstream ss;
         StatusInfo tpstatus;
@@ -160,9 +161,10 @@ namespace nymrobot
             ss << stateData;
 			MessageBox(NULL, ss.str().c_str(), "Read Status", MB_OK);
         }
+        // Start to read the position
         if (ImGui::Button("Read Pos"))
         {
-			PositionData positionData{};
+			PositionData rData{};
             // Position of robot
             tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, positionData);
             ss << formatNumber(positionData) << "\n~~~DONE~~~\n";
@@ -175,8 +177,30 @@ namespace nymrobot
             }
 			MessageBox(NULL, ss.str().c_str(), "Robot Pos", MB_OK);
         }
+        // start to read torque
+        if (ImGui::Button("Read Torque"))
+        {
+            TorqueData  rData{};
+            // Position of robot
+            tpstatus = controller->ControlGroup->ReadTorqueData(ControlGroupId::R1, rData);
+            std::cout << rData << std::endl;
+        }
 
+
+        // Readtime linked
+        static bool readtime = false;
+        if (ImGui::Button("RealTime Start"))
+        {
+            static PositionData positionData{};
+            // Position of robot
+            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, positionData);
+
+        }
+        ImGui::Button("RealTime Stop");
     }
+
+
+
     std::string ymconnect::formatNumber( PositionData positionData) {
         std::ostringstream oss;
         std::string name[8] = { "X: ", "Y: ", "Z: ", "Rx: ", "Ry: ", "Rz: ", "Re: ", "Rw: "};
