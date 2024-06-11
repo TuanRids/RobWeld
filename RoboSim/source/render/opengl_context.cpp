@@ -76,7 +76,7 @@ namespace nrender
 
     std::string theme;     nrender::UIContext::get_theme(theme); //glClearColor(0.14f, 0.15f, 0.18f, 1.0f);
     if (theme == "dark"){glClearColor(0.14f, 0.15f, 0.18f, 1.0f);}
-    else if (theme == "light"){glClearColor(0.62f, 0.64f, 0.67f, 1.0f);}
+    else if (theme == "light"){glClearColor(0.3f, 0.3f, 0.3f, 1.0f);}
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }

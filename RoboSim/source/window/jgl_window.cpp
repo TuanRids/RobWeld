@@ -2,7 +2,6 @@
 
 #include "jgl_window.h"
 
-
 #include "elems/input.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -44,8 +43,7 @@ namespace nwindow
     mSceneView->SetMeshLoadCallback(
       [this](std::string filepath) { mSceneView->load_mesh(filepath,0); });
 
-    // robotic arm
-    mRobot = &nymrobot::ymconnect::getInstance();
+    
     
     // MSAA
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -125,7 +123,6 @@ namespace nwindow
 
     mSceneView->render();
     mPropertyPanel->render(mSceneView,mWindow);
-    mRobot->render();
 
     // Render the UI 
     mUICtx->post_render();

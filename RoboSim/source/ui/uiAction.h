@@ -17,7 +17,7 @@ namespace nui
 	{
 	private:
 		nelems::mMesh* proMesh;
-		nelems::oMesh* mesh;
+		std::shared_ptr<nelems::oMesh> mesh;
 		ncommand::ObHistory* obAction;
 		nutils::RobsFileIO robFileIO;
 	public:
@@ -88,7 +88,7 @@ namespace nui
 
 			for (int i{ 0 }; i < proMesh->size(); i++)
 			{
-				proMesh->get_mesh_ptr(i, mesh);
+				mesh = proMesh->get_mesh_ptr(i);
 				if (mesh->selected)
 				{
 					// Set oMaterial.mColor to a random color using the uniform distribution

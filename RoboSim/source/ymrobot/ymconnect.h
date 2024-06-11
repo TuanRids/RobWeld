@@ -3,7 +3,7 @@
 #include "YMConnect/YMConnect.h"
 #include "imgui.h"
 #include "elems/mesh.h"
-
+#include <iomanip> 
 namespace nymrobot
 {
 	/// <summary>
@@ -14,9 +14,9 @@ namespace nymrobot
 	{
 	private:
 		bool call_move{ false }, call_read{ false };
-		bool connect_trigger = false;
+		bool connect_trigger = true;
 		StatusInfo status;
-		std::shared_ptr<MotomanController> controller;
+		MotomanController* controller;
 		UINT32 restime = 10;
 		
 		// Singleton pattern to prevent instantiation
@@ -24,24 +24,30 @@ namespace nymrobot
 		ymconnect(ymconnect&&) = delete;
 		ymconnect& operator=(const ymconnect&) = delete;
 		ymconnect& operator=(ymconnect&&) = delete;
-
+		float angle1{ 0 }, angle2{ 0 }, angle3{ 0 }, angle4{ 0 }, angle5{ 0 }, angle6{ 0 };
 		// pointer to Robot's mesh
 		nelems::mMesh* proMeshRb;
+		std::stringstream resultmsg;
 		// based ptr
-		nelems::oMesh* base1, * base2, * base3, * base4, * base5, * base6;
-
 		// Private constructor to prevent instantiation
-		ymconnect() : controller(nullptr), proMeshRb(nullptr), base1(nullptr), base2(nullptr), base3(nullptr), base4(nullptr), base5(nullptr), base6(nullptr)
+		ymconnect() : controller(nullptr), proMeshRb(nullptr)
 		{ 
-			controller = std::make_shared<MotomanController>();
 			YMConnect::OpenConnection("192.0.0.0", status, restime); // Fake Login for destroy status
 		}
 	public:
 		// singleton instance
-		static ymconnect& getInstance() { static ymconnect instance; return instance; }
+		static ymconnect& getInstance() { 
+			static ymconnect instance; return instance; }
 
 		//deconstructor
-		~ymconnect() { disconnect_robot(false); }
+		~ymconnect() 
+		{ 
+			if (status.StatusCode  == 0)
+			{
+				disconnect_robot(false);
+			}
+			delete controller;
+		}
 
 		//connect & disconnect to robot
 		void connect_robot();
@@ -57,8 +63,18 @@ namespace nymrobot
 		void move_robot();
 		void read_robot();
 
-		//format data from position
-		std::string formatNumber( PositionData positionData);
+		void get_angle(float& g1,float &g2,float &g3,float &g4,float &g5,float &g6) {
+			if (status.StatusCode != 0){ return; }
+			if (status.StatusCode == 0)
+			{
+				g1 = angle1;
+				g2 = angle2;
+				g3 = angle3;
+				g4 = angle4;
+				g5 = angle5;
+				g6 = angle6;
+			}
+		}
 
 	};
 }

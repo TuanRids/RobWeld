@@ -10,7 +10,7 @@ namespace ncommand
 {
     class MoveOb : public Command {
     private:
-        nelems::oMesh* mesh;
+        std::shared_ptr<nelems::oMesh> mesh;
         nelems::mMesh* proMesh;
         float mx,my,mz;
     public:
@@ -27,7 +27,7 @@ namespace ncommand
     class RotateOb : public Command
     {
     private:
-        nelems::oMesh* mesh;
+        std::shared_ptr<nelems::oMesh> mesh;
         nelems::mMesh* proMesh;
         float rx, ry, rz;
     public:

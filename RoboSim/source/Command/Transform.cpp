@@ -15,7 +15,7 @@ namespace ncommand
         else if (reverse == 2){ lastIDs = cmdIDs_redo.back(); }
         for (int i = 0; i < proMesh->size(); i++)
         {
-            proMesh->get_mesh_ptr(i, mesh);
+            mesh = proMesh->get_mesh_ptr(i);
             if (reverse == 0)
             {
                 if (!(mesh->selected)) { continue; }
@@ -106,7 +106,7 @@ namespace ncommand
         else if (reverse == 2) { lastIDs = cmdIDs_redo.back(); }
         for (int i = 0; i < proMesh->size(); i++)
         {
-            proMesh->get_mesh_ptr(i, mesh);
+            mesh = proMesh->get_mesh_ptr(i);
             if (reverse == 0)
             {
                 if (!(mesh->selected)) { continue; }

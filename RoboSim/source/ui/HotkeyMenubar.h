@@ -8,7 +8,7 @@
 #pragma warning( disable : 26819) //3rd party library
 #include "nlohmann/json.hpp"
 #pragma warning( pop )
-#include "ymrobot/ymconnect.h"
+
 
 using json = nlohmann::json;
 namespace nui {
@@ -18,7 +18,7 @@ namespace nui {
     private:
         uiAction uiaction;
         nui::SceneView* scene_view;
-        nymrobot::ymconnect* ym_con;
+
         std::string mCurrentFile;
         static bool waitloop[6];
         static bool shint;
@@ -27,7 +27,6 @@ namespace nui {
     public:
         HotkeyMenubar() : scene_view(nullptr) {
             scene_view = &nui::SceneView::getInstance();
-            ym_con = &nymrobot::ymconnect::getInstance();
             
         }
         ////====    ==============MENU BAR==================

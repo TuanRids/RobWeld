@@ -111,8 +111,7 @@ namespace nui {
 
             if (ImGui::BeginMenu("Robot"))
             {
-                if (ImGui::MenuItem("Connect")) { ym_con->set_connect_trigger(true); }
-                ImGui::EndMenu();
+                //
             }
             ImGui::EndMainMenuBar();
         }
@@ -267,7 +266,7 @@ namespace nui {
     {
         nrender::UIContext::get_theme(theme);
         static float pos_x, pos_y;
-        if (!pos_x || !pos_y) { nui::FrameManage::getViewportSize(pos_x, pos_y); }
+        nui::FrameManage::getViewportSize(pos_x, pos_y); 
         ImGui::SetNextWindowPos(ImVec2(pos_x + 5, pos_y + 250 + 25));
         ImGui::Begin("Hint", nullptr,
             ImGuiWindowFlags_NoTitleBar | // Do not display title bar

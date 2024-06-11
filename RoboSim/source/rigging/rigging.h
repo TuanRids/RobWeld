@@ -18,7 +18,7 @@ class RiggedObject
 {
 private:
     std::vector<Point> points{};
-    nelems::oMesh* target;
+    std::shared_ptr<nelems::oMesh> target;
     nelems::mMesh* proMesh;
     // Speed [0.01 to 0.99];
     float speed{ 0.1 };
@@ -48,7 +48,7 @@ public:
         {
             for (int i{ 0 }; i < proMesh->size(); i++)
             {
-                proMesh->get_mesh_ptr(i, target);
+                target = proMesh->get_mesh_ptr(i);
                 if (target->selected)
                 {
                     return;

@@ -19,11 +19,11 @@
 #pragma warning( disable : 26819) //3rd party library
 #include "nlohmann/json.hpp"
 #pragma warning( pop )
+#include "Eigen/Dense"
 
-#include "fs100/robotcn.h"
 #include <Windows.h>
 #include "render/ui_context.h"
-
+#include "ymrobot/ymconnect.h"
 using json = nlohmann::json;
 
 namespace nui
@@ -39,15 +39,19 @@ namespace nui
     private:
         // Transformation
         nelems::mMesh* proMesh; // Mesh Properties
-        nelems::oMesh* mesh = nullptr; // for each objects
-        nelems::oMesh* base1, * base2, * base3, * base4, * base5, * base6;
+        std::shared_ptr<nelems::oMesh> mesh;
+        std::vector<std::shared_ptr<nelems::oMesh>> base;
         nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
-        std::unique_ptr<robocn> mRobocn;
+ 
+        float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
+        nymrobot::ymconnect* mRobot;
+
     public:
         Property_Panel():
-            proMesh(nullptr),mesh(nullptr), base1(nullptr),base2(nullptr),base3(nullptr),base4(nullptr),base5(nullptr),base6(nullptr),mRobocn(std::make_unique<robocn>())
+            proMesh(nullptr),mesh(nullptr), mRobot(nullptr)
         {
+            for (int i{ 0 }; i < 6; i++) { base.push_back(nullptr); }
             std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
             if (file.is_open())
             {
@@ -66,6 +70,9 @@ namespace nui
         void camera_frame(nui::SceneView* scene_view);
         void layer_frame(nui::SceneView* scene_view);
         void Robot_Controls_table();
+        void rotateJoint(size_t jointIndex, float& ang, float& pre, const float tolerance,
+            std::vector<nelems::oMesh>& joints, std::vector<std::shared_ptr<nelems::oMesh>>& base,
+            float diffX, float diffY, float diffZ);
         void obInfo_frame();
         void coordinate_frame();
         void draft_chart();

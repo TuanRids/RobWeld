@@ -8,20 +8,25 @@ namespace nymrobot
     {
         
         static char ip_address[20] = "192.168.10.102"; // Default IP address
+        static char connect_content[100] = "Welcome to OhLabs";
 
-        ImGui::SetNextWindowPos(ImVec2(300, 300));
+        // set UI
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.3f, 0.2f, 1.0f));
-        ImGui::Begin("GetIP", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
+        ImGui::Begin("GetIP", nullptr,  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize );
         ImGui::SetWindowSize(ImVec2(400, 100));
+        ImGui::SetNextItemWidth(150);
 
-        ImGui::InputText("IP Address", ip_address, sizeof(ip_address));
-        static char connect_content[100] = "Check Pendant Message to Connect...";
+        ImGui::InputText("IP Address", ip_address, sizeof(ip_address)); ImGui::SetNextItemWidth(150);
+        
         if (status.StatusCode == 0) { strcpy_s(connect_content, "Connected."); }
         ImGui::InputText("Status", connect_content, sizeof(connect_content));
 
-        if (ImGui::Button("Connect")) {
+        if (ImGui::Button("Connect") && status.StatusCode != 0) {
             std::string getip{ ip_address };
-            MotomanController* rawController = YMConnect::OpenConnection(getip, status); // Open a connection to the robot controller
+            
+            // set content to make sure it is updated for 2nd time of connection
+            strcpy_s(connect_content, "Welcome to OhLabs.");
+            controller = YMConnect::OpenConnection(getip, status); // Open a connection to the robot controller
 
             if (status.StatusCode != 0) {
                 std::stringstream ss;
@@ -29,20 +34,21 @@ namespace nymrobot
                 std::string message = ss.str();
                 MessageBox(NULL, message.c_str(), "Error", MB_OK);
             }
-            else {
-                controller.reset(rawController); // Convert raw pointer to shared_ptr
+            else 
+            {
                 status = controller->ControlCommands->DisplayStringToPendant(connect_content);
-                MessageBox(NULL, "Connected", "Success", MB_OK);
             }
         }
-        ImGui::SameLine();
-        if (ImGui::Button("Close")) {
-            ImGui::CloseCurrentPopup();
-            connect_trigger = false;
-        }
-        ImGui::Separator();
-        
 
+        ImGui::SameLine();
+        if (ImGui::Button("Disconnect")) {
+            status = controller->ControlCommands->DisplayStringToPendant((char*)"Disconnect!");
+            disconnect_robot(false);
+            strcpy_s(connect_content, "Disconnect!");
+            
+        }
+
+        ImGui::Separator();
         ImGui::End();
         ImGui::PopStyleColor();
     }
@@ -51,41 +57,22 @@ namespace nymrobot
     {
         std::cout<< status.StatusCode << std::endl;
         if (status.StatusCode == 0)
-        { YMConnect::CloseConnection(controller.get()); }
+        { 
+            YMConnect::CloseConnection(controller);
+            YMConnect::OpenConnection("192.0.0.0", status, restime); // Fake Login for destroy status
+            controller = nullptr;
+        }
         if (showmsg)
         { ImGui::OpenPopup("Disconnected"); }
 
     }
     void ymconnect::render()
     {
-        //  =========================================================================================================
+        // =========================================================================================================
         // get ptr to the robot mesh
         if (!proMeshRb)
         {
             proMeshRb = &nelems::mMesh::getInstance();
-        }
-        // get ptr to the base of the robot
-        if (!base1 || !base2 || !base3 || !base4 || !base5 || !base6)
-        {
-            nelems::oMesh* mesh;
-            for (int i{ 0 }; i < proMeshRb->size(); i++)
-            {
-                // Error when taking base1, base2, base3, base4, base5, base6
-                proMeshRb->get_mesh_ptr(i, mesh);
-                std::string name = std::string(mesh->oname);
-                if (name.find("base 1") != std::string::npos)
-                { proMeshRb->get_mesh_ptr(i, base1); }
-                else if (name.find("base 2") != std::string::npos)
-                { proMeshRb->get_mesh_ptr(i, base2); }
-                else if (name.find("base 3") != std::string::npos)
-                { proMeshRb->get_mesh_ptr(i, base3); }
-                else if (name.find("base 4") != std::string::npos)
-                { proMeshRb->get_mesh_ptr(i, base4); }
-                else if (name.find("base 5") != std::string::npos)
-                { proMeshRb->get_mesh_ptr(i, base5); }
-                else if (name.find("base 6") != std::string::npos)
-                { proMeshRb->get_mesh_ptr(i, base6); }
-            }
         }
         //  =========================================================================================================
 
@@ -94,132 +81,145 @@ namespace nymrobot
         // if connected, expand the UI for working with the Robot
         if (status.StatusCode != 0 || controller->Status == NULL) { return; }
         
+        // UI for controlling the Robot
         ImGui::Begin("Robot Control", &connect_trigger);
-        //move_robot();
+
+        if (ImGui::Button("Clear Fault"))
+        {
+            StatusInfo* temptstt = new StatusInfo();
+            *temptstt = controller->Faults->ClearAllFaults();
+            if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
+            delete temptstt;
+
+        }
+
+        move_robot();
         read_robot();
+        ImGui::Separator();
+        if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }
+
 		ImGui::End();
     }
     void ymconnect::move_robot()
     {
-        StatusInfo tpstatus;        std::stringstream ss;
+        std::unique_ptr<StatusInfo> tpstatus = std::make_unique<StatusInfo>();
         ImGui::Separator();
-        /*static float mover_x = 0.1, mover_y=0.1, mover_z=0.1;     ImGui::SetNextItemWidth(100);
-        ImGui::InputFloat("X", &mover_x, 0.01f, 100.0f);   ImGui::SetNextItemWidth(100); 
-        ImGui::InputFloat("Y", &mover_y, 0.01f, 100.0f);   ImGui::SetNextItemWidth(100); 
-        ImGui::InputFloat("Z", &mover_z, 0.01f, 100.0f);*/
 
-        if (ImGui::Button("Move")) {
-			RobotPositionVariableData r1PositionData{}; r1PositionData.positionData.coordinateType = CoordinateType::RobotCoordinate;
-			//BaseAxisPositionVariableData b1PositionData{}; b1PositionData.positionData.coordinateType = CoordinateType::RobotCoordinate;
-            //tpstatus = controller->Variables->BasePositionVariable->Read(1, b1PositionData);
-            tpstatus = controller->Variables->RobotPositionVariable->Read(1, r1PositionData);
+        // Bx by bz for movement
+        static float bx{ 0 }, by{ 0 }, bz{ 0 }, brx{ 0 }, bry{ 0 }, brz{ 0 }, spdlinear{ 5 }, spdjoint{ 0.7 };
 
-            LinearMotion r1Motion(ControlGroupId::R1, r1PositionData.positionData, 25.0);
-            //JointMotion b1Motion(ControlGroupId::B1, b1PositionData.positionData, 25.0);
-			std::cout << r1Motion.position << std::endl;
+        ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("X ", &bx, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50); ImGui::SameLine();
+        ImGui::InputFloat("Y ", &by, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50); ImGui::SameLine();
+        ImGui::InputFloat("Z ", &bz, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("Rx", &brx, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50); ImGui::SameLine();
+        ImGui::InputFloat("Ry", &bry, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50); ImGui::SameLine();
+        ImGui::InputFloat("Rz", &brz, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("Linear Speed", &spdlinear, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("Joint Speed",  &spdjoint,  0.0f, 0.0f, "%.2f");
+        if (spdlinear <= 0 || spdlinear > 100) { spdlinear = 10; }
+        if (spdjoint <= 0 || spdjoint > 1)     { spdjoint = 0.7; }
+        if (ImGui::Button("B6 Linear Move [!!!!]")) {
+            BaseAxisPositionVariableData* b1PositionData = new BaseAxisPositionVariableData();
+            PositionData* b1posconvert = new PositionData();
 
-            tpstatus = controller->MotionManager->AddPointToTrajectory(r1Motion);
+            *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
+            *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1posconvert);
 
-            tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+            if (bx != 0.0f) { b1posconvert->axisData[0] += bx; }
+            if (by != 0.0f) { b1posconvert->axisData[1] += by; }
+            if (bz != 0.0f) { b1posconvert->axisData[2] += bz; }
+            if (brx != 0.0f) { b1posconvert->axisData[3] += brx; }
+            if (bry != 0.0f) { b1posconvert->axisData[4] += bry; }
+            if (brz != 0.0f) { b1posconvert->axisData[5] += brz; }
 
-            tpstatus = controller->MotionManager->MotionStart();
+            LinearMotion r1movel(ControlGroupId::R1, *b1posconvert, spdlinear);
+            // check SLURBT neu can thi giam toc.
 
-            /*
-            PositionData crposition{};
-            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::RobotCoordinate, 0, 0, crposition);
-            PositionData destination;
-			destination.coordinateType = CoordinateType::RobotCoordinate;
-            //Destination position.
-			destination.axisData = { crposition.axisData[0] + mover_x, crposition.axisData[1] + mover_y, crposition.axisData[2] + mover_z, crposition.axisData[3], crposition.axisData[4], crposition.axisData[5] };
-            //Set coordinate system to RobotCoordinate.
-            destination.coordinateType = CoordinateType::RobotCoordinate;
+            *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
+            *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+            *tpstatus = controller->MotionManager->MotionStart();
 
-            //A motion with the default motion attributes using the position data in destination.
-            //Speed of 25.0 mm/s. ControlGroupId R1.
-            LinearMotion r1LinearMotion(ControlGroupId::R1, destination, 25);
+            // delete ptr
+            delete b1PositionData;
+            delete b1posconvert;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("B6 Joint Move")) {
+            // use dynamic ptr for avoiding using too much memory on stack
+            RobotPositionVariableData* r1pos = new RobotPositionVariableData();
+            PositionData* r1poscv = new PositionData();
 
-            tpstatus = controller->MotionManager->AddPointToTrajectory(r1LinearMotion);
-            tpstatus = controller->MotionManager->MotionStart();*/
-            if (tpstatus.StatusCode!=0)
-            {
-                AlarmHistory alarmHistoryData;
-                controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData);
-				std::cout << alarmHistoryData << std::endl;
-            }
+            *tpstatus = controller->Variables->RobotPositionVariable->Read(0, *r1pos);
+            *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, r1pos->positionData, KinematicConversions::PulseToCartesianPos, *r1poscv);
+
+            if (bx != 0.0f) { r1poscv->axisData[0] += bx; }
+            if (by != 0.0f) { r1poscv->axisData[1] += by; }
+            if (bz != 0.0f) { r1poscv->axisData[2] += bz; }
+            if (brx != 0.0f) { r1poscv->axisData[3] += brx; }
+            if (bry != 0.0f) { r1poscv->axisData[4] += bry; }
+            if (brz != 0.0f) { r1poscv->axisData[5] += brz; }
+
+            JointMotion r1movej(ControlGroupId::R1,*r1poscv, spdjoint);
+            *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movej);
+            *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+            *tpstatus = controller->MotionManager->MotionStart();
+
+            // delete ptr
+            delete r1pos;
+            delete r1poscv;
         }
     }
+
     void ymconnect::read_robot()
     {
         // Setup for reading status
         ImGui::Separator();
-        std::stringstream ss;
+        std::stringstream* strget = new std::stringstream();
         StatusInfo tpstatus;
-        if (ImGui::Button("Read Status")) {
-            ControllerStateData stateData{};
-            controller->Status->ReadState(stateData);
-			//TODO: Create getstring function for status
-            ss << stateData;
-			MessageBox(NULL, ss.str().c_str(), "Read Status", MB_OK);
-        }
-        // Start to read the position
-        if (ImGui::Button("Read Pos"))
+
+        // read state
+        ControllerStateData stateData{};
+        controller->Status->ReadState(stateData);
+        *strget << stateData;
+        ImGui::Text("%s", strget->str().c_str());
+
+        // read the position
+        PositionData raxisData{}, rposData{}, rjointangle{};
+        tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, rposData);
+        *strget << rposData;
+        std::string substr = strget->str().substr(strget->str().find("Axes"));
+        if (stateData.isRunning)
         {
-			PositionData rData{};
-            // Position of robot
-            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, rData);
-            ss << formatNumber(rData) << "\n~~~DONE~~~\n";
-
-            /// Rotation of joint angles
-            for (int i = 11; i <= 18; ++i) {
-                ControlGroupId groupId = static_cast<ControlGroupId>(i);
-                tpstatus = controller->ControlGroup->ReadPositionData(groupId, CoordinateType::BaseCoordinate, 0, 0, rData);
-                ss << formatNumber(rData);
-            }
-			MessageBox(NULL, ss.str().c_str(), "Robot Pos", MB_OK);
-        }
-        // start to read torque
-        if (ImGui::Button("Read Torque"))
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", substr.c_str()); //red color
+        } 
+        else
         {
-            TorqueData  rData{};
-            // Position of robot
-            tpstatus = controller->ControlGroup->ReadTorqueData(ControlGroupId::R1, rData);
-            std::cout << rData << std::endl;
+            ImGui::Text("%s", substr.c_str());
         }
-
-
-        // Readtime linked
-        static bool readtime = false;
-        if (ImGui::Button("RealTime Start"))
+        if (stateData.isAlarming)
         {
-            static PositionData positionData{};
-            // Position of robot
-            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, positionData);
-
+            AlarmHistory alarmHistoryData;
+            controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData);
+            resultmsg.str();
+            resultmsg << alarmHistoryData << std::endl;
         }
-        ImGui::Button("RealTime Stop");
-    }
+
+        // read the Joint of robot
+        tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, raxisData);
+        tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, raxisData
+            , KinematicConversions::PulseToJointAngle, rjointangle);
+        angle1 = -rjointangle.axisData[0];
+        angle2 = rjointangle.axisData[1];
+        angle3 = -rjointangle.axisData[2];
+        angle4 = rjointangle.axisData[3];
+        angle5 = -rjointangle.axisData[4];
+        angle6 = rjointangle.axisData[5];
+        delete strget;
+        
+        }
+      
 
 
-
-    std::string ymconnect::formatNumber( PositionData positionData) {
-        std::ostringstream oss;
-        std::string name[8] = { "X: ", "Y: ", "Z: ", "Rx: ", "Ry: ", "Rz: ", "Re: ", "Rw: "};
-		for (int i{ 0 }; i < 8; i++) {
-            if (i<3)
-            {
-                oss << "[" << name[i] << std::setw(6) << std::setprecision(3) << std::fixed << positionData.axisData[i] << "] - ";
-			}
-			else if (i==3)
-			{
-				oss << "\n[" << name[i] << std::setw(6) << std::setprecision(3) << std::fixed << positionData.axisData[i] << "] - ";
-			}
-            else
-            {
-				oss << "[" << name[i] << std::setw(6) << std::setprecision(3) << std::fixed << positionData.axisData[i] << "] ";
-            }
-		}
-		oss << "\n";
-        return oss.str();
-    }
-
+    
 }

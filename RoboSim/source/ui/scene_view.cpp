@@ -24,10 +24,10 @@ namespace nui
   }
   void SceneView::set_rotation_center()
   {
-      nelems::oMesh* selMesh;
+      std::shared_ptr<nelems::oMesh> selMesh;
       for (int i = 0; i < rdMesh->size(); i++)
       {
-          rdMesh->get_mesh_ptr(i, selMesh);
+          selMesh =  rdMesh->get_mesh_ptr(i);
           if (selMesh->selected)
           { mCamera->set_rotation_center(selMesh->oMaterial.position);
           return; }

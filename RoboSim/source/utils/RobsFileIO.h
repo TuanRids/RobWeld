@@ -14,7 +14,7 @@ namespace nutils
     class RobsFileIO 
     {
     public:
-        static bool SaveToFile(nelems::mMesh& mesh)
+        static bool SaveToFile(nelems::mMesh& proMesh)
         {
             std::string filePath;
             //--------------------------------------------------------------------------------
@@ -59,13 +59,13 @@ namespace nutils
                 return false;
             }
 
-            uint32_t numMeshes = static_cast<uint32_t>(mesh.size());
+            uint32_t numMeshes = static_cast<uint32_t>(proMesh.size());
             file.write(reinterpret_cast<char*>(&numMeshes), sizeof(numMeshes));
 
-            for (int i = 0; i < mesh.size(); ++i)
+            for (int i = 0; i < proMesh.size(); ++i)
             {
-                nelems::oMesh* oMesh;
-                mesh.get_mesh_ptr(i, oMesh);
+                std::shared_ptr<nelems::oMesh> oMesh;
+                oMesh = proMesh.get_mesh_ptr(i);
 
                 file.write(reinterpret_cast<char*>(&oMesh->ID), sizeof(oMesh->ID));
 
