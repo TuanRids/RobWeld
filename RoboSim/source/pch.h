@@ -12,26 +12,10 @@
 
 #include "imgui.h"
 #include <ImFileBrowser.h>
-/// 1. Robot Moving (R1 & O1 -> O6)
-/// 2. The same UI as RoboDk
-/// 3. 3D Scanner showing results
-/// 
 
-
-
-
-
-
-
-/// Shader problems: right view - behind objects cover the front objects
-/// TEST ROBOT										=> 
 /// UPDATE DRAW LINES, POINTS						=> 
 /// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.		=> 
 /// ADD DRAW TEXT									=> 
-/// 
-/// robot table position: x,y,z,rx,ry,rz + 6 5 4 (3 2 1 expand)
-/// Keyframe: with a,v between keys
-/// 
 // GL includes
 
 #include <gl/glew.h>

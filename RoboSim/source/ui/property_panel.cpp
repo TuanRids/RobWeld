@@ -48,8 +48,9 @@ namespace nui
         }
         mRobot->render();
         camera_frame(scene_view); // show camera properties
-        
         Robot_Controls_table();
+
+
     }
     ////===========================================================================================
     //// Main Frames 
@@ -109,6 +110,7 @@ namespace nui
             for (int i = 0; i < proMesh->size(); i++)
             {
                 auto mesh = proMesh->get_mesh_ptr(i);
+                if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
 
@@ -205,6 +207,7 @@ namespace nui
         {
             for (int i = 0; i < proMesh->size(); i++) {
                 mesh = proMesh->get_mesh_ptr(i);
+                if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
                 ImGui::Text(mesh->oname); ImGui::SameLine();
                 ImGui::Text(": %lld - %lld", mesh->mVertices.size(), mesh->mVertexIndices.size());
             }
@@ -393,6 +396,7 @@ namespace nui
             static const char* items[] = { "Single Point Light", "WorldBox 8 Lights", "NoLights"};
             ImGui::Combo("SetLight", &scene_view->get_light()->lightmode, items, IM_ARRAYSIZE(items)); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Light Intensity", &scene_view->get_light()->mStrength, 0.00f, 1000.0f);
+
             if (scene_view->get_light()->mStrength == 0)
             {
                 ImGui::TextWrapped("Light is off. Render by Shaded mode.");
@@ -447,12 +451,12 @@ namespace nui
 
                 mesh = proMesh->get_mesh_ptr(i);
                 std::string name = std::string(mesh->oname);
-                if (name.find("base 1") != std::string::npos)      { base[0] = std::move(mesh); }
-                else if (name.find("base 2") != std::string::npos) { base[1] = std::move(mesh); }
-                else if (name.find("base 3") != std::string::npos) { base[2] = std::move(mesh); }
-                else if (name.find("base 4") != std::string::npos) { base[3] = std::move(mesh); }
-                else if (name.find("base 5") != std::string::npos) { base[4] = std::move(mesh); }
-                else if (name.find("base 6") != std::string::npos) { base[5] = std::move(mesh); }
+                if      (name.find("RBSIMBase_1") != std::string::npos) { base[0] = std::move(mesh); }
+                else if (name.find("RBSIMBase_2") != std::string::npos) { base[1] = std::move(mesh); }
+                else if (name.find("RBSIMBase_3") != std::string::npos) { base[2] = std::move(mesh); }
+                else if (name.find("RBSIMBase_4") != std::string::npos) { base[3] = std::move(mesh); }
+                else if (name.find("RBSIMBase_5") != std::string::npos) { base[4] = std::move(mesh); }
+                else if (name.find("RBSIMBase_6") != std::string::npos) { base[5] = std::move(mesh); }
             }
         }
         if (base[0] == nullptr) { return; }
@@ -514,7 +518,7 @@ namespace nui
         }
         if (tem1 != ang1 || tem2 != ang2 || tem3 != ang3 || tem4 != ang4 || tem5 != ang5 || tem6 != ang6)
         {
-            std::vector<nelems::oMesh> Joints = { *base[0], *base[1], *base[2], *base[3], *base[4], *base[5] };
+            Joints = { *base[0], *base[1], *base[2], *base[3], *base[4], *base[5] };
             // take angle from temporary
             ang1 = tem1; ang2 = tem2; ang3 = tem3; ang4 = tem4; ang5 = tem5; ang6 = tem6;
             mRobot->get_angle(ang1, ang2, ang3, ang4, ang5, ang6);
@@ -563,10 +567,6 @@ namespace nui
         float diffX, float diffY, float diffZ)
     {
         ang = std::round(ang * 100.0f) / 100.0f;
-        if (jointIndex == 0)
-		{
-			std::cout << ang << std::endl;
-		}
         if (std::abs(ang - pre) > tolerance) {
             float diff = ang - pre;
             if (jointIndex == 0)

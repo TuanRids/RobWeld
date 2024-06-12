@@ -13,7 +13,6 @@ namespace ncommand
             }
             // Store the command in the command stack
             commandStack.push_back(std::move(cmd));
-            std::cout << cmdIDs.back() << cmdlogs.back() << std::endl;
             redoStack.clear(); // Clear redo stack when executing new command
             if (commandStack.size() > limhit) {
                 commandStack.front().reset(); // FOCUS: Reset to avoid Memory Leaks 

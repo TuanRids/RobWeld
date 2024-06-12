@@ -20,7 +20,6 @@ struct OBxyz {
         // Create the rotation matrix from the rotation vector (Euler angles)
         glm::quat quaternion = glm::quat(glm::vec3(glm::radians(rotation.x), glm::radians(rotation.y), glm::radians(rotation.z)));
         glm::mat4 rotationMatrix = glm::toMat4(quaternion);
-        std::cout << rotation.z << std::endl;
         // Update StartPoint and Endpoints based on the new position
         xs = position; xe = position + glm::vec3(rotationMatrix * glm::vec4(1000.0f, 0.0f, 0.0f, 1.0f));
         ys = position; ye = position + glm::vec3(rotationMatrix * glm::vec4(0.0f, 1000.0f, 0.0f, 1.0f));
@@ -64,8 +63,5 @@ struct Material {
         mOxyz.update(position, rotation);
     }
 
-    void printpos()
-    {
-        std::cout << position.x << " " << position.y << " " << position.z << std::endl;
-    }
+
 };

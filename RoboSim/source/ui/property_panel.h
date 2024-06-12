@@ -43,7 +43,7 @@ namespace nui
         std::vector<std::shared_ptr<nelems::oMesh>> base;
         nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
- 
+
         float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
         nymrobot::ymconnect* mRobot;
 

@@ -78,15 +78,17 @@ void main()
 
     if (LightModes == 1)
     {
+        int lipx = 1000;
+        int lipxx = -1000;
         vec3 lightPositions[8] = vec3[](
-            vec3(1000, 1000, 1000),
-            vec3(1000, 1000, -1000),
-            vec3(-1000, 1000, 1000),
-            vec3(-1000, 1000, -1000),
-            vec3(1000, -1000, 1000),
-            vec3(1000, -1000, -1000),
-            vec3(-1000, -1000, 1000),
-            vec3(-1000, -1000, -1000)
+            vec3(lipx, lipx, lipx),
+            vec3(lipx, lipx, lipxx),
+            vec3(lipxx, lipx, lipx),
+            vec3(lipxx, lipx, lipxx),
+            vec3(lipx, lipxx, lipx),
+            vec3(lipx, lipxx, lipxx),
+            vec3(lipxx, lipxx, lipx),
+            vec3(lipxx, lipxx, lipxx)
         );
 
         for (int i = 0; i < 8; ++i)

@@ -55,7 +55,6 @@ namespace nymrobot
 
     void ymconnect::disconnect_robot(bool showmsg)
     {
-        std::cout<< status.StatusCode << std::endl;
         if (status.StatusCode == 0)
         { 
             YMConnect::CloseConnection(controller);

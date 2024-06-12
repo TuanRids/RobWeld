@@ -1,8 +1,11 @@
 #include "pch.h"
 #include "HotkeyMenubar.h"
+#include "ui/RdrawChart.h"
+
 namespace nui {
 	bool HotkeyMenubar::waitloop[6] = { false,false,false,false,false,false };
 	bool HotkeyMenubar::shint = true;
+    static std::unique_ptr<RdrawChart> drchart = std::make_unique<RdrawChart>();
 
 	void HotkeyMenubar::mMenuBar(GLFWwindow* mWindow)
     {
@@ -113,6 +116,20 @@ namespace nui {
             {
                 //
             }
+
+            if (ImGui::BeginMenu("Chart"))
+            {
+                if (ImGui::MenuItem("Show"))
+                {
+                    drchart->setChartFlag(true);
+                }
+                if (ImGui::MenuItem("Hide"))
+				{
+					drchart->setChartFlag(false);
+					
+				}
+				ImGui::EndMenu();
+            }
             ImGui::EndMainMenuBar();
         }
     }
@@ -121,7 +138,7 @@ namespace nui {
 
     {
 
-
+        drchart->render();
         static double lastPressTime{ 0 };
         static const double debounceDelay = 0.1;
 

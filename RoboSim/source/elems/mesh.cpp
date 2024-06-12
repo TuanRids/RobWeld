@@ -184,7 +184,7 @@ namespace nelems {
 
     bool mMesh::load(const std::string& filepath, bool robot) {
         static glm::vec3 color[9] = {
-            glm::vec3(0.14, 0.14, 0.14), glm::vec3(0.13, 0.15, 0.17), glm::vec3(0.1, 0.4, 0.7),
+            glm::vec3(0.1, 0.4, 0.7),
             glm::vec3(0.0, 0.5, 0.0), glm::vec3(1.0, 0.8, 0.2), glm::vec3(0.0, 0.6, 0.4),
             glm::vec3(0.2, 0.1, 0.1), glm::vec3(0.04, 0.04, 0.4), glm::vec3(0.4, 0.1, 0.7)
         };
@@ -206,7 +206,7 @@ namespace nelems {
                 for (unsigned int i = 0; i < pScene->mNumMeshes; ++i) {
                     auto* mesh = pScene->mMeshes[i];
                     std::string name = mesh->mName.C_Str();
-                    if (name.find("ct") != std::string::npos) {
+                    if (name.find("RBSIMCenter_") != std::string::npos) {
                         ctMap[name] = glm::vec3(mesh->mVertices[0].x, mesh->mVertices[0].y, mesh->mVertices[0].z);
                     }
                 }
@@ -221,12 +221,25 @@ namespace nelems {
                 load_specific_mesh(mesh, newMesh);
                 if (robot) {
                     std::string name = mesh->mName.C_Str();
-                    if (name.find("ct") != std::string::npos) { continue; }
-                    newMesh.changeName(name);
-                    newMesh.oMaterial.mColor = color[color_idx++];
-                    if (name.find("table") != std::string::npos) { newMesh.oMaterial.mMetallic = 0; newMesh.oMaterial.mRoughness = 0; }
-                    name = "ct" + name.substr(name.find_last_of(" ") + 1);
-                    newMesh.oMaterial.position = ctMap[name];
+                    // Center Point => Skip
+                    if (name.find("RBSIMCenter_") != std::string::npos) { continue; }
+                    // Table
+                    else if (name.find("table") != std::string::npos)
+                    {
+                        newMesh.oMaterial.mMetallic = 0; newMesh.oMaterial.mRoughness = 0;
+						newMesh.changeName(name);
+						newMesh.oMaterial.mColor = glm::vec3(0.2f, 0.2f, 0.2f);
+						name = "RBSIMCenter_" + name.substr(name.find_last_of(" ") + 1);
+						newMesh.oMaterial.position = ctMap[name];
+                    }
+                    // Base
+                    else
+                    {
+                        newMesh.changeName(name);
+                        newMesh.oMaterial.mColor = color[color_idx++];
+                        name = "RBSIMCenter_" + name.substr(name.find_last_of(" ") + 1);
+                        newMesh.oMaterial.position = ctMap[name];
+                    }
                 }
                 else {
                     newMesh.changeName(filename + std::to_string(newMesh.ID % 1000));

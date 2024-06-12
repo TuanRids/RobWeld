@@ -212,7 +212,7 @@ namespace nelems
 		glm::mat4 mProjection = glm::mat4{ 1.0f };
 		glm::vec3 mPosition = { 0.0f, 0.0f, 0.0f };
 
-		glm::vec3 mFocus = { 541.4f, 874.2f, -1293.4f };
+		glm::vec3 mFocus = { 500.0f,400.0f, -100.0f };
 
 		float mDistance = 655.0f;
 		float mAspect;
