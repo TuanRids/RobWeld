@@ -91,8 +91,7 @@ namespace nymrobot
             delete temptstt;
 
         }
-
-        move_robot();
+        if (call_move) { move_robot(); MessageBox(NULL, "Move Robot", "Move Robot", MB_OK);}
         read_robot();
         ImGui::Separator();
         if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }

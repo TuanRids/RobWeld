@@ -10,6 +10,8 @@
 #include "elems/TranRBMatrix.h"
 #include <cmath>
 #include "chrono"
+
+
 using namespace Eigen;
 
 namespace nui
@@ -48,9 +50,8 @@ namespace nui
         }
         mRobot->render();
         camera_frame(scene_view); // show camera properties
+        
         Robot_Controls_table();
-
-
     }
     ////===========================================================================================
     //// Main Frames 
@@ -442,13 +443,12 @@ namespace nui
 
     void nui::Property_Panel::Robot_Controls_table()
     {
-
-        // get base objects
+        // *****************************************************
+        // Get base objects if not already retrieved
         if (base[0] == nullptr)
         {
-            for (int i{ 0 }; i < proMesh->size(); i++)
+            for (int i = 0; i < proMesh->size(); i++)
             {
-
                 mesh = proMesh->get_mesh_ptr(i);
                 std::string name = std::string(mesh->oname);
                 if      (name.find("RBSIMBase_1") != std::string::npos) { base[0] = std::move(mesh); }
@@ -459,52 +459,116 @@ namespace nui
                 else if (name.find("RBSIMBase_6") != std::string::npos) { base[5] = std::move(mesh); }
             }
         }
+
+        // If no base objects found, return
         if (base[0] == nullptr) { return; }
 
-
-
-
+        // *****************************************************
+        // Initialize static variables for joint angles
         static float tolerance = 0.1f;
-        static float ang1{ 0 }, ang2{ 0 }, ang3{ 0 }, ang4{ 0 }, ang5{ 0 }, ang6{ 0 };
-        static float pre1{ 0 }, pre2{ 0 }, pre3{ 0 }, pre4{ 0 }, pre5{ 0 }, pre6{ 0 };
-        static float tem1{ 0 }, tem2{ 0 }, tem3{ 0 }, tem4{ 0 }, tem5{ 0 }, tem6{ 0 };
-                
-        // OrgBase: use as main rotation for avoiding overlapping matrix calculations
-        // base:    use to visualize on the 3D screen.
-        // Joints:  use to calculate the rotation of the joints.
+        static float ang1 = 0, ang2 = 0, ang3 = 0, ang4 = 0, ang5 = 0, ang6 = 0;
+        static float pre1 = 0, pre2 = 0, pre3 = 0, pre4 = 0, pre5 = 0, pre6 = 0;
+        static float tem1 = 0, tem2 = 0, tem3 = 0, tem4 = 0, tem5 = 0, tem6 = 0;
 
-        // Set OrgBase and Joints
-        static std::vector<nelems::oMesh> OrgBase = { *base[0], *base[1], *base[2], *base[3], *base[4], *base[5] };
-        std::vector<nelems::oMesh> Joints = { *base[0], *base[1], *base[2], *base[3], *base[4], *base[5] };
+        // OrgBase is used as the main rotation reference to avoid overlapping matrix calculations
+        static std::vector<std::shared_ptr<nelems::oMesh>> OrgBase = {
+            std::make_shared<nelems::oMesh>(*base[0]),
+            std::make_shared<nelems::oMesh>(*base[1]),
+            std::make_shared<nelems::oMesh>(*base[2]),
+            std::make_shared<nelems::oMesh>(*base[3]),
+            std::make_shared<nelems::oMesh>(*base[4]),
+            std::make_shared<nelems::oMesh>(*base[5])
+        };
 
-        // std::vector<nelems::oMesh> joints = { cpOrgBase->at(0),cpOrgBase->at(1),cpOrgBase->at(2),cpOrgBase->at(3),cpOrgBase->at(4),cpOrgBase->at(5)};
+        std::vector<std::shared_ptr<nelems::oMesh>> Joints = {
+            std::make_shared<nelems::oMesh>(*base[0]),
+            std::make_shared<nelems::oMesh>(*base[1]),
+            std::make_shared<nelems::oMesh>(*base[2]),
+            std::make_shared<nelems::oMesh>(*base[3]),
+            std::make_shared<nelems::oMesh>(*base[4]),
+            std::make_shared<nelems::oMesh>(*base[5])
+        };
 
-        // UI
-        ImGui::Begin("Robot Controls", nullptr);  ImGui::SetNextItemWidth(100);
-        ImGui::InputFloat("Base1", &ang1, 1.0f, 0.5f, "%.2f"); ImGui::SetNextItemWidth(100);
-        ImGui::InputFloat("Base2", &ang2, 1.0f, 0.5f, "%.2f"); ImGui::SetNextItemWidth(100);
-        ImGui::InputFloat("Base3", &ang3, 1.0f, 0.5f, "%.2f"); ImGui::SetNextItemWidth(100);
-        ImGui::InputFloat("Base4", &ang4, 1.0f, 0.5f, "%.2f"); ImGui::SetNextItemWidth(100);
-        ImGui::InputFloat("Base5", &ang5, 1.0f, 0.5f, "%.2f"); ImGui::SetNextItemWidth(100);
-        ImGui::InputFloat("Base6", &ang6, 1.0f, 0.5f, "%.2f");
-        bool resvl = ImGui::Button("Reset"); static bool ResFlag = false;
+        ImGui::Begin("Robot Controls", nullptr);
+        static bool CtrFlag = false;
+        if (ImGui::Button(CtrFlag ? "Visualize" : "LiveSync")) { CtrFlag = !CtrFlag; }
+
+        // LiveSync Mode: 
+        if (CtrFlag == false) { 
+            // *****************************************************
+            // Set Switching Color
+            static auto lastSwitchTime = std::chrono::steady_clock::now();
+            static bool useRed = true;
+            ImVec4 redcode = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+            ImVec4 bluecode = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+            auto now = std::chrono::steady_clock::now();
+            if (std::chrono::duration_cast<std::chrono::seconds>(now - lastSwitchTime).count() >= 0.5)
+            {  useRed = !useRed;   lastSwitchTime = now;  }
+
+            // Get joint angles
+            mRobot->get_angle(ang1, ang2, ang3, ang4, ang5, ang6);
+
+            // Show Joints Data
+            ImVec4 vecred = useRed ? redcode : bluecode;
+            ImGui::TextColored(vecred, "Joint 1: %.2f", ang1); ImGui::SameLine();
+            ImGui::TextColored(vecred, "Joint 4: %.2f", ang4);
+            ImGui::TextColored(vecred, "Joint 2: %.2f", ang2); ImGui::SameLine();
+            ImGui::TextColored(vecred, "Joint 5: %.2f", ang5);
+            ImGui::TextColored(vecred, "Joint 3: %.2f", ang3); ImGui::SameLine();
+            ImGui::TextColored(vecred, "Joint 6: %.2f", ang6);
+            mRobot->trigger_call_move(false);
+        }
+        // Visualize Mode:
+        else
+        {
+            mRobot->trigger_call_move(true);
+            // UI for controlling joint angles
+            ImGui::SetNextItemWidth(100);
+            ImGui::SliderFloat("Joint 1", &ang1, -180.0f, 180.0f, "%.2f");
+
+            ImGui::SetNextItemWidth(100);
+            ImGui::SliderFloat("Joint 2", &ang2, -180.0f, 180.0f, "%.2f");
+
+            ImGui::SetNextItemWidth(100);
+            ImGui::SliderFloat("Joint 3", &ang3, -180.0f, 180.0f, "%.2f");
+
+            ImGui::SetNextItemWidth(100);
+            ImGui::SliderFloat("Joint 4", &ang4, -180.0f, 180.0f, "%.2f");
+
+            ImGui::SetNextItemWidth(100);
+            ImGui::SliderFloat("Joint 5", &ang5, -180.0f, 180.0f, "%.2f");
+
+            ImGui::SetNextItemWidth(100);
+            ImGui::SliderFloat("Joint 6", &ang6, -180.0f, 180.0f, "%.2f");
+
+        }
+        
 
         
-        // If any angle is adjusted
-        if ( (tem1 != ang1 || tem2 != ang2 || tem3 != ang3 || tem4 != ang4 || tem5 != ang5 || tem6 != ang6) && ResFlag == false)
+        
+
+        // *****************************************************
+        // Check if any angle has been adjusted
+        static bool ResFlag = false;
+        if ((tem1 != ang1 || tem2 != ang2 || tem3 != ang3 || tem4 != ang4 || tem5 != ang5 || tem6 != ang6) && !ResFlag)
         {
-            // save ang to temporary
+            // Save current angles to temporary variables
             tem1 = ang1; tem2 = ang2; tem3 = ang3; tem4 = ang4; tem5 = ang5; tem6 = ang6;
-            // reset ang and objects to original
-            ang1 = 0; ang2 = 0; ang3 = 0; ang4 = 0; ang5 = 0; ang6 = 0;
-            for (int j = 0; j < 2; j++) {
-                for (int i{ 0 }; i < 6; i++) {
-                    base[i]->oMaterial.rotation = OrgBase[i].oMaterial.rotation;
-                    base[i]->mVertices = OrgBase[i].mVertices;
-                    base[i]->oMaterial.position = OrgBase[i].oMaterial.position;
-                    base[i]->oMaterial.mOxyz = OrgBase[i].oMaterial.mOxyz;
+
+            // Reset angles and objects to original state
+            ang1 = ang2 = ang3 = ang4 = ang5 = ang6 = 0;
+            for (int j = 0; j < 2; j++)
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    base[i]->oMaterial.rotation = OrgBase[i]->oMaterial.rotation;
+                    base[i]->mVertices = OrgBase[i]->mVertices;
+                    base[i]->oMaterial.position = OrgBase[i]->oMaterial.position;
+                    base[i]->oMaterial.mOxyz = OrgBase[i]->oMaterial.mOxyz;
                 }
-                // Rotate object with ang = default to reset all status
+
+                // Rotate joints to reset all statuses
                 rotateJoint(5, ang6, pre6, tolerance, Joints, base, ang6 - pre6, 0, 0);
                 rotateJoint(4, ang5, pre5, tolerance, Joints, base, 0, ang5 - pre5, 0);
                 rotateJoint(3, ang4, pre4, tolerance, Joints, base, ang4 - pre4, 0, 0);
@@ -513,57 +577,42 @@ namespace nui
                 rotateJoint(0, ang1, pre1, tolerance, Joints, base, 0, 0, ang1 - pre1);
             }
             ResFlag = true;
-            //ImGui::End();
-            //return;
         }
+        // If angles have changed, update joint rotations
         if (tem1 != ang1 || tem2 != ang2 || tem3 != ang3 || tem4 != ang4 || tem5 != ang5 || tem6 != ang6)
         {
-            Joints = { *base[0], *base[1], *base[2], *base[3], *base[4], *base[5] };
-            // take angle from temporary
+            Joints = {
+                std::make_shared<nelems::oMesh>(*base[0]),
+                std::make_shared<nelems::oMesh>(*base[1]),
+                std::make_shared<nelems::oMesh>(*base[2]),
+                std::make_shared<nelems::oMesh>(*base[3]),
+                std::make_shared<nelems::oMesh>(*base[4]),
+                std::make_shared<nelems::oMesh>(*base[5])
+            };
+
+            // Restore angles from temporary variables
             ang1 = tem1; ang2 = tem2; ang3 = tem3; ang4 = tem4; ang5 = tem5; ang6 = tem6;
             mRobot->get_angle(ang1, ang2, ang3, ang4, ang5, ang6);
 
-            // Calculation based on the new angle
+            // Calculate new joint rotations based on angles
             rotateJoint(5, ang6, pre6, tolerance, Joints, base, ang6 - pre6, 0, 0);
             rotateJoint(4, ang5, pre5, tolerance, Joints, base, 0, ang5 - pre5, 0);
             rotateJoint(3, ang4, pre4, tolerance, Joints, base, ang4 - pre4, 0, 0);
             rotateJoint(2, ang3, pre3, tolerance, Joints, base, 0, ang3 - pre3, 0);
             rotateJoint(1, ang2, pre2, tolerance, Joints, base, 0, ang2 - pre2, 0);
             rotateJoint(0, ang1, pre1, tolerance, Joints, base, 0, 0, ang1 - pre1);
+
             ResFlag = false;
         }
-        
+
+        // Create buffers for each base
         for (auto& bs : base) { bs->create_buffers(); }
-
-        /*
-        TOD 1: Update Oxyz
-        */
-        static auto lastSwitchTime = std::chrono::steady_clock::now();
-        static bool useRed = true;
-
-        ImVec4 redcode = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-        ImVec4 bluecode = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
-
-        auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::seconds>(now - lastSwitchTime).count() >= 0.5)
-        {
-            useRed = !useRed;
-            lastSwitchTime = now;
-        }
-        ImVec4 vecred = useRed ? redcode : bluecode;
-        ImGui::Text("Base Angle: ");
-        ImGui::TextColored(vecred, "Joint 1: %.2f", ang1); ImGui::SameLine();
-        ImGui::TextColored(vecred, "Joint 4: %.2f", ang4);
-        ImGui::TextColored(vecred, "Joint 2: %.2f", ang2); ImGui::SameLine();
-        ImGui::TextColored(vecred, "Joint 5: %.2f", ang5);
-        ImGui::TextColored(vecred, "Joint 3: %.2f", ang3); ImGui::SameLine();
-        ImGui::TextColored(vecred, "Joint 6: %.2f", ang6);
-
         ImGui::End();
     }
 
+
     void nui::Property_Panel::rotateJoint(size_t jointIndex, float& ang, float& pre, const float tolerance,
-        std::vector<nelems::oMesh>& joints, std::vector<std::shared_ptr <nelems::oMesh>>& base,
+        std::vector< std::shared_ptr <nelems::oMesh>>& joints, std::vector<std::shared_ptr <nelems::oMesh>>& base,
         float diffX, float diffY, float diffZ)
     {
         ang = std::round(ang * 100.0f) / 100.0f;
@@ -574,13 +623,13 @@ namespace nui
                 std::cout << 0 << std::endl;
             }
             for (size_t i = jointIndex; i < joints.size(); ++i) {
-                joints[i].applyTransformation(base[jointIndex]->oMaterial.position, diffX, diffY, diffZ);
-                base[i]->mVertices = joints[i].mVertices;
-                base[i]->oMaterial.position = joints[i].oMaterial.position;
-                base[i]->oMaterial.mOxyz = joints[i].oMaterial.mOxyz;
+                joints[i]->applyTransformation(base[jointIndex]->oMaterial.position, diffX, diffY, diffZ);
+                base[i]->mVertices = joints[i]->mVertices;
+                base[i]->oMaterial.position = joints[i]->oMaterial.position;
+                base[i]->oMaterial.mOxyz = joints[i]->oMaterial.mOxyz;
                 // base[i]->create_buffers();
             }
-            base[jointIndex]->oMaterial.rotation = joints[jointIndex].oMaterial.rotation;
+            base[jointIndex]->oMaterial.rotation = joints[jointIndex]->oMaterial.rotation;
 
             pre = std::round(ang * 100.0f) / 100.0f;
         }     

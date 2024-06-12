@@ -71,7 +71,7 @@ namespace nui
         void layer_frame(nui::SceneView* scene_view);
         void Robot_Controls_table();
         void rotateJoint(size_t jointIndex, float& ang, float& pre, const float tolerance,
-            std::vector<nelems::oMesh>& joints, std::vector<std::shared_ptr<nelems::oMesh>>& base,
+            std::vector< std::shared_ptr <nelems::oMesh>>& joints, std::vector<std::shared_ptr<nelems::oMesh>>& base,
             float diffX, float diffY, float diffZ);
         void obInfo_frame();
         void coordinate_frame();

@@ -229,15 +229,13 @@ namespace nelems {
                         newMesh.oMaterial.mMetallic = 0; newMesh.oMaterial.mRoughness = 0;
 						newMesh.changeName(name);
 						newMesh.oMaterial.mColor = glm::vec3(0.2f, 0.2f, 0.2f);
-						name = "RBSIMCenter_" + name.substr(name.find_last_of(" ") + 1);
-						newMesh.oMaterial.position = ctMap[name];
                     }
                     // Base
                     else
                     {
                         newMesh.changeName(name);
                         newMesh.oMaterial.mColor = color[color_idx++];
-                        name = "RBSIMCenter_" + name.substr(name.find_last_of(" ") + 1);
+                        name = "RBSIMCenter_" + name.substr(name.find_last_of("_") + 1);
                         newMesh.oMaterial.position = ctMap[name];
                     }
                 }

@@ -13,7 +13,7 @@ namespace nymrobot
 	class ymconnect
 	{
 	private:
-		bool call_move{ false }, call_read{ false };
+		bool call_move{ false };
 		bool connect_trigger = true;
 		StatusInfo status;
 		MotomanController* controller;
@@ -54,7 +54,7 @@ namespace nymrobot
 
 		void disconnect_robot(bool showmsg);
 		void render();
-
+		void trigger_call_move(const bool &get_stt) { call_move = get_stt; }
 		// setter connect trigger as true to show UI for connecting with the robot
 		// static for simple access
 		void set_connect_trigger(const bool& trigger) { connect_trigger = trigger; }

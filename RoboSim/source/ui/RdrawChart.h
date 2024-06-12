@@ -9,7 +9,7 @@ namespace nui
     class RdrawChart
     {
     private:
-        bool dChartFlag{ true };
+        bool dChartFlag{ false };
     public:
         // Constructor
         RdrawChart();
