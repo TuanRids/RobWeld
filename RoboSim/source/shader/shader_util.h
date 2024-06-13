@@ -17,7 +17,6 @@ namespace nshaders
 
 		// Load a vertex and a fragment shader from file
 		bool load(const std::string& vertexshader_file, const std::string& fragmentshader_file);
-
 		// Use the program
 		void use();
 

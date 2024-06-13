@@ -82,20 +82,19 @@ namespace nymrobot
         
         // UI for controlling the Robot
         ImGui::Begin("Robot Control", &connect_trigger);
-
         if (ImGui::Button("Clear Fault"))
         {
             StatusInfo* temptstt = new StatusInfo();
             *temptstt = controller->Faults->ClearAllFaults();
             if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
             delete temptstt;
-
         }
-        if (call_move) { move_robot(); MessageBox(NULL, "Move Robot", "Move Robot", MB_OK);}
+
+        if (call_move) { move_robot(); }
         read_robot();
         ImGui::Separator();
-        if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }
 
+        if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }
 		ImGui::End();
     }
     void ymconnect::move_robot()
@@ -117,7 +116,9 @@ namespace nymrobot
         ImGui::InputFloat("Joint Speed",  &spdjoint,  0.0f, 0.0f, "%.2f");
         if (spdlinear <= 0 || spdlinear > 100) { spdlinear = 10; }
         if (spdjoint <= 0 || spdjoint > 1)     { spdjoint = 0.7; }
+
         if (ImGui::Button("B6 Linear Move [!!!!]")) {
+            switchVisualizeMode = true;
             BaseAxisPositionVariableData* b1PositionData = new BaseAxisPositionVariableData();
             PositionData* b1posconvert = new PositionData();
 
@@ -144,6 +145,7 @@ namespace nymrobot
         }
         ImGui::SameLine();
         if (ImGui::Button("B6 Joint Move")) {
+            switchVisualizeMode = true;
             // use dynamic ptr for avoiding using too much memory on stack
             RobotPositionVariableData* r1pos = new RobotPositionVariableData();
             PositionData* r1poscv = new PositionData();
@@ -187,6 +189,7 @@ namespace nymrobot
         tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, rposData);
         *strget << rposData;
         std::string substr = strget->str().substr(strget->str().find("Axes"));
+
         if (stateData.isRunning)
         {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", substr.c_str()); //red color

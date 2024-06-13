@@ -5,6 +5,8 @@
 #include <filesystem>
 #include "render/opengl_buffer_manager.h"
 #include <thread>
+#include <unordered_set>
+#include <functional>
 
 namespace nelems {
     void oMesh::rotate(float angleX, float angleY, float angleZ) {
@@ -96,60 +98,36 @@ namespace nelems {
         oMaterial.mOxyz.zs.z += offsetZ; oMaterial.mOxyz.ze.z += offsetZ;
     }
 
-    void oMesh::applyTransformation(const glm::vec3& center, float angleX, float angleY, float angleZ) {
-        // create rotation matrix
-        Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
+    void oMesh::applyTransformation(const glm::vec3& center, Eigen::Matrix4f transform) {
+        
 
-        // X-axis rotation
-        if (angleX != 0.0f) {
-            float rad = glm::radians(angleX);
-            Eigen::Matrix4f rotX;
-            rotX << 1, 0, 0, 0,
-                0, cos(rad), -sin(rad), 0,
-                0, sin(rad), cos(rad), 0,
-                0, 0, 0, 1;
-            transform *= rotX;
+        // Convert vertices to Eigen matrix
+        Eigen::MatrixXf vtx(4, mVertices.size());
+        for (size_t i = 0; i < mVertices.size(); ++i) {
+            vtx(0, i) = mVertices[i].mPos.x - center.x;
+            vtx(1, i) = mVertices[i].mPos.y - center.y;
+            vtx(2, i) = mVertices[i].mPos.z - center.z;
+            vtx(3, i) = 1.0f;
         }
 
-        // Y-axis rotation
-        if (angleY != 0.0f) {
-            float rad = glm::radians(angleY);
-            Eigen::Matrix4f rotY;
-            rotY << cos(rad), 0, sin(rad), 0,
-                0, 1, 0, 0,
-                -sin(rad), 0, cos(rad), 0,
-                0, 0, 0, 1;
-            transform *= rotY;
+        // Apply transformation to all vertices
+        Eigen::MatrixXf newPositions = transform * vtx;
+
+        // Update vertices positions
+        for (size_t i = 0; i < mVertices.size(); ++i) {
+            mVertices[i].mPos = glm::vec3(newPositions(0, i) + center.x, newPositions(1, i) + center.y, newPositions(2, i) + center.z);
         }
 
-        // Z-axis rotation
-        if (angleZ != 0.0f) {
-            float rad = glm::radians(angleZ);
-            Eigen::Matrix4f rotZ;
-            rotZ << cos(rad), -sin(rad), 0, 0,
-                sin(rad), cos(rad), 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1;
-            transform *= rotZ;
-        }
-
-        for (auto& vertex : mVertices) {
-            Eigen::Vector4f newPos = transform * Eigen::Vector4f(vertex.mPos.x - center.x, vertex.mPos.y - center.y, vertex.mPos.z - center.z, 1.0f);
-            vertex.mPos = glm::vec3(newPos.x() + center.x, newPos.y() + center.y, newPos.z() + center.z);
-        }
         // Update oMaterial position
         Eigen::Vector4f centerPos(oMaterial.position.x - center.x, oMaterial.position.y - center.y, oMaterial.position.z - center.z, 1.0f);
         Eigen::Vector4f newCenterPos = transform * centerPos;
         oMaterial.position.x = newCenterPos.x() + center.x;
         oMaterial.position.y = newCenterPos.y() + center.y;
         oMaterial.position.z = newCenterPos.z() + center.z;
-        // Update oMaterial rotation
-        oMaterial.rotation.x += angleX;
-        oMaterial.rotation.y += angleY;
-        oMaterial.rotation.z += angleZ;
 
-        oMaterial.updateOxyz();
+
     }
+
 }
 
 
@@ -190,7 +168,7 @@ namespace nelems {
         };
 
         const uint32_t cMeshImportFlags =
-            aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes |
+            aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices|
             aiProcess_ValidateDataStructure;
 
         Assimp::Importer Importer;
@@ -256,6 +234,7 @@ namespace nelems {
     }
 
     void mMesh::load_specific_mesh(const aiMesh* mesh, oMesh& outMesh) {
+        std::cout << mesh->mNumVertices << std::endl;
         for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
             VertexHolder vh;
             vh.mPos = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };

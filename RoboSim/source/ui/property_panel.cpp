@@ -40,7 +40,7 @@ namespace nui
 
         if (ImGui::Begin("Properties"))
         {
-            
+
             obInfo_frame(); // show object info such as vertices and vertex indices
             ImGui::Separator();
             coordinate_frame(); // show the position
@@ -50,7 +50,7 @@ namespace nui
         }
         mRobot->render();
         camera_frame(scene_view); // show camera properties
-        
+
         Robot_Controls_table();
     }
     ////===========================================================================================
@@ -176,7 +176,7 @@ namespace nui
     {
         static int x{ 200 }, y{ 200 };
         static float pos_x, pos_y;
-        nui::FrameManage::getViewportSize(pos_x, pos_y); 
+        nui::FrameManage::getViewportSize(pos_x, pos_y);
         ImGui::SetNextWindowPos(ImVec2(pos_x + 15, pos_y + 35)); // Set the position of the frame
         ImGui::SetNextWindowSize(ImVec2(x, y)); // Set the size of the frame
         ImGui::Begin("H1", nullptr,
@@ -222,10 +222,6 @@ namespace nui
 
         if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen)) //&&mesh
         {
-            ImGui::Separator();
-            ImGui::Text("Add arrow");
-            ImGui::Text("Add front, right and top view");
-            ImGui::Text("Add Delete = delete objects");
             ImGui::Separator();
             bool pressOk = ImGui::Button("UPDATE");
             if (proMesh->check_selected() == 1)
@@ -360,13 +356,13 @@ namespace nui
             {
                 mesh = proMesh->get_mesh_ptr(i);
                 if (mesh->selected == true)
-                { 
+                {
                     clor = ImVec4(mesh->oMaterial.mColor.x, mesh->oMaterial.mColor.y, mesh->oMaterial.mColor.z, 1.0f);
                     rness = mesh->oMaterial.mRoughness;
                     mlic = mesh->oMaterial.mMetallic;
                 }
             }
-                
+
             ImGui::SetNextItemWidth(150);
             ImGui::ColorEdit3("Color", (float*)&clor); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);
@@ -394,7 +390,7 @@ namespace nui
         {
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
             nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
-            static const char* items[] = { "Single Point Light", "WorldBox 8 Lights", "NoLights"};
+            static const char* items[] = { "Single Point Light", "WorldBox 8 Lights", "NoLights" };
             ImGui::Combo("SetLight", &scene_view->get_light()->lightmode, items, IM_ARRAYSIZE(items)); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Light Intensity", &scene_view->get_light()->mStrength, 0.00f, 1000.0f);
 
@@ -451,7 +447,7 @@ namespace nui
             {
                 mesh = proMesh->get_mesh_ptr(i);
                 std::string name = std::string(mesh->oname);
-                if      (name.find("RBSIMBase_1") != std::string::npos) { base[0] = std::move(mesh); }
+                if (name.find("RBSIMBase_1") != std::string::npos) { base[0] = std::move(mesh); }
                 else if (name.find("RBSIMBase_2") != std::string::npos) { base[1] = std::move(mesh); }
                 else if (name.find("RBSIMBase_3") != std::string::npos) { base[2] = std::move(mesh); }
                 else if (name.find("RBSIMBase_4") != std::string::npos) { base[3] = std::move(mesh); }
@@ -459,18 +455,14 @@ namespace nui
                 else if (name.find("RBSIMBase_6") != std::string::npos) { base[5] = std::move(mesh); }
             }
         }
-
         // If no base objects found, return
         if (base[0] == nullptr) { return; }
 
         // *****************************************************
         // Initialize static variables for joint angles
         static float tolerance = 0.1f;
-        static float ang1 = 0, ang2 = 0, ang3 = 0, ang4 = 0, ang5 = 0, ang6 = 0;
-        static float pre1 = 0, pre2 = 0, pre3 = 0, pre4 = 0, pre5 = 0, pre6 = 0;
-        static float tem1 = 0, tem2 = 0, tem3 = 0, tem4 = 0, tem5 = 0, tem6 = 0;
-
-        // OrgBase is used as the main rotation reference to avoid overlapping matrix calculations
+        static float ang[6]{ 0 };
+        static float pre[6]{ 0 };
         static std::vector<std::shared_ptr<nelems::oMesh>> OrgBase = {
             std::make_shared<nelems::oMesh>(*base[0]),
             std::make_shared<nelems::oMesh>(*base[1]),
@@ -478,45 +470,32 @@ namespace nui
             std::make_shared<nelems::oMesh>(*base[3]),
             std::make_shared<nelems::oMesh>(*base[4]),
             std::make_shared<nelems::oMesh>(*base[5])
-        };
-
-        std::vector<std::shared_ptr<nelems::oMesh>> Joints = {
-            std::make_shared<nelems::oMesh>(*base[0]),
-            std::make_shared<nelems::oMesh>(*base[1]),
-            std::make_shared<nelems::oMesh>(*base[2]),
-            std::make_shared<nelems::oMesh>(*base[3]),
-            std::make_shared<nelems::oMesh>(*base[4]),
-            std::make_shared<nelems::oMesh>(*base[5])
-        };
+        };      
 
         ImGui::Begin("Robot Controls", nullptr);
         static bool CtrFlag = false;
-        if (ImGui::Button(CtrFlag ? "Visualize" : "LiveSync")) { CtrFlag = !CtrFlag; }
-
+        if (ImGui::Button(CtrFlag ? "Visualize" : "LiveSync")) {
+            CtrFlag = !CtrFlag;
+            if (CtrFlag) {
+                mRobot->setSwitchVisualize();
+            }
+        }
+        static glm::vec3 rbHandpos { 0.0f, 0.0f, 0.0f };
+        rbHandpos = base[5]->oMaterial.position;
+        // *****************************************************
         // LiveSync Mode: 
-        if (CtrFlag == false) { 
-            // *****************************************************
-            // Set Switching Color
-            static auto lastSwitchTime = std::chrono::steady_clock::now();
-            static bool useRed = true;
-            ImVec4 redcode = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-            ImVec4 bluecode = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
-
-            auto now = std::chrono::steady_clock::now();
-            if (std::chrono::duration_cast<std::chrono::seconds>(now - lastSwitchTime).count() >= 0.5)
-            {  useRed = !useRed;   lastSwitchTime = now;  }
-
+        if (CtrFlag == false) {
             // Get joint angles
-            mRobot->get_angle(ang1, ang2, ang3, ang4, ang5, ang6);
+            mRobot->get_angle(ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]);
 
             // Show Joints Data
-            ImVec4 vecred = useRed ? redcode : bluecode;
-            ImGui::TextColored(vecred, "Joint 1: %.2f", ang1); ImGui::SameLine();
-            ImGui::TextColored(vecred, "Joint 4: %.2f", ang4);
-            ImGui::TextColored(vecred, "Joint 2: %.2f", ang2); ImGui::SameLine();
-            ImGui::TextColored(vecred, "Joint 5: %.2f", ang5);
-            ImGui::TextColored(vecred, "Joint 3: %.2f", ang3); ImGui::SameLine();
-            ImGui::TextColored(vecred, "Joint 6: %.2f", ang6);
+            ImVec4 vecred(0.0f, 0.0f, 1.0f, 1.0f);
+            ImGui::TextColored(vecred, "Joint 1: %.2f", ang[0]); ImGui::SameLine();
+            ImGui::TextColored(vecred, "Joint 4: %.2f", ang[3]);
+            ImGui::TextColored(vecred, "Joint 2: %.2f", ang[1]); ImGui::SameLine();
+            ImGui::TextColored(vecred, "Joint 5: %.2f", ang[4]);
+            ImGui::TextColored(vecred, "Joint 3: %.2f", ang[2]); ImGui::SameLine();
+            ImGui::TextColored(vecred, "Joint 6: %.2f", ang[5]);
             mRobot->trigger_call_move(false);
         }
         // Visualize Mode:
@@ -525,113 +504,121 @@ namespace nui
             mRobot->trigger_call_move(true);
             // UI for controlling joint angles
             ImGui::SetNextItemWidth(100);
-            ImGui::SliderFloat("Joint 1", &ang1, -180.0f, 180.0f, "%.2f");
-
+            ImGui::InputFloat("Joint 1", &ang[0], 1, 0.1, "%.2f");
             ImGui::SetNextItemWidth(100);
-            ImGui::SliderFloat("Joint 2", &ang2, -180.0f, 180.0f, "%.2f");
-
+            ImGui::InputFloat("Joint 2", &ang[1], 1, 0.1, "%.2f");
             ImGui::SetNextItemWidth(100);
-            ImGui::SliderFloat("Joint 3", &ang3, -180.0f, 180.0f, "%.2f");
-
+            ImGui::InputFloat("Joint 3", &ang[2], 1, 0.1, "%.2f");
             ImGui::SetNextItemWidth(100);
-            ImGui::SliderFloat("Joint 4", &ang4, -180.0f, 180.0f, "%.2f");
-
+            ImGui::InputFloat("Joint 4", &ang[3], 1, 0.1, "%.2f");
             ImGui::SetNextItemWidth(100);
-            ImGui::SliderFloat("Joint 5", &ang5, -180.0f, 180.0f, "%.2f");
-
+            ImGui::InputFloat("Joint 5", &ang[4], 1, 0.1, "%.2f");
             ImGui::SetNextItemWidth(100);
-            ImGui::SliderFloat("Joint 6", &ang6, -180.0f, 180.0f, "%.2f");
-
+            ImGui::InputFloat("Joint 6", &ang[5], 1, 0.1, "%.2f");
+            if (mRobot->getSwitchVisualize()) { CtrFlag = false; }
         }
-        
-
-        
-        
-
-        // *****************************************************
-        // Check if any angle has been adjusted
-        static bool ResFlag = false;
-        if ((tem1 != ang1 || tem2 != ang2 || tem3 != ang3 || tem4 != ang4 || tem5 != ang5 || tem6 != ang6) && !ResFlag)
-        {
-            // Save current angles to temporary variables
-            tem1 = ang1; tem2 = ang2; tem3 = ang3; tem4 = ang4; tem5 = ang5; tem6 = ang6;
-
-            // Reset angles and objects to original state
-            ang1 = ang2 = ang3 = ang4 = ang5 = ang6 = 0;
-            for (int j = 0; j < 2; j++)
-            {
-                for (int i = 0; i < 6; i++)
-                {
-                    base[i]->oMaterial.rotation = OrgBase[i]->oMaterial.rotation;
-                    base[i]->mVertices = OrgBase[i]->mVertices;
-                    base[i]->oMaterial.position = OrgBase[i]->oMaterial.position;
-                    base[i]->oMaterial.mOxyz = OrgBase[i]->oMaterial.mOxyz;
-                }
-
-                // Rotate joints to reset all statuses
-                rotateJoint(5, ang6, pre6, tolerance, Joints, base, ang6 - pre6, 0, 0);
-                rotateJoint(4, ang5, pre5, tolerance, Joints, base, 0, ang5 - pre5, 0);
-                rotateJoint(3, ang4, pre4, tolerance, Joints, base, ang4 - pre4, 0, 0);
-                rotateJoint(2, ang3, pre3, tolerance, Joints, base, 0, ang3 - pre3, 0);
-                rotateJoint(1, ang2, pre2, tolerance, Joints, base, 0, ang2 - pre2, 0);
-                rotateJoint(0, ang1, pre1, tolerance, Joints, base, 0, 0, ang1 - pre1);
+        ImGui::Text(("Pos rbHand: \nx: " + std::to_string(rbHandpos.x) + " \ny: " + std::to_string(rbHandpos.y) + " \nz: " + std::to_string(rbHandpos.z)).c_str());   
+        //*****************************************************
+        // Caclculate for simulate the movement
+        bool exceeds_tolerance = false;
+        for (int i = 0; i < 6; ++i) {
+            if (std::abs(ang[i] - pre[i]) > tolerance) {
+                std::cout << "time " <<i <<  ": " << pre[i] << " - " << ang[i] << std::endl;
+                exceeds_tolerance = true;
+                break;
             }
-            ResFlag = true;
         }
-        // If angles have changed, update joint rotations
-        if (tem1 != ang1 || tem2 != ang2 || tem3 != ang3 || tem4 != ang4 || tem5 != ang5 || tem6 != ang6)
-        {
-            Joints = {
-                std::make_shared<nelems::oMesh>(*base[0]),
-                std::make_shared<nelems::oMesh>(*base[1]),
-                std::make_shared<nelems::oMesh>(*base[2]),
-                std::make_shared<nelems::oMesh>(*base[3]),
-                std::make_shared<nelems::oMesh>(*base[4]),
-                std::make_shared<nelems::oMesh>(*base[5])
-            };
+        if (exceeds_tolerance)
+        { 
+            for (int i = 0; i < 6; i++)
+            {
+                base[i]->mVertices.clear();
+                base[i]->oMaterial.rotation = OrgBase[i]->oMaterial.rotation;
+                base[i]->mVertices = OrgBase[i]->mVertices;
+                base[i]->oMaterial.position = OrgBase[i]->oMaterial.position;
+                base[i]->oMaterial.mOxyz = OrgBase[i]->oMaterial.mOxyz;
+            }
+            pre[0] = pre[1] = pre[2] = pre[3] = pre[4] = pre[5] = 0;
+            rotateJoint(5, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
+            rotateJoint(4, ang[4], pre[4], tolerance, base, 0, ang[4] - pre[4], 0);
+            rotateJoint(3, ang[3], pre[3], tolerance, base, ang[3] - pre[3], 0, 0);
+            rotateJoint(2, ang[2], pre[2], tolerance, base, 0, ang[2] - pre[2], 0);
+            rotateJoint(1, ang[1], pre[1], tolerance, base, 0, ang[1] - pre[1], 0);
+            rotateJoint(0, ang[0], pre[0], tolerance, base, 0, 0, ang[0] - pre[0]);
 
-            // Restore angles from temporary variables
-            ang1 = tem1; ang2 = tem2; ang3 = tem3; ang4 = tem4; ang5 = tem5; ang6 = tem6;
-            mRobot->get_angle(ang1, ang2, ang3, ang4, ang5, ang6);
-
-            // Calculate new joint rotations based on angles
-            rotateJoint(5, ang6, pre6, tolerance, Joints, base, ang6 - pre6, 0, 0);
-            rotateJoint(4, ang5, pre5, tolerance, Joints, base, 0, ang5 - pre5, 0);
-            rotateJoint(3, ang4, pre4, tolerance, Joints, base, ang4 - pre4, 0, 0);
-            rotateJoint(2, ang3, pre3, tolerance, Joints, base, 0, ang3 - pre3, 0);
-            rotateJoint(1, ang2, pre2, tolerance, Joints, base, 0, ang2 - pre2, 0);
-            rotateJoint(0, ang1, pre1, tolerance, Joints, base, 0, 0, ang1 - pre1);
-
-            ResFlag = false;
+            /*auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = end - start;
+            std::cout << "time: " << elapsed.count() << " s" << "  -  ";
+            std::cout << "fps: " << 1/elapsed.count() << " s" << std::endl;*/
         }
+
 
         // Create buffers for each base
-        for (auto& bs : base) { bs->create_buffers(); }
+        for (auto& bs : base) 
+        { 
+            bs->delete_buffers();
+            bs->create_buffers(); }
         ImGui::End();
     }
 
 
     void nui::Property_Panel::rotateJoint(size_t jointIndex, float& ang, float& pre, const float tolerance,
-        std::vector< std::shared_ptr <nelems::oMesh>>& joints, std::vector<std::shared_ptr <nelems::oMesh>>& base,
+        std::vector<std::shared_ptr <nelems::oMesh>>& base,
         float diffX, float diffY, float diffZ)
     {
+        // Create rotation matrix using Eigen
+        Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
+
+        // Combine rotation matrices
+        if (diffX != 0.0f) {
+            float rad = glm::radians(diffX);
+            Eigen::Matrix4f rotX;
+            rotX << 1, 0, 0, 0,
+                0, cos(rad), -sin(rad), 0,
+                0, sin(rad), cos(rad), 0,
+                0, 0, 0, 1;
+            transform *= rotX;
+        }
+        if (diffY != 0.0f) {
+            float rad = glm::radians(diffY);
+            Eigen::Matrix4f rotY;
+            rotY << cos(rad), 0, sin(rad), 0,
+                0, 1, 0, 0,
+                -sin(rad), 0, cos(rad), 0,
+                0, 0, 0, 1;
+            transform *= rotY;
+        }
+        if (diffZ != 0.0f) {
+            float rad = glm::radians(diffZ);
+            Eigen::Matrix4f rotZ;
+            rotZ << cos(rad), -sin(rad), 0, 0,
+                sin(rad), cos(rad), 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1;
+            transform *= rotZ;
+        }
+
         ang = std::round(ang * 100.0f) / 100.0f;
         if (std::abs(ang - pre) > tolerance) {
             float diff = ang - pre;
-            if (jointIndex == 0)
-            {
-                std::cout << 0 << std::endl;
+            glm::vec3 center = base[jointIndex]->oMaterial.position;
+
+            // Parallelize the loop using OpenMP
+            #pragma omp parallel for
+            for (size_t i = jointIndex; i < base.size(); ++i) {
+                for (auto& vertex : base[i]->mVertices) {
+                    Eigen::Vector4f newPos = transform * Eigen::Vector4f(vertex.mPos.x - center.x, vertex.mPos.y - center.y, vertex.mPos.z - center.z, 1.0f);
+                    vertex.mPos = glm::vec3(newPos.x() + center.x, newPos.y() + center.y, newPos.z() + center.z);
+                }
+
+                // Update oMaterial position
+                Eigen::Vector4f centerPos(base[i]->oMaterial.position.x - center.x, base[i]->oMaterial.position.y - center.y, base[i]->oMaterial.position.z - center.z, 1.0f);
+                Eigen::Vector4f newCenterPos = transform * centerPos;
+                base[i]->oMaterial.position = glm::vec3(newCenterPos.x() + center.x, newCenterPos.y() + center.y, newCenterPos.z() + center.z);
             }
-            for (size_t i = jointIndex; i < joints.size(); ++i) {
-                joints[i]->applyTransformation(base[jointIndex]->oMaterial.position, diffX, diffY, diffZ);
-                base[i]->mVertices = joints[i]->mVertices;
-                base[i]->oMaterial.position = joints[i]->oMaterial.position;
-                base[i]->oMaterial.mOxyz = joints[i]->oMaterial.mOxyz;
-                // base[i]->create_buffers();
-            }
-            base[jointIndex]->oMaterial.rotation = joints[jointIndex]->oMaterial.rotation;
 
             pre = std::round(ang * 100.0f) / 100.0f;
-        }     
+        }
     }
+
 }

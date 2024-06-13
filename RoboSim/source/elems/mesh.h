@@ -55,7 +55,7 @@ namespace nelems {
         void rotate(float angleX, float angleY, float angleZ);
         void rotate(float angleX, float angleY, float angleZ, const glm::vec3 pt_center);
         void move(float offsetX, float offsetY, float offsetZ);
-        void applyTransformation(const glm::vec3& center, float angleX, float angleY, float angleZ);
+        void applyTransformation(const glm::vec3& center, Eigen::Matrix4f transform);
         //--------------------------------------------------------------------------------
         // add vertex to object
         void add_vertex(const VertexHolder& vertex) { mVertices.push_back(vertex); }

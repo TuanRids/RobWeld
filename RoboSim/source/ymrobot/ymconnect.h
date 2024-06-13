@@ -18,7 +18,7 @@ namespace nymrobot
 		StatusInfo status;
 		MotomanController* controller;
 		UINT32 restime = 10;
-		
+		bool switchVisualizeMode = false;
 		// Singleton pattern to prevent instantiation
 		ymconnect(const ymconnect&) = delete;
 		ymconnect(ymconnect&&) = delete;
@@ -55,13 +55,14 @@ namespace nymrobot
 		void disconnect_robot(bool showmsg);
 		void render();
 		void trigger_call_move(const bool &get_stt) { call_move = get_stt; }
-		// setter connect trigger as true to show UI for connecting with the robot
-		// static for simple access
 		void set_connect_trigger(const bool& trigger) { connect_trigger = trigger; }
 
 		// command robot
 		void move_robot();
 		void read_robot();
+
+		bool getSwitchVisualize() { return switchVisualizeMode; }
+		void setSwitchVisualize() { switchVisualizeMode = false; }
 
 		void get_angle(float& g1,float &g2,float &g3,float &g4,float &g5,float &g6) {
 			if (status.StatusCode != 0){ return; }
