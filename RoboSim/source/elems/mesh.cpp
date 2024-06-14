@@ -234,7 +234,6 @@ namespace nelems {
     }
 
     void mMesh::load_specific_mesh(const aiMesh* mesh, oMesh& outMesh) {
-        std::cout << mesh->mNumVertices << std::endl;
         for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
             VertexHolder vh;
             vh.mPos = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };

@@ -34,6 +34,7 @@ namespace nshaders
 
 		void set_vec3(const glm::vec3& vec3, const std::string& name);
 		void set_vec4(const glm::vec4& vec4, const std::string& name);
+		bool load_compute_shader(const std::string& compute_shader_file);
 
 
 

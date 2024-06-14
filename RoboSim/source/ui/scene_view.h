@@ -23,7 +23,7 @@ namespace nui
         nelems::mMesh* rdMesh;
         std::unique_ptr<nelems::Camera> mCamera;
         std::unique_ptr<nrender::OpenGL_FrameBuffer> mFrameBuffer;
-        std::unique_ptr<nshaders::Shader> mShader;
+        std::shared_ptr<nshaders::Shader> mShader;
         std::unique_ptr<nelems::Light> mLight;
         std::shared_ptr<nui::SceneView> mSceneView;
 
@@ -67,7 +67,7 @@ namespace nui
         
         // Public methods
         nelems::Light* get_light() { return mLight.get(); }
-        nshaders::Shader* get_shader() { return mShader.get(); }
+        std::shared_ptr<nshaders::Shader> get_shader() const { return mShader; }
         void resize(int32_t width, int32_t height);
         void render();
         void load_mesh(const std::string& filepath, bool robot);

@@ -43,15 +43,15 @@ namespace nui
         std::vector<std::shared_ptr<nelems::oMesh>> base;
         nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
-
+        std::shared_ptr<nshaders::Shader> mctshader;
         float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
         nymrobot::ymconnect* mRobot;
 
     public:
         Property_Panel():
-            proMesh(nullptr),mesh(nullptr), mRobot(nullptr)
+            proMesh(nullptr),mesh(nullptr), mRobot(nullptr), mctshader(nullptr)
         {
-            for (int i{ 0 }; i < 6; i++) { base.push_back(nullptr); }
+            for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
             std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
             if (file.is_open())
             {

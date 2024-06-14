@@ -53,6 +53,24 @@ namespace nshaders
 
 		return true;
 	}
+	bool Shader::load_compute_shader(const std::string& compute_shader_file) {
+		std::ifstream is_cs(compute_shader_file);
+		const std::string f_cs((std::istreambuf_iterator<char>(is_cs)), std::istreambuf_iterator<char>());
+
+		mProgramId = glCreateProgram();
+
+		unsigned int cs = get_compiled_shader(GL_COMPUTE_SHADER, f_cs);
+
+		glAttachShader(mProgramId, cs);
+
+		glLinkProgram(mProgramId);
+		glValidateProgram(mProgramId);
+
+		glDeleteShader(cs);
+
+		return true;
+	}
+
 
 	void Shader::use()
 	{

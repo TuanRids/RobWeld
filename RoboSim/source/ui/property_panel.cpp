@@ -27,6 +27,7 @@ namespace nui
         {
             mRobot = &nymrobot::ymconnect::getInstance();
         }
+        
         //****************************************************
 
         static nui::HotkeyMenubar hotkey_manage;
@@ -440,7 +441,7 @@ namespace nui
     void nui::Property_Panel::Robot_Controls_table()
     {
         // *****************************************************
-        // Get base objects if not already retrieved
+        // A - Get base objects if not already retrieved
         if (base[0] == nullptr)
         {
             for (int i = 0; i < proMesh->size(); i++)
@@ -453,23 +454,26 @@ namespace nui
                 else if (name.find("RBSIMBase_4") != std::string::npos) { base[3] = std::move(mesh); }
                 else if (name.find("RBSIMBase_5") != std::string::npos) { base[4] = std::move(mesh); }
                 else if (name.find("RBSIMBase_6") != std::string::npos) { base[5] = std::move(mesh); }
+                else if (name.find("RBSIMBase_7") != std::string::npos) { base[6] = std::move(mesh); }
             }
         }
         // If no base objects found, return
         if (base[0] == nullptr) { return; }
 
         // *****************************************************
-        // Initialize static variables for joint angles
+        // B - Initialize static variables for joint angles & RB Hand pos
         static float tolerance = 0.1f;
         static float ang[6]{ 0 };
         static float pre[6]{ 0 };
+        static float prehand[3]{ 0 };
         static std::vector<std::shared_ptr<nelems::oMesh>> OrgBase = {
             std::make_shared<nelems::oMesh>(*base[0]),
             std::make_shared<nelems::oMesh>(*base[1]),
             std::make_shared<nelems::oMesh>(*base[2]),
             std::make_shared<nelems::oMesh>(*base[3]),
             std::make_shared<nelems::oMesh>(*base[4]),
-            std::make_shared<nelems::oMesh>(*base[5])
+            std::make_shared<nelems::oMesh>(*base[5]),
+            std::make_shared<nelems::oMesh>(*base[6])
         };      
 
         ImGui::Begin("Robot Controls", nullptr);
@@ -480,9 +484,11 @@ namespace nui
                 mRobot->setSwitchVisualize();
             }
         }
-        static glm::vec3 rbHandpos { 0.0f, 0.0f, 0.0f };
-        rbHandpos = base[5]->oMaterial.position;
+        prehand[0] = base[5]->oMaterial.position.x;
+        prehand[1] = base[5]->oMaterial.position.y;
+        prehand[2] = base[5]->oMaterial.position.z;
         // *****************************************************
+        // C - Livesync & Control mode 
         // LiveSync Mode: 
         if (CtrFlag == false) {
             // Get joint angles
@@ -498,9 +504,11 @@ namespace nui
             ImGui::TextColored(vecred, "Joint 6: %.2f", ang[5]);
             mRobot->trigger_call_move(false);
         }
-        // Visualize Mode:
+        // Control Mode:
         else
         {
+
+
             mRobot->trigger_call_move(true);
             // UI for controlling joint angles
             ImGui::SetNextItemWidth(100);
@@ -515,22 +523,43 @@ namespace nui
             ImGui::InputFloat("Joint 5", &ang[4], 1, 0.1, "%.2f");
             ImGui::SetNextItemWidth(100);
             ImGui::InputFloat("Joint 6", &ang[5], 1, 0.1, "%.2f");
+            ImGui::Separator();
+            //// RB Hand
+            //ImGui::InputFloat("RbHand X: ", &base[5]->oMaterial.position.x, 1, 0.1, "%.2f");
+            //ImGui::InputFloat("RbHand Y: ", &base[5]->oMaterial.position.y, 1, 0.1, "%.2f");
+            //ImGui::InputFloat("RbHand Z: ", &base[5]->oMaterial.position.z, 1, 0.1, "%.2f");
+
             if (mRobot->getSwitchVisualize()) { CtrFlag = false; }
         }
-        ImGui::Text(("Pos rbHand: \nx: " + std::to_string(rbHandpos.x) + " \ny: " + std::to_string(rbHandpos.y) + " \nz: " + std::to_string(rbHandpos.z)).c_str());   
         //*****************************************************
-        // Caclculate for simulate the movement
+        // D - Caclculate for simulate the movement
+
+        // D - 1: RB Hand simulation, and get joints angles
+        //bool exceeds_rbhand = false;
+        //for (int i = 0; i < 3; ++i) {
+        //    if (std::abs(prehand[i] - base[5]->oMaterial.position[i]) > tolerance) {
+        //        std::cout << "time rbhand " << prehand[i] << " - " << base[5]->oMaterial.position[i] << std::endl;
+        //        exceeds_rbhand = true;
+        //        break;
+        //    }
+        //}
+        //if (exceeds_rbhand)
+        //{
+        //    // Move hand 5
+        //    base[5]->move(base[5]->oMaterial.position.x- prehand[0], base[5]->oMaterial.position.y- prehand[1], base[5]->oMaterial.position.z- prehand[2]);
+        //}
+
+        // D - 2 Joints Siumulation
         bool exceeds_tolerance = false;
-        for (int i = 0; i < 6; ++i) {
+        for (int i = 0; i < 7; ++i) {
             if (std::abs(ang[i] - pre[i]) > tolerance) {
-                std::cout << "time " <<i <<  ": " << pre[i] << " - " << ang[i] << std::endl;
                 exceeds_tolerance = true;
                 break;
             }
         }
         if (exceeds_tolerance)
         { 
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 7; i++)
             {
                 base[i]->mVertices.clear();
                 base[i]->oMaterial.rotation = OrgBase[i]->oMaterial.rotation;
@@ -538,7 +567,9 @@ namespace nui
                 base[i]->oMaterial.position = OrgBase[i]->oMaterial.position;
                 base[i]->oMaterial.mOxyz = OrgBase[i]->oMaterial.mOxyz;
             }
+            //auto start = std::chrono::high_resolution_clock::now();
             pre[0] = pre[1] = pre[2] = pre[3] = pre[4] = pre[5] = 0;
+            // rotateJoint(6, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
             rotateJoint(5, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
             rotateJoint(4, ang[4], pre[4], tolerance, base, 0, ang[4] - pre[4], 0);
             rotateJoint(3, ang[3], pre[3], tolerance, base, ang[3] - pre[3], 0, 0);
@@ -599,22 +630,34 @@ namespace nui
         }
 
         ang = std::round(ang * 100.0f) / 100.0f;
+
+
         if (std::abs(ang - pre) > tolerance) {
-            float diff = ang - pre;
-            glm::vec3 center = base[jointIndex]->oMaterial.position;
 
-            // Parallelize the loop using OpenMP
-            #pragma omp parallel for
-            for (size_t i = jointIndex; i < base.size(); ++i) {
-                for (auto& vertex : base[i]->mVertices) {
-                    Eigen::Vector4f newPos = transform * Eigen::Vector4f(vertex.mPos.x - center.x, vertex.mPos.y - center.y, vertex.mPos.z - center.z, 1.0f);
-                    vertex.mPos = glm::vec3(newPos.x() + center.x, newPos.y() + center.y, newPos.z() + center.z);
+            //GPU GLSL
+            if (mctshader)
+            {
+                /// Future if necessary
+            }
+            //CPU
+            else
+            {                
+                float diff = ang - pre;
+                glm::vec3 center = base[jointIndex]->oMaterial.position;
+
+                // Parallelize the loop using OpenMP
+                #pragma omp parallel for
+                for (size_t i = jointIndex; i < base.size(); ++i) {
+                    for (auto& vertex : base[i]->mVertices) {
+                        Eigen::Vector4f newPos = transform * Eigen::Vector4f(vertex.mPos.x - center.x, vertex.mPos.y - center.y, vertex.mPos.z - center.z, 1.0f);
+                        vertex.mPos = glm::vec3(newPos.x() + center.x, newPos.y() + center.y, newPos.z() + center.z);
+                    }
+
+                    // Update oMaterial position
+                    Eigen::Vector4f centerPos(base[i]->oMaterial.position.x - center.x, base[i]->oMaterial.position.y - center.y, base[i]->oMaterial.position.z - center.z, 1.0f);
+                    Eigen::Vector4f newCenterPos = transform * centerPos;
+                    base[i]->oMaterial.position = glm::vec3(newCenterPos.x() + center.x, newCenterPos.y() + center.y, newCenterPos.z() + center.z);
                 }
-
-                // Update oMaterial position
-                Eigen::Vector4f centerPos(base[i]->oMaterial.position.x - center.x, base[i]->oMaterial.position.y - center.y, base[i]->oMaterial.position.z - center.z, 1.0f);
-                Eigen::Vector4f newCenterPos = transform * centerPos;
-                base[i]->oMaterial.position = glm::vec3(newCenterPos.x() + center.x, newCenterPos.y() + center.y, newCenterPos.z() + center.z);
             }
 
             pre = std::round(ang * 100.0f) / 100.0f;
