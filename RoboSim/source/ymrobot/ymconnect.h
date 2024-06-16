@@ -14,7 +14,6 @@ namespace nymrobot
 	{
 	private:
 		bool call_move{ false };
-		bool connect_trigger = true;
 		StatusInfo status;
 		MotomanController* controller;
 		UINT32 restime = 10;
@@ -32,7 +31,7 @@ namespace nymrobot
 		// Private constructor to prevent instantiation
 		ymconnect() : controller(nullptr), proMeshRb(nullptr)
 		{ 
-			YMConnect::OpenConnection("192.0.0.0", status, restime); // Fake Login for destroy status
+			YMConnect::OpenConnection("192.168.0.0", status, restime); // Fake Login for destroy status
 		}
 	public:
 		// singleton instance
@@ -55,7 +54,7 @@ namespace nymrobot
 		void disconnect_robot(bool showmsg);
 		void render();
 		void trigger_call_move(const bool &get_stt) { call_move = get_stt; }
-		void set_connect_trigger(const bool& trigger) { connect_trigger = trigger; }
+
 
 		// command robot
 		void move_robot();

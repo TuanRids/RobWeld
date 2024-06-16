@@ -551,7 +551,7 @@ namespace nui
 
         // D - 2 Joints Siumulation
         bool exceeds_tolerance = false;
-        for (int i = 0; i < 7; ++i) {
+        for (int i = 0; i < 6; ++i) {
             if (std::abs(ang[i] - pre[i]) > tolerance) {
                 exceeds_tolerance = true;
                 break;
@@ -567,7 +567,7 @@ namespace nui
                 base[i]->oMaterial.position = OrgBase[i]->oMaterial.position;
                 base[i]->oMaterial.mOxyz = OrgBase[i]->oMaterial.mOxyz;
             }
-            //auto start = std::chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
             pre[0] = pre[1] = pre[2] = pre[3] = pre[4] = pre[5] = 0;
             // rotateJoint(6, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
             rotateJoint(5, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
@@ -577,10 +577,10 @@ namespace nui
             rotateJoint(1, ang[1], pre[1], tolerance, base, 0, ang[1] - pre[1], 0);
             rotateJoint(0, ang[0], pre[0], tolerance, base, 0, 0, ang[0] - pre[0]);
 
-            /*auto end = std::chrono::high_resolution_clock::now();
+            auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed = end - start;
             std::cout << "time: " << elapsed.count() << " s" << "  -  ";
-            std::cout << "fps: " << 1/elapsed.count() << " s" << std::endl;*/
+            std::cout << "fps: " << 1/elapsed.count() << " s" << std::endl;
         }
 
 

@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "ymconnect.h"
 #include "windows.h"
+#include <chrono>
+
 namespace nymrobot
 {
     //bool ymconnect::connect_trigger = false;
@@ -58,7 +60,7 @@ namespace nymrobot
         if (status.StatusCode == 0)
         { 
             YMConnect::CloseConnection(controller);
-            YMConnect::OpenConnection("192.0.0.0", status, restime); // Fake Login for destroy status
+            YMConnect::OpenConnection("192.168.0.0", status); // Fake Login for destroy status
             controller = nullptr;
         }
         if (showmsg)
@@ -73,15 +75,13 @@ namespace nymrobot
         {
             proMeshRb = &nelems::mMesh::getInstance();
         }
-        //  =========================================================================================================
 
         // if trigger is true, show the UI to connect to the robot
-        if (connect_trigger) { connect_robot(); }
-        // if connected, expand the UI for working with the Robot
+        connect_robot(); 
         if (status.StatusCode != 0 || controller->Status == NULL) { return; }
         
         // UI for controlling the Robot
-        ImGui::Begin("Robot Control", &connect_trigger);
+        ImGui::Begin("Robot Control");
         if (ImGui::Button("Clear Fault"))
         {
             StatusInfo* temptstt = new StatusInfo();
@@ -101,74 +101,69 @@ namespace nymrobot
     {
         std::unique_ptr<StatusInfo> tpstatus = std::make_unique<StatusInfo>();
         ImGui::Separator();
+        
+        BaseAxisPositionVariableData* b1PositionData = new BaseAxisPositionVariableData();
+        PositionData* b1posconvert = new PositionData();
 
+        *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
+        *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1posconvert);
+        
         // Bx by bz for movement
-        static float bx{ 0 }, by{ 0 }, bz{ 0 }, brx{ 0 }, bry{ 0 }, brz{ 0 }, spdlinear{ 5 }, spdjoint{ 0.7 };
+        static float rbpos[6];
+        static float spdlinear{ 5 }, spdjoint{ 0.7 };
+
+        for (int i = 0; i < 6; i++)
+        {
+            rbpos[i] = b1posconvert->axisData[i];
+        }
 
         ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("X ", &bx, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50); ImGui::SameLine();
-        ImGui::InputFloat("Y ", &by, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50); ImGui::SameLine();
-        ImGui::InputFloat("Z ", &bz, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("Rx", &brx, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50); ImGui::SameLine();
-        ImGui::InputFloat("Ry", &bry, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50); ImGui::SameLine();
-        ImGui::InputFloat("Rz", &brz, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50);
+        ImGui::Text(" X:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("", &rbpos[0], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+        ImGui::Text(" Y:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("", &rbpos[1], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+        ImGui::Text(" Z:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("", &rbpos[2], 0.0f, 0.0f, "%.2f"); 
+
+        ImGui::Text("Rx:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("", &rbpos[3], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+        ImGui::Text("Ry:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("", &rbpos[4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+        ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("", &rbpos[5], 0.0f, 0.0f, "%.2f");
         ImGui::InputFloat("Linear Speed", &spdlinear, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50);
         ImGui::InputFloat("Joint Speed",  &spdjoint,  0.0f, 0.0f, "%.2f");
+
+        for (int i = 0; i < 6; i++)
+        {
+            rbpos[i] = !0.0f;
+            b1posconvert->axisData[i] = rbpos[i];
+        }
+
         if (spdlinear <= 0 || spdlinear > 100) { spdlinear = 10; }
         if (spdjoint <= 0 || spdjoint > 1)     { spdjoint = 0.7; }
 
         if (ImGui::Button("B6 Linear Move [!!!!]")) {
             switchVisualizeMode = true;
-            BaseAxisPositionVariableData* b1PositionData = new BaseAxisPositionVariableData();
-            PositionData* b1posconvert = new PositionData();
-
-            *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
-            *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1posconvert);
-
-            if (bx != 0.0f) { b1posconvert->axisData[0] += bx; }
-            if (by != 0.0f) { b1posconvert->axisData[1] += by; }
-            if (bz != 0.0f) { b1posconvert->axisData[2] += bz; }
-            if (brx != 0.0f) { b1posconvert->axisData[3] += brx; }
-            if (bry != 0.0f) { b1posconvert->axisData[4] += bry; }
-            if (brz != 0.0f) { b1posconvert->axisData[5] += brz; }
-
             LinearMotion r1movel(ControlGroupId::R1, *b1posconvert, spdlinear);
             // check SLURBT neu can thi giam toc.
 
             *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
             *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *tpstatus = controller->MotionManager->MotionStart();
-
-            // delete ptr
-            delete b1PositionData;
-            delete b1posconvert;
         }
         ImGui::SameLine();
         if (ImGui::Button("B6 Joint Move")) {
             switchVisualizeMode = true;
-            // use dynamic ptr for avoiding using too much memory on stack
-            RobotPositionVariableData* r1pos = new RobotPositionVariableData();
-            PositionData* r1poscv = new PositionData();
 
-            *tpstatus = controller->Variables->RobotPositionVariable->Read(0, *r1pos);
-            *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, r1pos->positionData, KinematicConversions::PulseToCartesianPos, *r1poscv);
-
-            if (bx != 0.0f) { r1poscv->axisData[0] += bx; }
-            if (by != 0.0f) { r1poscv->axisData[1] += by; }
-            if (bz != 0.0f) { r1poscv->axisData[2] += bz; }
-            if (brx != 0.0f) { r1poscv->axisData[3] += brx; }
-            if (bry != 0.0f) { r1poscv->axisData[4] += bry; }
-            if (brz != 0.0f) { r1poscv->axisData[5] += brz; }
-
-            JointMotion r1movej(ControlGroupId::R1,*r1poscv, spdjoint);
+            JointMotion r1movej(ControlGroupId::R1,*b1posconvert, spdjoint);
             *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movej);
             *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *tpstatus = controller->MotionManager->MotionStart();
-
-            // delete ptr
-            delete r1pos;
-            delete r1poscv;
         }
+        // delete ptr
+        delete b1PositionData;
+        delete b1posconvert;
     }
 
     void ymconnect::read_robot()
@@ -210,11 +205,11 @@ namespace nymrobot
         tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, raxisData);
         tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, raxisData
             , KinematicConversions::PulseToJointAngle, rjointangle);
-        angle1 = -rjointangle.axisData[0];
+        angle1 = rjointangle.axisData[0];
         angle2 = rjointangle.axisData[1];
-        angle3 = -rjointangle.axisData[2];
+        angle3 = rjointangle.axisData[2];
         angle4 = rjointangle.axisData[3];
-        angle5 = -rjointangle.axisData[4];
+        angle5 = rjointangle.axisData[4];
         angle6 = rjointangle.axisData[5];
         delete strget;
         
