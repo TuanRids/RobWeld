@@ -47,10 +47,10 @@ namespace nui
             coordinate_frame(); // show the position
             material_frame(scene_view); // show material properties
             ImGui::End();
-
         }
         mRobot->render();
         camera_frame(scene_view); // show camera properties
+        sh_performance();
 
         Robot_Controls_table();
     }
@@ -436,6 +436,49 @@ namespace nui
         ImGui::End();
     }
 
+    void Property_Panel::sh_performance()
+    {
+        static int x{ 200 }, y{ 200 };
+        static float pos_x, pos_y;
+        nui::FrameManage::getViewportSize(pos_x, pos_y);
+
+        static auto start = std::chrono::high_resolution_clock::now();
+        static auto countime = std::chrono::high_resolution_clock::now();
+        static std::vector<float> fps; 
+        auto end = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double> elapsed = end - start;
+        start = end;
+        float current_fps = std::round((1.0f / static_cast<float>(elapsed.count())) * 10) / 10.0f;
+
+        if ( ( end- countime ).count() > 2.0f  )
+        {
+            if (current_fps > 120 ){current_fps = 120.0f;}
+            else if (current_fps > 60) { current_fps = 60.0f; }
+
+            if (fps.size() < 100) { fps.push_back(current_fps); }
+            else { fps.erase(fps.begin()); fps.push_back(current_fps); }
+            countime = end;
+        }
+        
+
+        ImGui::SetNextWindowBgAlpha(0.0f);
+        ImGui::SetNextWindowPos(ImVec2(pos_x +215, pos_y + 35));
+        ImGui::SetNextWindowSize(ImVec2(200, 0), ImGuiCond_Always);
+
+        ImGui::Begin("##Performance", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+        ImGui::PlotLines("", fps.data(), static_cast<int>(fps.size()));
+        ImGui::SameLine();
+
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(1) << current_fps;
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f),"FPS: %s", ss.str().c_str());
+
+        ImGui::End();
+
+    }
+
     //================================================================================================
 
     void nui::Property_Panel::Robot_Controls_table()
@@ -567,20 +610,16 @@ namespace nui
                 base[i]->oMaterial.position = OrgBase[i]->oMaterial.position;
                 base[i]->oMaterial.mOxyz = OrgBase[i]->oMaterial.mOxyz;
             }
-            auto start = std::chrono::high_resolution_clock::now();
             pre[0] = pre[1] = pre[2] = pre[3] = pre[4] = pre[5] = 0;
             // rotateJoint(6, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
             rotateJoint(5, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
-            rotateJoint(4, ang[4], pre[4], tolerance, base, 0, ang[4] - pre[4], 0);
+            rotateJoint(4, ang[4], pre[4], tolerance, base, 0, -(ang[4] - pre[4]), 0);
             rotateJoint(3, ang[3], pre[3], tolerance, base, ang[3] - pre[3], 0, 0);
-            rotateJoint(2, ang[2], pre[2], tolerance, base, 0, ang[2] - pre[2], 0);
-            rotateJoint(1, ang[1], pre[1], tolerance, base, 0, ang[1] - pre[1], 0);
-            rotateJoint(0, ang[0], pre[0], tolerance, base, 0, 0, ang[0] - pre[0]);
+            rotateJoint(2, ang[2], pre[2], tolerance, base, 0, -(ang[2] - pre[2]), 0);
+            rotateJoint(1, ang[1], pre[1], tolerance, base, 0, (ang[1] - pre[1]), 0);
+            rotateJoint(0, ang[0], pre[0], tolerance, base, 0, 0, -(ang[0] - pre[0]));
 
-            auto end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> elapsed = end - start;
-            std::cout << "time: " << elapsed.count() << " s" << "  -  ";
-            std::cout << "fps: " << 1/elapsed.count() << " s" << std::endl;
+
         }
 
 

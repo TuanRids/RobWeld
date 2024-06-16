@@ -2,6 +2,7 @@
 #include "ymconnect.h"
 #include "windows.h"
 #include <chrono>
+#include "elems/vertex_holder.h"
 
 namespace nymrobot
 {
@@ -97,74 +98,152 @@ namespace nymrobot
         if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }
 		ImGui::End();
     }
-    void ymconnect::move_robot()
-    {
+    void ymconnect::move_robot() {
         std::unique_ptr<StatusInfo> tpstatus = std::make_unique<StatusInfo>();
         ImGui::Separator();
-        
+        ImGui::Begin("Attributes: ");
+
         BaseAxisPositionVariableData* b1PositionData = new BaseAxisPositionVariableData();
-        PositionData* b1posconvert = new PositionData();
+        PositionData* b1origi = new PositionData();
+        PositionData* b1crpos = new PositionData();
 
         *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
-        *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1posconvert);
-        
-        // Bx by bz for movement
-        static float rbpos[6];
-        static float spdlinear{ 5 }, spdjoint{ 0.7 };
+        *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1origi);
+        *tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *b1crpos);
 
-        for (int i = 0; i < 6; i++)
+        static std::vector<std::vector<float>> rbpos(3, std::vector<float>(6, 0.0f));
+        static std::vector<float> spdlinear{};
+        static std::vector<float> spdjoint{};
+        static int coumove{ 3 };
+
+        ImGui::SetNextItemWidth(150);
+        ImGui::InputInt("Times", &coumove, 1, 2); ImGui::SameLine();
+        if (ImGui::Button("Loadpy"))
         {
-            rbpos[i] = b1posconvert->axisData[i];
+            std::vector<std::vector<double>> get6pos = readpysrc.get_values_from_python();
+            for (int i{ 0 }; i < get6pos.size(); i++)
+            {
+				rbpos[i][0] = get6pos[i][0];
+				rbpos[i][1] = get6pos[i][1];
+				rbpos[i][2] = get6pos[i][2];
+				rbpos[i][3] = get6pos[i][3];
+				rbpos[i][4] = get6pos[i][4];
+				rbpos[i][5] = get6pos[i][5];
+            }
+        }
+        spdlinear.resize(coumove);
+        spdjoint.resize(coumove);
+
+        for (int j = 0; j < coumove; j++) {
+            if (rbpos.size() < coumove) {
+                int numToAdd = coumove - rbpos.size();
+                for (int i = 0; i < numToAdd; ++i) {
+                    rbpos.push_back(std::vector<float>(6, 0.0f));
+                }
+            }
+            if (ImGui::Button(("OrgPos " + std::to_string(j)).c_str())) { for (int i = 0; i < 6; i++) { rbpos[j][i] = b1origi->axisData[i]; } }
+            ImGui::SameLine();
+            if (ImGui::Button(("CrtPos " + std::to_string(j)).c_str())) { for (int i = 0; i < 6; i++) { rbpos[j][i] = b1crpos->axisData[i]; } }
+            ImGui::SameLine();
+
+            ImGui::Text(" X:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##X" + std::to_string(j)).c_str(), &rbpos[j][0], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::Text(" Y:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##Y" + std::to_string(j)).c_str(), &rbpos[j][1], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::Text(" Z:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##Z" + std::to_string(j)).c_str(), &rbpos[j][2], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+
+            ImGui::Text("Rx:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##RX" + std::to_string(j)).c_str(), &rbpos[j][3], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::Text("Ry:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &rbpos[j][4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &rbpos[j][5], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::Text("Linear spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##LS" + std::to_string(j)).c_str(), &spdlinear[j], 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
+            ImGui::Text("Joint spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##JS" + std::to_string(j)).c_str(), &spdjoint[j], 0.0f, 0.0f, "%.2f");
+
+            if (spdlinear[j] <= 0 || spdlinear[j] > 100) { spdlinear[j] = 10; }
+            if (spdjoint[j] <= 0 || spdjoint[j] > 1) { spdjoint[j] = 0.95; }
         }
 
-        ImGui::SetNextItemWidth(50);
-        ImGui::Text(" X:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("", &rbpos[0], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-        ImGui::Text(" Y:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("", &rbpos[1], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-        ImGui::Text(" Z:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("", &rbpos[2], 0.0f, 0.0f, "%.2f"); 
-
-        ImGui::Text("Rx:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("", &rbpos[3], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-        ImGui::Text("Ry:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("", &rbpos[4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-        ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("", &rbpos[5], 0.0f, 0.0f, "%.2f");
-        ImGui::InputFloat("Linear Speed", &spdlinear, 0.0f, 0.0f, "%.2f"); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("Joint Speed",  &spdjoint,  0.0f, 0.0f, "%.2f");
-
-        for (int i = 0; i < 6; i++)
+        if (ImGui::Button("LinearPath !NOT AVAILABLE"))
         {
-            rbpos[i] = !0.0f;
-            b1posconvert->axisData[i] = rbpos[i];
+           /* nelems::oMesh linepath;
+            for (int j = 0; j < coumove; j++) {
+                nelems::VertexHolder vertex;
+                vertex.mPos = { rbpos[j][0],rbpos[j][1],rbpos[j][2] };
+                vertex.mNormal = { 0.0f, 0.0f, 1.0f };
+                linepath.add_vertex(vertex);
+            }
+            linepath.changeName("LINEPATH");
+            proMeshRb->pushback(linepath);*/
         }
 
-        if (spdlinear <= 0 || spdlinear > 100) { spdlinear = 10; }
-        if (spdjoint <= 0 || spdjoint > 1)     { spdjoint = 0.7; }
+        if (ImGui::Button("Joint Move")) {
+            ImGui::SetTooltip("Should Use!");
+            for (int j = 0; j < coumove; j++) {
+                b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+                for (int i = 0; i < 6; i++) {
+                    b1crpos->axisData[i] = rbpos[j][i];
+                }
+                JointMotion r1movel(ControlGroupId::R1, *b1crpos, spdjoint[j]);
+                *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
+            }
 
-        if (ImGui::Button("B6 Linear Move [!!!!]")) {
             switchVisualizeMode = true;
-            LinearMotion r1movel(ControlGroupId::R1, *b1posconvert, spdlinear);
-            // check SLURBT neu can thi giam toc.
-
-            *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
             *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *tpstatus = controller->MotionManager->MotionStart();
         }
         ImGui::SameLine();
-        if (ImGui::Button("B6 Joint Move")) {
+        if (ImGui::Button("Linear Move")) {
+            ImGui::SetTooltip("Dont use if you dont know what you are doing !");
+            for (int j = 0; j < coumove; j++) {
+                b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+                for (int i = 0; i < 6; i++) {
+                    b1crpos->axisData[i] = rbpos[j][i];
+                }
+                LinearMotion r1movel(ControlGroupId::R1, *b1crpos, spdlinear[j]);
+                *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
+            }
             switchVisualizeMode = true;
-
-            JointMotion r1movej(ControlGroupId::R1,*b1posconvert, spdjoint);
-            *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movej);
             *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *tpstatus = controller->MotionManager->MotionStart();
         }
-        // delete ptr
+        ImGui::SameLine();
+        if (ImGui::Button("Circular Move")) {
+            ImGui::SetTooltip("current to 1st point = Linear, 1 -> 3 is circular based on 2nd points to calculate the curve. !");
+            // Linear from current to 1st points
+            b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+            for (int i = 0; i < 6; i++) {
+                b1crpos->axisData[i] = rbpos[0][i];
+            }
+            JointMotion r1movel(ControlGroupId::R1, *b1crpos, spdjoint[0]);
+            *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
+            // Circular 0.1.2, 2.3.4
+            for (int j = 2; j < coumove; j+=2) {
+                b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+                CoordinateArray coorarr;
+                for (int i = 0; i < 6; i++) {
+                    b1crpos->axisData[i] = rbpos[j][i];
+                    coorarr[i] = rbpos[j - 1][i];
+                }
+                CircularMotion r1movel(ControlGroupId::R1, *b1crpos, coorarr, spdlinear[j]);
+                *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
+            }
+            switchVisualizeMode = true;
+            *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+            *tpstatus = controller->MotionManager->MotionStart();
+        }
+
         delete b1PositionData;
-        delete b1posconvert;
+        delete b1crpos;
+        delete b1origi;
+
+        ImGui::End();
     }
+
 
     void ymconnect::read_robot()
     {
@@ -199,6 +278,7 @@ namespace nymrobot
             controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData);
             resultmsg.str();
             resultmsg << alarmHistoryData << std::endl;
+            std::cout << alarmHistoryData << std::endl;
         }
 
         // read the Joint of robot

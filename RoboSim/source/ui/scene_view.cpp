@@ -97,7 +97,8 @@ namespace nui
 
       mFrameBuffer->unbind();
 
-      
+      auto end = std::chrono::high_resolution_clock::now();
+
 
       ImGui::Begin("ViewPort");
       {

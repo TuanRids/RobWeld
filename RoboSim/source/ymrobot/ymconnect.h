@@ -4,6 +4,8 @@
 #include "imgui.h"
 #include "elems/mesh.h"
 #include <iomanip> 
+#include <py3rdsrc/readpysrc.h>
+
 namespace nymrobot
 {
 	/// <summary>
@@ -18,6 +20,8 @@ namespace nymrobot
 		MotomanController* controller;
 		UINT32 restime = 10;
 		bool switchVisualizeMode = false;
+
+		readpysrc readpysrc;
 		// Singleton pattern to prevent instantiation
 		ymconnect(const ymconnect&) = delete;
 		ymconnect(ymconnect&&) = delete;
@@ -27,6 +31,7 @@ namespace nymrobot
 		// pointer to Robot's mesh
 		nelems::mMesh* proMeshRb;
 		std::stringstream resultmsg;
+
 		// based ptr
 		// Private constructor to prevent instantiation
 		ymconnect() : controller(nullptr), proMeshRb(nullptr)
@@ -54,7 +59,6 @@ namespace nymrobot
 		void disconnect_robot(bool showmsg);
 		void render();
 		void trigger_call_move(const bool &get_stt) { call_move = get_stt; }
-
 
 		// command robot
 		void move_robot();

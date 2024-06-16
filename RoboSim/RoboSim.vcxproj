@@ -156,7 +156,7 @@
     <ClCompile Include="source\Command\ObHistory.h" />
     <ClCompile Include="source\elems\loadRobot.cpp" />
     <ClCompile Include="source\elems\TranRBMatrix.cpp" />
-    <ClCompile Include="source\fs100\robotcn.cpp" />
+    <ClCompile Include="source\py3rdsrc\readpysrc.cpp" />
     <ClCompile Include="source\rigging\rigging.cpp" />
     <ClCompile Include="source\ui\FrameManage.cpp" />
     <ClCompile Include="source\ui\HotkeyMenubar.cpp" />
@@ -223,7 +223,7 @@
     <ClInclude Include="source\elems\material.h" />
     <ClInclude Include="source\elems\stb_image.h" />
     <ClInclude Include="source\elems\TranRBMatrix.h" />
-    <ClInclude Include="source\fs100\robotcn.h" />
+    <ClInclude Include="source\py3rdsrc\readpysrc.h" />
     <ClInclude Include="source\rigging\point.h" />
     <ClInclude Include="source\rigging\rigging.h" />
     <ClInclude Include="source\ui\FrameManage.h" />

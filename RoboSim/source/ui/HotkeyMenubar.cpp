@@ -9,6 +9,10 @@ namespace nui {
 
 	void HotkeyMenubar::mMenuBar(GLFWwindow* mWindow)
     {
+        if (!mRobot)
+        {
+            mRobot = &nymrobot::ymconnect::getInstance();
+        }
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
@@ -114,7 +118,11 @@ namespace nui {
 
             if (ImGui::BeginMenu("Robot"))
             {
-                //
+                if (ImGui::MenuItem("fromPY"))
+                {
+                    //
+                }
+                ImGui::EndMenu();
             }
 
             if (ImGui::BeginMenu("Chart"))

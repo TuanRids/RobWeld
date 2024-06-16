@@ -8,8 +8,7 @@
 #pragma warning( disable : 26819) //3rd party library
 #include "nlohmann/json.hpp"
 #pragma warning( pop )
-
-
+#include <ymrobot/ymconnect.h>
 using json = nlohmann::json;
 namespace nui {
     // Manage the hotkey and menubar
@@ -23,6 +22,7 @@ namespace nui {
         static bool waitloop[6];
         static bool shint;
         std::string theme;
+        nymrobot::ymconnect* mRobot;
 
     public:
         HotkeyMenubar() : scene_view(nullptr) {
