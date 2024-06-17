@@ -105,11 +105,9 @@ namespace nymrobot
         PositionData* b1origi = new PositionData();
         PositionData* b1crpos = new PositionData();
 
-
-
         static std::vector<std::vector<float>> rbpos(3, std::vector<float>(6, 0.0f));
-        static std::vector<float> spdlinear{};
-        static std::vector<float> spdjoint{};
+        static float spdlinear{};
+        static float spdjoint{};
         static int coumove{ 3 };
 
         ImGui::SetNextItemWidth(150);
@@ -119,6 +117,7 @@ namespace nymrobot
         bool circuflag = ImGui::Button("Circular Move"); ImGui::SameLine();
         bool linMFlag = ImGui::Button("Linear Move"); ImGui::SameLine();
         bool lineshpath = ImGui::Button("show MovingPATH !NOT AVAILABLE");
+
         if (ImGui::Button("Loadpy"))
         {
             std::vector<std::vector<double>> get6pos = readpysrc.get_values_from_python();
@@ -142,9 +141,24 @@ namespace nymrobot
                     rbpos[i][5] = get6pos[i][5];
                 }
             }
+        } 
+        ImGui::SameLine();
+        if (ImGui::Button("HOME")) 
+        {
+            *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
+            *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1origi);
+            JointMotion r1movel(ControlGroupId::R1, *b1origi, 3);
+            *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
+            *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+            *tpstatus = controller->MotionManager->MotionStart();
+            controller->MotionManager->ClearAllTrajectory();
         }
-        spdlinear.resize(coumove);
-        spdjoint.resize(coumove);
+        ImGui::SameLine();
+        ImGui::Text("Linear spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("##LS" , &spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
+        ImGui::Text("Joint spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::InputFloat("##JS" , &spdjoint, 0.0f, 0.0f, "%.2f");
+
 
         for (int j = 0; j < coumove; j++) {
             if (rbpos.size() < coumove) {
@@ -185,14 +199,7 @@ namespace nymrobot
             ImGui::Text("Ry:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
             ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &rbpos[j][4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
             ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &rbpos[j][5], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-            ImGui::Text("Linear spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##LS" + std::to_string(j)).c_str(), &spdlinear[j], 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
-            ImGui::Text("Joint spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##JS" + std::to_string(j)).c_str(), &spdjoint[j], 0.0f, 0.0f, "%.2f");
-
-            if (spdlinear[j] <= 0 || spdlinear[j] > 100) { spdlinear[j] = 10; }
-            if (spdjoint[j] <= 0 || spdjoint[j] > 1) { spdjoint[j] = 0.95; }
+            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &rbpos[j][5], 0.0f, 0.0f, "%.2f");           
         }
 
         if (lineshpath)
@@ -215,7 +222,7 @@ namespace nymrobot
                 for (int i = 0; i < 6; i++) {
                     b1crpos->axisData[i] = rbpos[j][i];
                 }
-                JointMotion r1movel(ControlGroupId::R1, *b1crpos, spdjoint[j]);
+                JointMotion r1movel(ControlGroupId::R1, *b1crpos, spdjoint);
                 *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
             }
 
@@ -230,7 +237,7 @@ namespace nymrobot
                 for (int i = 0; i < 6; i++) {
                     b1crpos->axisData[i] = rbpos[j][i];
                 }
-                LinearMotion r1movel(ControlGroupId::R1, *b1crpos, spdlinear[j]);
+                LinearMotion r1movel(ControlGroupId::R1, *b1crpos, spdlinear);
                 *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
             }
             switchVisualizeMode = true;
@@ -244,7 +251,7 @@ namespace nymrobot
             for (int i = 0; i < 6; i++) {
                 b1crpos->axisData[i] = rbpos[0][i];
             }
-            JointMotion r1movel(ControlGroupId::R1, *b1crpos, spdjoint[0]);
+            JointMotion r1movel(ControlGroupId::R1, *b1crpos, spdjoint);
             *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
             // Circular 0.1.2, 2.3.4
             for (int j = 2; j < coumove; j+=2) {
@@ -254,9 +261,10 @@ namespace nymrobot
                     b1crpos->axisData[i] = rbpos[j][i];
                     coorarr[i] = rbpos[j - 1][i];
                 }
-                CircularMotion r1movel(ControlGroupId::R1, *b1crpos, coorarr, spdlinear[j]);
+                CircularMotion r1movel(ControlGroupId::R1, *b1crpos, coorarr, spdlinear);
                 *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
             }
+
             switchVisualizeMode = true;
             *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *tpstatus = controller->MotionManager->MotionStart();
@@ -276,11 +284,11 @@ namespace nymrobot
         std::stringstream* strget = new std::stringstream();
         StatusInfo tpstatus;
         PositionData raxisData{}, rposData{};
-        static PositionData rjointangle{};
+        PositionData rjointangle{};
         static auto start = std::chrono::high_resolution_clock::now();       
 
         std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
-        if (elapsed.count()>0.01f)
+        if (elapsed.count()>0.1f)
         {
             // read state
             ControllerStateData stateData{};
@@ -300,19 +308,34 @@ namespace nymrobot
                 resultmsg << alarmHistoryData << std::endl;
             }
             // read the Joint of robot
-            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, raxisData);
-            tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, raxisData
-                , KinematicConversions::PulseToJointAngle, rjointangle);
+            
 
             start = std::chrono::high_resolution_clock::now();
         }
-                       
-        angle1 = rjointangle.axisData[0];
-        angle2 = rjointangle.axisData[1];
-        angle3 = rjointangle.axisData[2];
-        angle4 = rjointangle.axisData[3];
-        angle5 = rjointangle.axisData[4];
-        angle6 = rjointangle.axisData[5];
+        tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, raxisData);
+        tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, raxisData
+            , KinematicConversions::PulseToJointAngle, rjointangle);
+        angle[0] = rjointangle.axisData[0];
+        angle[1] = rjointangle.axisData[1];
+        angle[2] = rjointangle.axisData[2];
+        angle[3] = rjointangle.axisData[3];
+        angle[4] = rjointangle.axisData[4];
+        angle[5] = rjointangle.axisData[5];
+
+        bool isOutOfLimit = false;
+
+        for (int i = 0; i < 6; ++i) {
+            if (angle[i] < limitangle[i][0] || angle[i] > limitangle[i][1]) {
+                isOutOfLimit = true;
+                break;
+            }
+        }
+
+        if (isOutOfLimit) {
+            controller->MotionManager->MotionStop();
+            controller->ControlCommands->SetServos(SignalStatus::OFF);
+            MessageBox(NULL, "Error: Joint angle is out of limit", "Error", MB_OK);
+        }
         delete strget;
     }
 

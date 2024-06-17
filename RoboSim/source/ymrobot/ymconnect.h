@@ -19,14 +19,14 @@ namespace nymrobot
 		MotomanController* controller;
 		UINT32 restime = 10;
 		bool switchVisualizeMode = false;
-
+		std::vector<std::vector <float>> limitangle;
 		readpysrc readpysrc;
 		// Singleton pattern to prevent instantiation
 		ymconnect(const ymconnect&) = delete;
 		ymconnect(ymconnect&&) = delete;
 		ymconnect& operator=(const ymconnect&) = delete;
 		ymconnect& operator=(ymconnect&&) = delete;
-		float angle1{ 0 }, angle2{ 0 }, angle3{ 0 }, angle4{ 0 }, angle5{ 0 }, angle6{ 0 };
+		float angle[6];
 		// pointer to Robot's mesh
 		nelems::mMesh* proMeshRb;
 		std::stringstream resultmsg;
@@ -57,6 +57,8 @@ namespace nymrobot
 
 		void disconnect_robot(bool showmsg);
 		void render();
+		//angle
+		void set_limitangle(const std::vector<std::vector <float>>& getlim) { limitangle = getlim; }
 
 		// command robot
 		void move_robot();
@@ -69,12 +71,12 @@ namespace nymrobot
 			if (status.StatusCode != 0){ return; }
 			if (status.StatusCode == 0)
 			{
-				g1 = angle1;
-				g2 = angle2;
-				g3 = angle3;
-				g4 = angle4;
-				g5 = angle5;
-				g6 = angle6;
+				g1 = angle[0];
+				g2 = angle[1];
+				g3 = angle[2];
+				g4 = angle[3];
+				g5 = angle[4];
+				g6 = angle[5];
 			}
 		}
 

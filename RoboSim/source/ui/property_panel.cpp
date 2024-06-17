@@ -473,8 +473,8 @@ namespace nui
         ImGui::SameLine();
 
         std::ostringstream ss;
-        ss << std::fixed << std::setprecision(1) << current_fps;
-        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "FPS "); // , ss.str().c_str());
+        ss << std::fixed << std::setprecision(0) << current_fps;
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "FPS %s", ss.str().c_str());
 
         ImGui::End();
 
@@ -510,6 +510,7 @@ namespace nui
         static float ang[6]{ 0 };
         static float pre[6]{ 0 };
         static float prehand[3]{ 0 };
+        static std::vector<std::vector <float>> limangle{ 6, {-180,180} };
         static std::vector<std::shared_ptr<nelems::oMesh>> OrgBase = {
             std::make_shared<nelems::oMesh>(*base[0]),
             std::make_shared<nelems::oMesh>(*base[1]),
@@ -540,12 +541,30 @@ namespace nui
 
             // Show Joints Data
             ImVec4 vecred(0.0f, 0.0f, 1.0f, 1.0f);
-            ImGui::TextColored(vecred, "Joint 1: %.2f", ang[0]); ImGui::SameLine();
-            ImGui::TextColored(vecred, "Joint 4: %.2f", ang[3]);
-            ImGui::TextColored(vecred, "Joint 2: %.2f", ang[1]); ImGui::SameLine();
-            ImGui::TextColored(vecred, "Joint 5: %.2f", ang[4]);
-            ImGui::TextColored(vecred, "Joint 3: %.2f", ang[2]); ImGui::SameLine();
-            ImGui::TextColored(vecred, "Joint 6: %.2f", ang[5]);
+            ImGui::TextColored(vecred, "Joint 1: %.2f", ang[0]);            ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat("J1 Lim1", &limangle[0][0], 0, 0, "%.2f");    ImGui::SetNextItemWidth(50);
+			ImGui::InputFloat("J1 Lim2", &limangle[0][1], 0, 0, "%.2f");
+
+            ImGui::TextColored(vecred, "Joint 2: %.2f", ang[1]);          ImGui::SetNextItemWidth(50);
+			ImGui::InputFloat("J2 Lim1", &limangle[1][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat("J2 Lim2", &limangle[1][1], 0, 0, "%.2f");
+
+            ImGui::TextColored(vecred, "Joint 3: %.2f", ang[2]);   ImGui::SetNextItemWidth(50);
+			ImGui::InputFloat("J3 Lim1", &limangle[2][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
+			ImGui::InputFloat("J3 Lim2", &limangle[2][1], 0, 0, "%.2f");
+
+            ImGui::TextColored(vecred, "Joint 4: %.2f", ang[3]);  ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat("J4 Lim1", &limangle[3][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat("J4 Lim2", &limangle[3][1], 0, 0, "%.2f");
+
+            ImGui::TextColored(vecred, "Joint 5: %.2f", ang[4]);  ImGui::SetNextItemWidth(50);
+			ImGui::InputFloat("J5 Lim1", &limangle[4][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
+			ImGui::InputFloat("J5 Lim2", &limangle[4][1], 0, 0, "%.2f");
+
+            ImGui::TextColored(vecred, "Joint 6: %.2f", ang[5]);  ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat("J6 Lim1", &limangle[5][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
+			ImGui::InputFloat("J6 Lim2", &limangle[5][1], 0, 0, "%.2f");
+            mRobot->set_limitangle(limangle);
         }
         // Control Mode:
         else

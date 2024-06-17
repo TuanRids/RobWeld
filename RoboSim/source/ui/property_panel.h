@@ -64,7 +64,6 @@ namespace nui
             std::string fontPath = "C:/Windows/Fonts/" + std::string(content) + ".ttf";
             io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
         }
-
         void render(nui::SceneView* mScene, GLFWwindow* mWindow);
         void material_frame(nui::SceneView* scene_view);
         void camera_frame(nui::SceneView* scene_view);
