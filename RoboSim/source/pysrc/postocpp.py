@@ -1,14 +1,15 @@
 import random
 
 def give_to_cpp():
-    endvl = []
-    
-    for i in range (0,5):
-        values = []
-        for _ in range(3):
-            values.append(random.uniform(-300, 300))
-            # 3 số sau ngẫu nhiên từ -180 đến 180
-        for _ in range(3):
-            values.append(random.uniform(-180, 180))
-        endvl.append(values)
-    return endvl
+    # initialize the value
+    endvl = [
+        [460, -200, 200, 180, -90, 0],
+        [660, -100, 200, 180, -90, 0],
+        [460, 0, 200, 180, -90, 0],
+        [660, 100, 200, 180, -90, 0],
+        [460, 200, 200, 180, -90, 0]
+    ]
+    # convert to float
+    endvl_float = [[float(val) for val in sublist] for sublist in endvl]
+    # return 2D array
+    return endvl_float

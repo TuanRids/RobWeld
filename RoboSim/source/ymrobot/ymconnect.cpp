@@ -11,8 +11,7 @@ namespace nymrobot
     {
         
         static char ip_address[20] = "192.168.10.102"; // Default IP address
-        static char connect_content[100] = "Welcome to OhLabs";
-
+        static char connect_content[100] = "Welcome";
         // set UI
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.3f, 0.2f, 1.0f));
         ImGui::Begin("GetIP", nullptr,  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize );
@@ -60,7 +59,7 @@ namespace nymrobot
     {
         if (status.StatusCode == 0)
         { 
-            YMConnect::CloseConnection(controller);
+            // YMConnect::CloseConnection(controller);
             YMConnect::OpenConnection("192.168.0.0", status); // Fake Login for destroy status
             controller = nullptr;
         }
@@ -79,7 +78,7 @@ namespace nymrobot
 
         // if trigger is true, show the UI to connect to the robot
         connect_robot(); 
-        if (status.StatusCode != 0 || controller->Status == NULL) { return; }
+        if (status.StatusCode != 0 ) { return; }
         
         // UI for controlling the Robot
         ImGui::Begin("Robot Control");
@@ -90,8 +89,7 @@ namespace nymrobot
             if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
             delete temptstt;
         }
-
-        if (call_move) { move_robot(); }
+        move_robot(); 
         read_robot();
         ImGui::Separator();
 
@@ -107,9 +105,7 @@ namespace nymrobot
         PositionData* b1origi = new PositionData();
         PositionData* b1crpos = new PositionData();
 
-        *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
-        *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1origi);
-        *tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *b1crpos);
+
 
         static std::vector<std::vector<float>> rbpos(3, std::vector<float>(6, 0.0f));
         static std::vector<float> spdlinear{};
@@ -118,17 +114,33 @@ namespace nymrobot
 
         ImGui::SetNextItemWidth(150);
         ImGui::InputInt("Times", &coumove, 1, 2); ImGui::SameLine();
+        if (coumove < 1) { coumove = 1; }
+        bool joinflag = ImGui::Button("Joint Move"); ImGui::SameLine();
+        bool circuflag = ImGui::Button("Circular Move"); ImGui::SameLine();
+        bool linMFlag = ImGui::Button("Linear Move"); ImGui::SameLine();
+        bool lineshpath = ImGui::Button("show MovingPATH !NOT AVAILABLE");
         if (ImGui::Button("Loadpy"))
         {
             std::vector<std::vector<double>> get6pos = readpysrc.get_values_from_python();
-            for (int i{ 0 }; i < get6pos.size(); i++)
+            if (rbpos.size() < get6pos.size()) {
+                coumove = get6pos.size();
+                int numToAdd = get6pos.size() - rbpos.size();
+                for (int i = 0; i < numToAdd; ++i) {
+                    rbpos.push_back(std::vector<float>(6, 0.0f));
+                }
+            }
+            
+            if (get6pos.size()>0)
             {
-				rbpos[i][0] = get6pos[i][0];
-				rbpos[i][1] = get6pos[i][1];
-				rbpos[i][2] = get6pos[i][2];
-				rbpos[i][3] = get6pos[i][3];
-				rbpos[i][4] = get6pos[i][4];
-				rbpos[i][5] = get6pos[i][5];
+                for (int i{ 0 }; i < get6pos.size(); i++)
+                {
+                    rbpos[i][0] = get6pos[i][0];
+                    rbpos[i][1] = get6pos[i][1];
+                    rbpos[i][2] = get6pos[i][2];
+                    rbpos[i][3] = get6pos[i][3];
+                    rbpos[i][4] = get6pos[i][4];
+                    rbpos[i][5] = get6pos[i][5];
+                }
             }
         }
         spdlinear.resize(coumove);
@@ -141,9 +153,24 @@ namespace nymrobot
                     rbpos.push_back(std::vector<float>(6, 0.0f));
                 }
             }
-            if (ImGui::Button(("OrgPos " + std::to_string(j)).c_str())) { for (int i = 0; i < 6; i++) { rbpos[j][i] = b1origi->axisData[i]; } }
+            if (ImGui::Button(("OrgPos " + std::to_string(j)).c_str()))
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
+                    *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1origi);
+                    rbpos[j][i] = b1origi->axisData[i];
+                }
+            }
             ImGui::SameLine();
-            if (ImGui::Button(("CrtPos " + std::to_string(j)).c_str())) { for (int i = 0; i < 6; i++) { rbpos[j][i] = b1crpos->axisData[i]; } }
+            if (ImGui::Button(("CrtPos " + std::to_string(j)).c_str()))
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    *tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *b1crpos);
+                    rbpos[j][i] = b1crpos->axisData[i];
+                }
+            }
             ImGui::SameLine();
 
             ImGui::Text(" X:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
@@ -168,7 +195,7 @@ namespace nymrobot
             if (spdjoint[j] <= 0 || spdjoint[j] > 1) { spdjoint[j] = 0.95; }
         }
 
-        if (ImGui::Button("LinearPath !NOT AVAILABLE"))
+        if (lineshpath)
         {
            /* nelems::oMesh linepath;
             for (int j = 0; j < coumove; j++) {
@@ -181,7 +208,7 @@ namespace nymrobot
             proMeshRb->pushback(linepath);*/
         }
 
-        if (ImGui::Button("Joint Move")) {
+        if (joinflag) {
             ImGui::SetTooltip("Should Use!");
             for (int j = 0; j < coumove; j++) {
                 b1crpos->coordinateType = CoordinateType::RobotCoordinate;
@@ -197,8 +224,7 @@ namespace nymrobot
             *tpstatus = controller->MotionManager->MotionStart();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Linear Move")) {
-            ImGui::SetTooltip("Dont use if you dont know what you are doing !");
+        if (linMFlag) {
             for (int j = 0; j < coumove; j++) {
                 b1crpos->coordinateType = CoordinateType::RobotCoordinate;
                 for (int i = 0; i < 6; i++) {
@@ -212,8 +238,7 @@ namespace nymrobot
             *tpstatus = controller->MotionManager->MotionStart();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Circular Move")) {
-            ImGui::SetTooltip("current to 1st point = Linear, 1 -> 3 is circular based on 2nd points to calculate the curve. !");
+        if (circuflag) {
             // Linear from current to 1st points
             b1crpos->coordinateType = CoordinateType::RobotCoordinate;
             for (int i = 0; i < 6; i++) {
@@ -244,47 +269,44 @@ namespace nymrobot
         ImGui::End();
     }
 
-
+    // TODO Update a button for increasing FPS
     void ymconnect::read_robot()
     {
         // Setup for reading status
-        ImGui::Separator();
         std::stringstream* strget = new std::stringstream();
         StatusInfo tpstatus;
+        PositionData raxisData{}, rposData{};
+        static PositionData rjointangle{};
+        static auto start = std::chrono::high_resolution_clock::now();       
 
-        // read state
-        ControllerStateData stateData{};
-        controller->Status->ReadState(stateData);
-        *strget << stateData;
-        ImGui::Text("%s", strget->str().c_str());
-
-        // read the position
-        PositionData raxisData{}, rposData{}, rjointangle{};
-        tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, rposData);
-        *strget << rposData;
-        std::string substr = strget->str().substr(strget->str().find("Axes"));
-
-        if (stateData.isRunning)
+        std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
+        if (elapsed.count()>0.01f)
         {
-            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", substr.c_str()); //red color
-        } 
-        else
-        {
-            ImGui::Text("%s", substr.c_str());
+            // read state
+            ControllerStateData stateData{};
+            controller->Status->ReadState(stateData);
+            resultmsg.str(" ");
+            resultmsg << stateData;
+            
+            // read the position
+
+            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, rposData);
+            resultmsg << rposData;
+
+            if (stateData.isAlarming)
+            {
+                AlarmHistory alarmHistoryData;
+                controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData);                
+                resultmsg << alarmHistoryData << std::endl;
+            }
+            // read the Joint of robot
+            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, raxisData);
+            tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, raxisData
+                , KinematicConversions::PulseToJointAngle, rjointangle);
+
+            start = std::chrono::high_resolution_clock::now();
         }
-        if (stateData.isAlarming)
-        {
-            AlarmHistory alarmHistoryData;
-            controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData);
-            resultmsg.str();
-            resultmsg << alarmHistoryData << std::endl;
-            std::cout << alarmHistoryData << std::endl;
-        }
-
-        // read the Joint of robot
-        tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, raxisData);
-        tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, raxisData
-            , KinematicConversions::PulseToJointAngle, rjointangle);
+                       
         angle1 = rjointangle.axisData[0];
         angle2 = rjointangle.axisData[1];
         angle3 = rjointangle.axisData[2];
@@ -292,10 +314,6 @@ namespace nymrobot
         angle5 = rjointangle.axisData[4];
         angle6 = rjointangle.axisData[5];
         delete strget;
-        
-        }
-      
+    }
 
-
-    
 }

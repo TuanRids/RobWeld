@@ -30,7 +30,8 @@ void readpysrc::initialize() {
         std::wcerr << L"Failed to get PYTHON_HOME environment variable" << std::endl;
 
         // std::wstring selectedPath = BrowseFolder();
-		std::wstring selectedPath = L"C:\\Users\\ngdtu\\AppData\\Local\\Programs\\Python\\Python312";
+        // C:\Users\Admin\AppData\Local\Programs\Python\Python312
+		std::wstring selectedPath = L"C:\\Users\\Admin\\AppData\\Local\\Programs\\Python\\Python312";
         if (selectedPath.empty()) {
             std::wcerr << L"No directory selected. Exiting." << std::endl;
             return;

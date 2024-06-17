@@ -12,6 +12,7 @@
 #include "chrono"
 
 
+
 using namespace Eigen;
 
 namespace nui
@@ -473,7 +474,7 @@ namespace nui
 
         std::ostringstream ss;
         ss << std::fixed << std::setprecision(1) << current_fps;
-        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f),"FPS: %s", ss.str().c_str());
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "FPS "); // , ss.str().c_str());
 
         ImGui::End();
 
@@ -545,14 +546,11 @@ namespace nui
             ImGui::TextColored(vecred, "Joint 5: %.2f", ang[4]);
             ImGui::TextColored(vecred, "Joint 3: %.2f", ang[2]); ImGui::SameLine();
             ImGui::TextColored(vecred, "Joint 6: %.2f", ang[5]);
-            mRobot->trigger_call_move(false);
         }
         // Control Mode:
         else
         {
 
-
-            mRobot->trigger_call_move(true);
             // UI for controlling joint angles
             ImGui::SetNextItemWidth(100);
             ImGui::InputFloat("Joint 1", &ang[0], 1, 0.1, "%.2f");

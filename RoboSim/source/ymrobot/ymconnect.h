@@ -15,7 +15,6 @@ namespace nymrobot
 	class ymconnect
 	{
 	private:
-		bool call_move{ false };
 		StatusInfo status;
 		MotomanController* controller;
 		UINT32 restime = 10;
@@ -58,7 +57,6 @@ namespace nymrobot
 
 		void disconnect_robot(bool showmsg);
 		void render();
-		void trigger_call_move(const bool &get_stt) { call_move = get_stt; }
 
 		// command robot
 		void move_robot();
