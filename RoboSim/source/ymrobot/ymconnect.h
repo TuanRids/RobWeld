@@ -5,82 +5,48 @@
 #include "elems/mesh.h"
 #include <iomanip> 
 #include <py3rdsrc/readpysrc.h>
+#include <vector>
+#include <sstream>
 
-namespace nymrobot
-{
-	/// <summary>
-	/// Singleton pattern to create only 1 instance of the class
-	/// Connect the robot arm only 1 time.
-	/// </summary>
-	class ymconnect
-	{
-	private:
-		StatusInfo status;
-		MotomanController* controller;
-		UINT32 restime = 10;
-		bool switchVisualizeMode = false;
-		std::vector<std::vector <float>> limitangle;
-		readpysrc readpysrc;
-		// Singleton pattern to prevent instantiation
-		ymconnect(const ymconnect&) = delete;
-		ymconnect(ymconnect&&) = delete;
-		ymconnect& operator=(const ymconnect&) = delete;
-		ymconnect& operator=(ymconnect&&) = delete;
-		float angle[6];
-		// pointer to Robot's mesh
-		nelems::mMesh* proMeshRb;
-		std::stringstream resultmsg;
+namespace nymrobot {
 
-		// based ptr
-		// Private constructor to prevent instantiation
-		ymconnect() : controller(nullptr), proMeshRb(nullptr)
-		{ 
-			YMConnect::OpenConnection("192.168.0.0", status, restime); // Fake Login for destroy status
-		}
-	public:
-		// singleton instance
-		static ymconnect& getInstance() { 
-			static ymconnect instance; return instance; }
+    class ymconnect {
+    private:
+        StatusInfo status;
+        MotomanController* controller;
+        UINT32 restime = 10;
+        bool switchVisualizeMode = false;
+        std::vector<std::vector<float>> limitangle;
+        readpysrc readpysrc;
+        float angle[6];
+        nelems::mMesh* proMeshRb = nullptr;
+        std::stringstream resultmsg;
 
-		//deconstructor
-		~ymconnect() 
-		{ 
-			if (status.StatusCode  == 0)
-			{
-				disconnect_robot(false);
-			}
-			delete controller;
-		}
+        ymconnect();
+        ~ymconnect();
 
-		//connect & disconnect to robot
-		void connect_robot();
+        ymconnect(const ymconnect&) = delete;
+        ymconnect(ymconnect&&) = delete;
+        ymconnect& operator=(const ymconnect&) = delete;
+        ymconnect& operator=(ymconnect&&) = delete;
 
-		void disconnect_robot(bool showmsg);
-		void render();
-		//angle
-		void set_limitangle(const std::vector<std::vector <float>>& getlim) { limitangle = getlim; }
-		int check_files_in_directory();
-		// command robot
-		void move_robot();
-		void read_robot();
+    public:
+        static ymconnect& getInstance() {
+            static ymconnect instance;
+            return instance;
+        }
 
-		bool getSwitchVisualize() { return switchVisualizeMode; }
-		void setSwitchVisualize() { switchVisualizeMode = false; }
+        void connect_robot();
+        void disconnect_robot(bool showmsg);
+        void render();
+        void set_limitangle(const std::vector<std::vector<float>>& getlim) { limitangle = getlim; }
+        int check_files_in_directory();
+        void move_robot();
+        void read_robot();
 
-		void get_angle(float& g1,float &g2,float &g3,float &g4,float &g5,float &g6) {
-			if (status.StatusCode != 0){ return; }
-			if (status.StatusCode == 0)
-			{
-				g1 = angle[0];
-				g2 = angle[1];
-				g3 = angle[2];
-				g4 = angle[3];
-				g5 = angle[4];
-				g6 = angle[5];
-			}
-		}
+        bool getSwitchVisualize() const { return switchVisualizeMode; }
+        void setSwitchVisualize() { switchVisualizeMode = false; }
+        void get_angle(float& g1, float& g2, float& g3, float& g4, float& g5, float& g6);
+    };
 
-	};
 }
-
-
