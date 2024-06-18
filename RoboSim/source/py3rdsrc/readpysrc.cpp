@@ -19,23 +19,52 @@ std::wstring BrowseFolder() {
     return L"";
 }
 
-void readpysrc::initialize() {
+bool readpysrc::initialize() 
+{
     PyStatus status;
     PyConfig config;
     PyConfig_InitIsolatedConfig(&config);
 
     wchar_t pythonHome[512];
     DWORD size = GetEnvironmentVariableW(L"PYTHON_HOME", pythonHome, 512);
+    std::wstring selectedPath;
+
+
     if (size == 0) {
         std::wcerr << L"Failed to get PYTHON_HOME environment variable" << std::endl;
 
-        // std::wstring selectedPath = BrowseFolder();
-        // C:\Users\Admin\AppData\Local\Programs\Python\Python312
-		std::wstring selectedPath = L"C:\\Users\\Admin\\AppData\\Local\\Programs\\Python\\Python312";
-        if (selectedPath.empty()) {
-            std::wcerr << L"No directory selected. Exiting." << std::endl;
-            return;
+        // Read from ini file
+        std::ifstream inputFile("robosim_ini.dat");
+        json j;
+        if (inputFile.is_open()) {
+            inputFile >> j;
+            inputFile.close();
+            if (j.find("pypath") != j.end()) {
+                std::string getp = j["pypath"].get<std::string>();
+                selectedPath = std::wstring(getp.begin(), getp.end());
+
+            }
         }
+
+        if (selectedPath.empty()) {
+            // Browse for path
+            selectedPath = BrowseFolder();
+            if (selectedPath.empty()) {
+                MessageBox(nullptr, "No directory selected. Exiting.", "Error", MB_OK | MB_ICONERROR);
+                return false;
+            }
+
+            // Save path to JSON file
+            j["pypath"] = std::string(selectedPath.begin(), selectedPath.end());
+            std::ofstream outputFile("robosim_ini.dat");
+            if (!outputFile.is_open()) {
+                MessageBox(nullptr, "Failed to open file for writing: robosim_ini.dat", "Error", MB_OK | MB_ICONERROR);
+                return false;
+            }
+            outputFile << j.dump(4);
+            outputFile.close();
+        }
+
         wcscpy_s(pythonHome, selectedPath.c_str());
     }
 
@@ -54,12 +83,18 @@ void readpysrc::initialize() {
 
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("sys.path.append(\"./pysrc\")");
+    return true;
 }
+
 
 
 std::vector<std::vector<double>> readpysrc::get_values_from_python() {
     std::vector<std::vector<double>> get_result;
-    initialize();
+    if (!initialize())
+    {
+        MessageBox(nullptr, "Failed to initialize Python", "Error", MB_OK | MB_ICONERROR);
+        return get_result;
+    }
     PyObject* pName = PyUnicode_DecodeFSDefault("postocpp");
     PyObject* pModule = PyImport_Import(pName);
     Py_DECREF(pName);
@@ -109,8 +144,106 @@ std::vector<std::vector<double>> readpysrc::get_values_from_python() {
     Py_DECREF(pFunc);
     Py_DECREF(pModule);
     Py_Finalize();
+    return get_result;
+}
+
+std::vector<std::vector<double>> readpysrc::get_values_from_exe()
+{
+    std::wstring exePath = L"pysrc\\postocpp.exe";
+    std::vector<std::vector<double>> get_result;
+    if (exePath.empty()) {
+        MessageBox(nullptr, "Failed to get path to postocpp.exe", "Error", MB_OK | MB_ICONERROR);
+        return get_result;
+    }
+
+    // Initialize structures for CreateProcess
+    // Initialize structures for CreateProcess
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    SECURITY_ATTRIBUTES sa;
+    HANDLE g_hChildStd_OUT_Rd = NULL;
+    HANDLE g_hChildStd_OUT_Wr = NULL;
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    si.dwFlags |= STARTF_USESTDHANDLES;
+
+    ZeroMemory(&pi, sizeof(pi));
+
+    // Set security attributes for the pipe
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+
+    // Create a pipe for the child process's STDOUT
+    if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &sa, 0)) {
+        std::cerr << "Stdout pipe creation failed\n";
+        return get_result;
+    }
+
+    // Ensure the read handle to the pipe is not inherited
+    if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
+        std::cerr << "Stdout pipe set handle information failed\n";
+        return get_result;
+    }
+
+    // Set the handles for STDOUT and STDERR for the child process
+    si.hStdOutput = g_hChildStd_OUT_Wr;
+    si.hStdError = g_hChildStd_OUT_Wr;
+
+    // Launch the child process using the Unicode version explicitly
+    if (!CreateProcessW(NULL, const_cast<LPWSTR>(exePath.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+        std::cerr << "CreateProcess failed\n";
+        return get_result;
+    }
+
+    // Close the handle to the write end of the pipe in the parent process
+    CloseHandle(g_hChildStd_OUT_Wr);
+
+    // Read output from the child process's pipe
+    DWORD dwRead;
+    CHAR chBuf[4096];
+    BOOL bSuccess = FALSE;
+    std::string result;
+
+    for (;;) {
+        bSuccess = ReadFile(g_hChildStd_OUT_Rd, chBuf, sizeof(chBuf), &dwRead, NULL);
+        if (!bSuccess || dwRead == 0) break;
+        result.append(chBuf, dwRead);
+    }
+
+    // Wait for the child process to exit
+    WaitForSingleObject(pi.hProcess, INFINITE);
+
+    // Close handles for the child process
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    // Parse the result string into a 2D vector of doubles
+    std::istringstream iss(result);
+    std::string line;
+    while (std::getline(iss, line)) {
+        std::istringstream lineStream(line);
+        std::vector<double> inner_vector;
+        double value;
+        while (lineStream >> value) {
+            inner_vector.push_back(value);
+        }
+        if (!inner_vector.empty()) {
+            get_result.push_back(inner_vector);
+        }
+    }
+
+
+    for (auto &ob: get_result) {
+		for (auto &i: ob) {
+			std::cout << i << " ";
+		}
+		std::cout << std::endl;
+	}
 
     return get_result;
+
 }
 
 

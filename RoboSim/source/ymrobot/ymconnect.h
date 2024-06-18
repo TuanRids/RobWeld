@@ -59,7 +59,7 @@ namespace nymrobot
 		void render();
 		//angle
 		void set_limitangle(const std::vector<std::vector <float>>& getlim) { limitangle = getlim; }
-
+		int check_files_in_directory();
 		// command robot
 		void move_robot();
 		void read_robot();

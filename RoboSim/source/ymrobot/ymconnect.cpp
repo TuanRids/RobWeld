@@ -3,29 +3,32 @@
 #include "windows.h"
 #include <chrono>
 #include "elems/vertex_holder.h"
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace nymrobot
 {
     //bool ymconnect::connect_trigger = false;
     void ymconnect::connect_robot()
     {
-        
+
         static char ip_address[20] = "192.168.10.102"; // Default IP address
         static char connect_content[100] = "Welcome";
         // set UI
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.3f, 0.2f, 1.0f));
-        ImGui::Begin("GetIP", nullptr,  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize );
+        ImGui::Begin("GetIP", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
         ImGui::SetWindowSize(ImVec2(400, 100));
         ImGui::SetNextItemWidth(150);
 
         ImGui::InputText("IP Address", ip_address, sizeof(ip_address)); ImGui::SetNextItemWidth(150);
-        
+
         if (status.StatusCode == 0) { strcpy_s(connect_content, "Connected."); }
         ImGui::InputText("Status", connect_content, sizeof(connect_content));
 
         if (ImGui::Button("Connect") && status.StatusCode != 0) {
             std::string getip{ ip_address };
-            
+
             // set content to make sure it is updated for 2nd time of connection
             strcpy_s(connect_content, "Welcome to OhLabs.");
             controller = YMConnect::OpenConnection(getip, status); // Open a connection to the robot controller
@@ -36,7 +39,7 @@ namespace nymrobot
                 std::string message = ss.str();
                 MessageBox(NULL, message.c_str(), "Error", MB_OK);
             }
-            else 
+            else
             {
                 status = controller->ControlCommands->DisplayStringToPendant(connect_content);
             }
@@ -47,7 +50,7 @@ namespace nymrobot
             status = controller->ControlCommands->DisplayStringToPendant((char*)"Disconnect!");
             disconnect_robot(false);
             strcpy_s(connect_content, "Disconnect!");
-            
+
         }
 
         ImGui::Separator();
@@ -58,7 +61,7 @@ namespace nymrobot
     void ymconnect::disconnect_robot(bool showmsg)
     {
         if (status.StatusCode == 0)
-        { 
+        {
             // YMConnect::CloseConnection(controller);
             YMConnect::OpenConnection("192.168.0.0", status); // Fake Login for destroy status
             controller = nullptr;
@@ -77,9 +80,9 @@ namespace nymrobot
         }
 
         // if trigger is true, show the UI to connect to the robot
-        connect_robot(); 
-        if (status.StatusCode != 0 ) { return; }
-        
+        connect_robot();
+        if (status.StatusCode != 0) { return; }
+
         // UI for controlling the Robot
         ImGui::Begin("Robot Control");
         if (ImGui::Button("Clear Fault"))
@@ -89,18 +92,54 @@ namespace nymrobot
             if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
             delete temptstt;
         }
-        move_robot(); 
+        move_robot();
         read_robot();
         ImGui::Separator();
 
         if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }
-		ImGui::End();
+        ImGui::End();
     }
+
+    int ymconnect::check_files_in_directory()
+    {
+        const std::wstring& directory_path{ L".\\pysrc" };
+        bool has_exe = false;
+        bool has_py = false;
+
+        // Check if the directory exists
+        if (!fs::exists(directory_path) || !fs::is_directory(directory_path)) {
+            std::wcerr << L"Directory does not exist: " << directory_path << std::endl;
+            return 0;
+        }
+
+        // Iterate through the files in the directory
+        for (const auto& entry : fs::directory_iterator(directory_path)) {
+            if (entry.is_regular_file()) {
+                if (entry.path().filename() == L"postocpp.exe") {
+                    has_exe = true;
+                }
+                if (entry.path().filename() == L"postocpp.py") {
+                    has_py = true;
+                }
+            }
+        }
+
+        // Determine the return value based on the presence of the files
+        if (has_exe) {
+            return 2;
+        }
+        if (has_py) {
+            return 1;
+        }
+        return 0;
+    }
+
     void ymconnect::move_robot() {
+        //===============================================================================================================================================================
+        // IMPORTANT Variables
         std::unique_ptr<StatusInfo> tpstatus = std::make_unique<StatusInfo>();
         ImGui::Separator();
         ImGui::Begin("Attributes: ");
-
         BaseAxisPositionVariableData* b1PositionData = new BaseAxisPositionVariableData();
         PositionData* b1origi = new PositionData();
         PositionData* b1crpos = new PositionData();
@@ -111,6 +150,9 @@ namespace nymrobot
         static int coumove{ 3 };
 
         ImGui::SetNextItemWidth(150);
+        //===============================================================================================================================================================
+        // MAIN BUTTONS
+        // HOME, JOINT MOVE< CIRCULAR MOVE, LINEAR MOVE, SHOW PATH, LOADPY
         ImGui::InputInt("Times", &coumove, 1, 2); ImGui::SameLine();
         if (coumove < 1) { coumove = 1; }
         bool joinflag = ImGui::Button("Joint Move"); ImGui::SameLine();
@@ -120,16 +162,23 @@ namespace nymrobot
 
         if (ImGui::Button("Loadpy"))
         {
-            std::vector<std::vector<double>> get6pos = readpysrc.get_values_from_python();
-            if (rbpos.size() < get6pos.size()) {
+            int checkfilepysrc = check_files_in_directory(); // 0 = nothing, 1 = py, 2 = exe
+
+            std::vector<std::vector<double>> get6pos;
+            if (checkfilepysrc == 1)        { get6pos = readpysrc.get_values_from_python(); }
+            else if (checkfilepysrc==2)     { get6pos = readpysrc.get_values_from_exe(); }
+            else                            { goto endload; }
+
+            if (rbpos.size() < get6pos.size()) 
+            {
                 coumove = get6pos.size();
                 int numToAdd = get6pos.size() - rbpos.size();
-                for (int i = 0; i < numToAdd; ++i) {
+                for (int i = 0; i < numToAdd; ++i) 
+                {
                     rbpos.push_back(std::vector<float>(6, 0.0f));
                 }
             }
-            
-            if (get6pos.size()>0)
+            if (get6pos.size() > 0)
             {
                 for (int i{ 0 }; i < get6pos.size(); i++)
                 {
@@ -141,25 +190,34 @@ namespace nymrobot
                     rbpos[i][5] = get6pos[i][5];
                 }
             }
-        } 
+        endload:
+            ; // done
+        }
         ImGui::SameLine();
-        if (ImGui::Button("HOME")) 
+        if (ImGui::Button("Home"))
         {
+            ///MAYBE ERROR
+            *tpstatus = controller->MotionManager->ClearAllTrajectory();
+
             *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
             *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1origi);
-            JointMotion r1movel(ControlGroupId::R1, *b1origi, 3);
-            *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
+            b1origi->coordinateType = CoordinateType::RobotCoordinate;
+
+            JointMotion r1home(ControlGroupId::R1, *b1origi, 3);
+            *tpstatus = controller->MotionManager->AddPointToTrajectory(r1home);
             *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *tpstatus = controller->MotionManager->MotionStart();
-            controller->MotionManager->ClearAllTrajectory();
+            goto end1;
+
         }
         ImGui::SameLine();
         ImGui::Text("Linear spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("##LS" , &spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
+        ImGui::InputFloat("##LS", &spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
         ImGui::Text("Joint spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("##JS" , &spdjoint, 0.0f, 0.0f, "%.2f");
+        ImGui::InputFloat("##JS", &spdjoint, 0.0f, 0.0f, "%.2f");
 
-
+        //===============================================================================================================================================================
+        // Create the UI for coordinates
         for (int j = 0; j < coumove; j++) {
             if (rbpos.size() < coumove) {
                 int numToAdd = coumove - rbpos.size();
@@ -199,22 +257,24 @@ namespace nymrobot
             ImGui::Text("Ry:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
             ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &rbpos[j][4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
             ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &rbpos[j][5], 0.0f, 0.0f, "%.2f");           
+            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &rbpos[j][5], 0.0f, 0.0f, "%.2f");
         }
 
         if (lineshpath)
         {
-           /* nelems::oMesh linepath;
-            for (int j = 0; j < coumove; j++) {
-                nelems::VertexHolder vertex;
-                vertex.mPos = { rbpos[j][0],rbpos[j][1],rbpos[j][2] };
-                vertex.mNormal = { 0.0f, 0.0f, 1.0f };
-                linepath.add_vertex(vertex);
-            }
-            linepath.changeName("LINEPATH");
-            proMeshRb->pushback(linepath);*/
+            /* nelems::oMesh linepath;
+             for (int j = 0; j < coumove; j++) {
+                 nelems::VertexHolder vertex;
+                 vertex.mPos = { rbpos[j][0],rbpos[j][1],rbpos[j][2] };
+                 vertex.mNormal = { 0.0f, 0.0f, 1.0f };
+                 linepath.add_vertex(vertex);
+             }
+             linepath.changeName("LINEPATH");
+             proMeshRb->pushback(linepath);*/
         }
 
+        //===============================================================================================================================================================
+        // Moving space
         if (joinflag) {
             ImGui::SetTooltip("Should Use!");
             for (int j = 0; j < coumove; j++) {
@@ -254,7 +314,7 @@ namespace nymrobot
             JointMotion r1movel(ControlGroupId::R1, *b1crpos, spdjoint);
             *tpstatus = controller->MotionManager->AddPointToTrajectory(r1movel);
             // Circular 0.1.2, 2.3.4
-            for (int j = 2; j < coumove; j+=2) {
+            for (int j = 2; j < coumove; j += 2) {
                 b1crpos->coordinateType = CoordinateType::RobotCoordinate;
                 CoordinateArray coorarr;
                 for (int i = 0; i < 6; i++) {
@@ -270,6 +330,7 @@ namespace nymrobot
             *tpstatus = controller->MotionManager->MotionStart();
         }
 
+        end1: // 
         delete b1PositionData;
         delete b1crpos;
         delete b1origi;
@@ -285,17 +346,17 @@ namespace nymrobot
         StatusInfo tpstatus;
         PositionData raxisData{}, rposData{};
         PositionData rjointangle{};
-        static auto start = std::chrono::high_resolution_clock::now();       
+        static auto start = std::chrono::high_resolution_clock::now();
+        ControllerStateData stateData{};
 
         std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
-        if (elapsed.count()>0.1f)
+        if (elapsed.count() > 0.1f)
         {
             // read state
-            ControllerStateData stateData{};
             controller->Status->ReadState(stateData);
             resultmsg.str(" ");
             resultmsg << stateData;
-            
+
             // read the position
 
             tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, rposData);
@@ -304,11 +365,13 @@ namespace nymrobot
             if (stateData.isAlarming)
             {
                 AlarmHistory alarmHistoryData;
-                controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData);                
+                controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData);
                 resultmsg << alarmHistoryData << std::endl;
             }
             // read the Joint of robot
-            
+            auto getper = controller->MotionManager->GetMotionTargetProgress(ControlGroupId::R1, tpstatus);
+            resultmsg << "\n RUN % : " << getper << std::endl;
+
 
             start = std::chrono::high_resolution_clock::now();
         }
@@ -331,12 +394,13 @@ namespace nymrobot
             }
         }
 
-        if (isOutOfLimit) {
+        if (isOutOfLimit && stateData.isRunning) {
             controller->MotionManager->MotionStop();
             controller->ControlCommands->SetServos(SignalStatus::OFF);
+
             MessageBox(NULL, "Error: Joint angle is out of limit", "Error", MB_OK);
         }
         delete strget;
     }
 
-}
+}			

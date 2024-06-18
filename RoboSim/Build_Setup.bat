@@ -20,4 +20,5 @@ xcopy /Y /s "%CD%\RobotStandard\*" "%CD%\..\x64\Debug\RobotStandard\"
 xcopy /Y /s "%CD%\shaders\*" "%CD%\..\x64\Release\shaders\"
 xcopy /Y /s "%CD%\source\pysrc\*" "%CD%\..\x64\Release"
 xcopy /Y /s "%CD%\RobotStandard\*" "%CD%\..\x64\Release\RobotStandard\"
+xcopy /Y /s "%CD%\source\pysrc\*" "%CD%\..\x64\Release\pysrc\"
 echo Release files copied successfully.
