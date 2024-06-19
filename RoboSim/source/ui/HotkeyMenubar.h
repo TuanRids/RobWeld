@@ -25,7 +25,7 @@ namespace nui {
         nymrobot::ymconnect* mRobot;
 
     public:
-        HotkeyMenubar() : scene_view(nullptr) {
+        HotkeyMenubar() : scene_view(nullptr), mRobot(nullptr){
             scene_view = &nui::SceneView::getInstance();
             
         }

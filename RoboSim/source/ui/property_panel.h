@@ -24,6 +24,7 @@
 #include <Windows.h>
 #include "render/ui_context.h"
 #include "ymrobot/ymconnect.h"
+#include "statuslogs.h"
 using json = nlohmann::json;
 
 namespace nui
@@ -46,10 +47,10 @@ namespace nui
         std::shared_ptr<nshaders::Shader> mctshader;
         float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
         nymrobot::ymconnect* mRobot;
-
+        StatusLogs* sttlogs;
     public:
         Property_Panel():
-            proMesh(nullptr),mesh(nullptr), mRobot(nullptr), mctshader(nullptr)
+            proMesh(nullptr),mesh(nullptr), mRobot(nullptr), mctshader(nullptr), sttlogs(nullptr)
         {
             for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
             std::string content = "Arial"; std::ifstream file("robosim_ini.dat");

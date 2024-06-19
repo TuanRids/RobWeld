@@ -28,7 +28,7 @@ namespace nui
         {
             mRobot = &nymrobot::ymconnect::getInstance();
         }
-        
+        if (!sttlogs) { sttlogs = &StatusLogs::getInstance(); }
         //****************************************************
 
         static nui::HotkeyMenubar hotkey_manage;
@@ -49,6 +49,14 @@ namespace nui
             material_frame(scene_view); // show material properties
             ImGui::End();
         }
+        //****************************************************
+		//Show StatusLogs
+        ImGui::Begin("StatusLogs", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+        ImGui::TextUnformatted(sttlogs->getStatus().c_str());
+        ImGui::End();
+
+
+
         mRobot->render();
         camera_frame(scene_view); // show camera properties
         sh_performance();
@@ -114,6 +122,8 @@ namespace nui
             {
                 auto mesh = proMesh->get_mesh_ptr(i);
                 if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
+                if (std::string(mesh->oname).find("__SKIP__") != std::string::npos) { continue; }
+
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
 
@@ -199,6 +209,7 @@ namespace nui
             for (int i = 0; i < proMesh->size(); i++)
             {
                 mesh = proMesh->get_mesh_ptr(i);
+                if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
                 if (mesh->selected == true)
                 {
                     ImGui::Text(mesh->oname); ImGui::SameLine();
@@ -211,6 +222,7 @@ namespace nui
             for (int i = 0; i < proMesh->size(); i++) {
                 mesh = proMesh->get_mesh_ptr(i);
                 if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
+                if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
                 ImGui::Text(mesh->oname); ImGui::SameLine();
                 ImGui::Text(": %lld - %lld", mesh->mVertices.size(), mesh->mVertexIndices.size());
             }
@@ -236,6 +248,7 @@ namespace nui
                     if (mesh->selected && PreObId != mesh->ID)
                     {
                         PreObId = mesh->ID;
+                        if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
                         strcpy_s(aname, sizeof(aname), mesh->oname);
                         posrot_obj[0] = mesh->oMaterial.position.x;
                         posrot_obj[1] = mesh->oMaterial.position.y;
@@ -540,37 +553,34 @@ namespace nui
             mRobot->get_angle(ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]);
 
             // Show Joints Data
-            ImVec4 vecred(0.0f, 0.0f, 1.0f, 1.0f);
-            ImGui::TextColored(vecred, "Joint 1: %.2f", ang[0]);            ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat("J1 Lim1", &limangle[0][0], 0, 0, "%.2f");    ImGui::SetNextItemWidth(50);
-			ImGui::InputFloat("J1 Lim2", &limangle[0][1], 0, 0, "%.2f");
+            ImVec4 vecred(0.0f, 0.0f, 1.0f, 1.0f); 
 
-            ImGui::TextColored(vecred, "Joint 2: %.2f", ang[1]);          ImGui::SetNextItemWidth(50);
-			ImGui::InputFloat("J2 Lim1", &limangle[1][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat("J2 Lim2", &limangle[1][1], 0, 0, "%.2f");
+            for (int i = 0; i < 6; i += 2) {
+                ImGui::TextColored(vecred, "Joint %d: %.2f", i + 1, ang[i]);
+                ImGui::SameLine();
+                ImGui::Dummy(ImVec2(30.0f, 0.0f));
+                ImGui::SameLine();
+                ImGui::TextColored(vecred, "Joint %d: %.2f", i + 2, ang[i + 1]);
+                ImGui::SetNextItemWidth(50);
 
-            ImGui::TextColored(vecred, "Joint 3: %.2f", ang[2]);   ImGui::SetNextItemWidth(50);
-			ImGui::InputFloat("J3 Lim1", &limangle[2][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
-			ImGui::InputFloat("J3 Lim2", &limangle[2][1], 0, 0, "%.2f");
+                for (int j = 0; j < 2; ++j) {
+                    ImGui::Text((std::string("J") + std::to_string(i + 1) + " Lim" + std::to_string(j + 1)).c_str());
+                    ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                    ImGui::InputFloat(("##" + std::to_string(i) + "_" + std::to_string(j)).c_str(), &limangle[i][j], 0, 0, "%.2f");
+                    ImGui::SameLine();
 
-            ImGui::TextColored(vecred, "Joint 4: %.2f", ang[3]);  ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat("J4 Lim1", &limangle[3][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat("J4 Lim2", &limangle[3][1], 0, 0, "%.2f");
-
-            ImGui::TextColored(vecred, "Joint 5: %.2f", ang[4]);  ImGui::SetNextItemWidth(50);
-			ImGui::InputFloat("J5 Lim1", &limangle[4][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
-			ImGui::InputFloat("J5 Lim2", &limangle[4][1], 0, 0, "%.2f");
-
-            ImGui::TextColored(vecred, "Joint 6: %.2f", ang[5]);  ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat("J6 Lim1", &limangle[5][0], 0, 0, "%.2f");  ImGui::SetNextItemWidth(50);
-			ImGui::InputFloat("J6 Lim2", &limangle[5][1], 0, 0, "%.2f");
+                    ImGui::Text((std::string("J") + std::to_string(i + 2) + " Lim" + std::to_string(j + 1)).c_str());
+                    ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                    ImGui::InputFloat(("##" + std::to_string(i + 1) + "_" + std::to_string(j)).c_str(), &limangle[i + 1][j], 0, 0, "%.2f");
+                    
+                }
+            }
             mRobot->set_limitangle(limangle);
         }
         // Control Mode:
         else
         {
 
-            // UI for controlling joint angles
             ImGui::SetNextItemWidth(100);
             ImGui::InputFloat("Joint 1", &ang[0], 1, 0.1, "%.2f");
             ImGui::SetNextItemWidth(100);
@@ -584,10 +594,6 @@ namespace nui
             ImGui::SetNextItemWidth(100);
             ImGui::InputFloat("Joint 6", &ang[5], 1, 0.1, "%.2f");
             ImGui::Separator();
-            //// RB Hand
-            //ImGui::InputFloat("RbHand X: ", &base[5]->oMaterial.position.x, 1, 0.1, "%.2f");
-            //ImGui::InputFloat("RbHand Y: ", &base[5]->oMaterial.position.y, 1, 0.1, "%.2f");
-            //ImGui::InputFloat("RbHand Z: ", &base[5]->oMaterial.position.z, 1, 0.1, "%.2f");
 
             if (mRobot->getSwitchVisualize()) { CtrFlag = false; }
         }

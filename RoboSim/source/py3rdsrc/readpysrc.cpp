@@ -42,7 +42,11 @@ bool readpysrc::initialize()
             if (j.find("pypath") != j.end()) {
                 std::string getp = j["pypath"].get<std::string>();
                 selectedPath = std::wstring(getp.begin(), getp.end());
-
+                // check if selectedpath is exists or not, if not set selectedpath = empty
+                std::error_code ec;
+                if (!std::filesystem::exists(selectedPath, ec)) {
+                    selectedPath.clear();
+                }
             }
         }
 
@@ -156,7 +160,6 @@ std::vector<std::vector<double>> readpysrc::get_values_from_exe()
         return get_result;
     }
 
-    // Initialize structures for CreateProcess
     // Initialize structures for CreateProcess
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;

@@ -7,7 +7,7 @@
 #include <py3rdsrc/readpysrc.h>
 #include <vector>
 #include <sstream>
-
+#include "ui/statuslogs.h"
 namespace nymrobot {
 
     class ymconnect {
@@ -21,7 +21,7 @@ namespace nymrobot {
         float angle[6];
         nelems::mMesh* proMeshRb = nullptr;
         std::stringstream resultmsg;
-
+        nui::StatusLogs* sttlogs = nullptr;
         ymconnect();
         ~ymconnect();
 

@@ -191,6 +191,7 @@
     <ClCompile Include="source\elems\vertex_holder.cpp" />
     <ClCompile Include="source\render\opengl_buffer_manager.cpp" />
     <ClCompile Include="source\render\ui_context.cpp" />
+    <ClCompile Include="source\ui\statuslogs.cpp" />
     <ClCompile Include="source\ui\uiAction.cpp" />
     <ClCompile Include="source\utils\RobsFileIO.h" />
     <ClCompile Include="source\window\jgl_window.cpp" />
@@ -229,6 +230,7 @@
     <ClInclude Include="source\ui\FrameManage.h" />
     <ClInclude Include="source\ui\HotkeyMenubar.h" />
     <ClInclude Include="source\ui\RdrawChart.h" />
+    <ClInclude Include="source\ui\statuslogs.h" />
     <ClInclude Include="source\ui\uiAction.h" />
     <ClInclude Include="source\utils\imgui_widgets.h" />
     <ClInclude Include="source\ui\scene_view.h" />

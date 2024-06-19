@@ -308,6 +308,15 @@ namespace nelems {
             mesh->unbind();
         }
         for (auto& mesh : *mMeshes) {
+            // incase robot
+            if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos)
+            {
+                shader->set_material(mesh->oMaterial, "materialData");
+                mesh->render_lines();
+                mesh->unbind();
+                continue;
+            }
+            // incase selected
             if (!mesh->selected) { continue; }
             oMesh OBxyz, OBox, OBoy, OBoz;
             set_OBxyz(axis_length, *mesh, OBox, OBoy, OBoz);
@@ -414,6 +423,32 @@ namespace nelems {
         }
         mMeshes->erase(std::remove_if(mMeshes->begin(), mMeshes->end(),
             [](const std::shared_ptr<oMesh>& mesh) { return mesh->selected; }), mMeshes->end());
+    }
+
+    void mMesh::delete_byname(const std::string& delmesh)
+    {
+        std::vector<std::vector<std::shared_ptr<oMesh>>::iterator> iterators_to_delete;
+
+        for (auto it = mMeshes->begin(); it != mMeshes->end(); ++it)
+        {
+            if (std::string((*it)->oname).find(delmesh) != std::string::npos)
+            {
+                (*it)->delete_buffers();
+                iterators_to_delete.push_back(it);
+            }
+        }
+
+        for (auto it : iterators_to_delete)
+        {
+            mMeshes->erase(it);
+        }
+    }
+
+
+    void mMesh::add_mesh(oMesh& addnewmesh)
+    {
+
+        mMeshes->push_back(std::make_shared<oMesh>(addnewmesh));
     }
 
     void mMesh::set_OBxyz(float length, oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz) {
