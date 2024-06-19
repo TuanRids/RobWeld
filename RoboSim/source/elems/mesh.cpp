@@ -415,6 +415,18 @@ namespace nelems {
         mesh = nullptr;
     }
 
+    bool mMesh::get_mesh_byname(const std::string& name, std::shared_ptr<nelems::oMesh>& mesh)
+    {
+		for (const auto& m : *mMeshes) {
+			if (std::string(m->oname).find(name) != std::string::npos) {
+				mesh = m;
+				return true;
+			}
+		}
+		mesh = nullptr;
+        return false;
+    }
+
     void mMesh::delete_selected() {
         for (auto& mesh : *mMeshes) {
             if (mesh->selected) {

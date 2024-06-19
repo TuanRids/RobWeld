@@ -123,14 +123,21 @@ namespace nymrobot {
         static float spdlinear{};
         static float spdjoint{};
         static int coumove{ 3 };
-
+        static auto LinepathStart = std::chrono::high_resolution_clock::now();
         ImGui::SetNextItemWidth(150);
         ImGui::InputInt("Times", &coumove, 1, 2);
         if (coumove < 1) { coumove = 1; }; ImGui::SameLine();
         bool joinflag = ImGui::Button("Joint Move"); ImGui::SameLine();
         bool circuflag = ImGui::Button("Circular Move"); ImGui::SameLine();
         bool linMFlag = ImGui::Button("Linear Move");ImGui::SameLine();
-        bool lineshpath = ImGui::Button("Moving Path"); ImGui::SameLine();
+        bool lineshpath{ false };
+        if (ImGui::Button(lineshpath ? "MovePath On" : "MovePath Off")) {
+            lineshpath = !lineshpath; // Toggle MovePath
+            if (lineshpath){ *sttlogs << "Render the Move Path"; }
+            else { *sttlogs << "Stop the Move Path";proMeshRb->delete_byname("movepath__SKIP__"); }
+        } ImGui::SameLine();
+
+
         if (ImGui::Button("Res path")) { proMeshRb->delete_byname("movepath__SKIP__"); }
         if (ImGui::Button("Loadpy")) {
             int checkfilepysrc = check_files_in_directory();
@@ -210,28 +217,44 @@ namespace nymrobot {
             ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
             ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &rbpos[j][5], 0.0f, 0.0f, "%.2f");
         }
-        if (lineshpath) {
-            
-            nelems::oMesh newmesh{};
-            newmesh.changeName("movepath__SKIP__");                 // Name
-            newmesh.ID = proMeshRb->getCurrentTimeMillis(0);        // ID
-            newmesh.oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f); // Color
-            nelems::VertexHolder vertex{};                          // Vertex
-            for (int i{ 0 }; i< coumove; i++)
-            {
-                vertex.mPos = glm::vec3(rbpos[i][0], rbpos[i][1], rbpos[i][2]+138.845); // 523.845
-                vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
-                newmesh.add_vertex(vertex);
-                if (i > 0) {
-                    newmesh.add_vertex_index(i - 1); // index of previous vertex
-                    newmesh.add_vertex_index(i);     // index of current vertex
+
+        double Linepathelapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>
+            (std::chrono::high_resolution_clock::now() - LinepathStart).count();
+
+
+        if (lineshpath && Linepathelapsed_seconds > 0.4f) {
+            if (lineshpath && Linepathelapsed_seconds > 0.2) {
+                LinepathStart = std::chrono::high_resolution_clock::now();
+
+                std::shared_ptr<nelems::oMesh> newmesh = std::make_shared<nelems::oMesh>();
+                if (!proMeshRb->get_mesh_byname("movepath__SKIP__", newmesh)) {
+                    newmesh->changeName("movepath__SKIP__");                
+                    newmesh->ID = proMeshRb->getCurrentTimeMillis(0);        
+                    newmesh->oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f);
                 }
+                else {
+                   
+                    newmesh->delete_buffers();
+                    newmesh->mVertexIndices.clear();
+                    newmesh->mVertices.clear();
+                }
+
+                nelems::VertexHolder vertex{};
+                for (int i = 0; i < coumove; ++i) {
+                    vertex.mPos = glm::vec3(rbpos[i][0], rbpos[i][1], rbpos[i][2] + 138.845);
+                    vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);                             
+                    newmesh->add_vertex(vertex);                                            
+                    if (i > 0) {
+                        newmesh->add_vertex_index(i - 1); 
+                        newmesh->add_vertex_index(i);    
+                    }
+                }
+
+                newmesh->init();
+                newmesh->selected = true; 
+                proMeshRb->add_mesh(*newmesh); 
             }
-            newmesh.init();
-            newmesh.selected = true;
-            proMeshRb->add_mesh(newmesh);
-            *sttlogs << "Render the Move Path";
-        }
+
 
         auto execute_move = [&](auto&& motion_functor) {
             for (int j = 0; j < coumove; ++j) {
