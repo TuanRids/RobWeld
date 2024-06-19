@@ -228,12 +228,12 @@ namespace nymrobot {
 
                 std::shared_ptr<nelems::oMesh> newmesh = std::make_shared<nelems::oMesh>();
                 if (!proMeshRb->get_mesh_byname("movepath__SKIP__", newmesh)) {
-                    newmesh->changeName("movepath__SKIP__");                
-                    newmesh->ID = proMeshRb->getCurrentTimeMillis(0);        
+                    newmesh->changeName("movepath__SKIP__");
+                    newmesh->ID = proMeshRb->getCurrentTimeMillis(0);
                     newmesh->oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f);
                 }
                 else {
-                   
+
                     newmesh->delete_buffers();
                     newmesh->mVertexIndices.clear();
                     newmesh->mVertices.clear();
@@ -242,25 +242,28 @@ namespace nymrobot {
                 nelems::VertexHolder vertex{};
                 for (int i = 0; i < coumove; ++i) {
                     vertex.mPos = glm::vec3(rbpos[i][0], rbpos[i][1], rbpos[i][2] + 138.845);
-                    vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);                             
-                    newmesh->add_vertex(vertex);                                            
+                    vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
+                    newmesh->add_vertex(vertex);
                     if (i > 0) {
-                        newmesh->add_vertex_index(i - 1); 
-                        newmesh->add_vertex_index(i);    
+                        newmesh->add_vertex_index(i - 1);
+                        newmesh->add_vertex_index(i);
                     }
                 }
 
                 newmesh->init();
-                newmesh->selected = true; 
-                proMeshRb->add_mesh(*newmesh); 
+                newmesh->selected = true;
+                proMeshRb->add_mesh(*newmesh);
             }
-
+        }
 
         auto execute_move = [&](auto&& motion_functor) {
+            std::string stent = "Start the Motion to " + std::to_string(coumove) + " points: ";
             for (int j = 0; j < coumove; ++j) {
                 b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+                stent += "\n" + std::to_string(j) + ": ";
                 for (int i = 0; i < 6; ++i) {
                     b1crpos->axisData[i] = rbpos[j][i];
+                    stent += std::to_string(rbpos[j][i]) + " ";
                 }
                 auto motion = motion_functor(ControlGroupId::R1, *b1crpos, (std::is_same_v<decltype(motion_functor), JointMotionFunctor>) ? spdjoint : spdlinear);
                 *tpstatus = controller->MotionManager->AddPointToTrajectory(motion);
@@ -268,7 +271,8 @@ namespace nymrobot {
             switchVisualizeMode = true;
             *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *tpstatus = controller->MotionManager->MotionStart();
-            *sttlogs << "Start the Motion";
+           
+            *sttlogs << stent;
             };
 
         if (joinflag) { execute_move(JointMotionFunctor{}); }
@@ -292,7 +296,7 @@ namespace nymrobot {
             switchVisualizeMode = true;
             *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *tpstatus = controller->MotionManager->MotionStart();
-            *sttlogs << "Start the Motion";
+            *sttlogs << "Start the Circular Motion";
         }
 
         ImGui::End();
