@@ -75,7 +75,7 @@ namespace nui
             float diffX, float diffY, float diffZ);
         void obInfo_frame();
         void coordinate_frame();
-
+        bool check_skip(const char(&name)[256]);
         void sh_performance();
         void draft_chart();
         /// mode: dark, light

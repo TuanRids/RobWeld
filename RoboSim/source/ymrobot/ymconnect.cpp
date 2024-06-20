@@ -27,10 +27,10 @@ namespace nymrobot {
         ImGui::Begin("GetIP", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
         ImGui::SetWindowSize(ImVec2(400, 100));
         ImGui::SetNextItemWidth(120);
-        ImGui::InputText("IP Address", ip_address, sizeof(ip_address));
+        ImGui::InputText("IP", ip_address, sizeof(ip_address));
         if (status.StatusCode == 0) { strcpy_s(connect_content, "Connected."); }
         ImGui::SetNextItemWidth(120);
-        ImGui::InputText("Status", connect_content, sizeof(connect_content));
+        ImGui::InputText("Msg", connect_content, sizeof(connect_content));
         if (ImGui::Button("Connect") && status.StatusCode != 0) {
             std::string getip{ ip_address };
             strcpy_s(connect_content, "Welcome to OhLabs.");
@@ -88,17 +88,18 @@ namespace nymrobot {
         if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }
         ImGui::End();
     }
-
+    // check files in directory
     int ymconnect::check_files_in_directory() {
         std::vector<std::filesystem::path> filep;
         filep.push_back( std::filesystem::current_path() / "pysrc" / "postocpp.exe");
         filep.push_back(std::filesystem::current_path() / "pysrc" / "postocpp.py");
-        if (std::filesystem::exists(filep[0])) 
-        { return 2; }
         if (std::filesystem::exists(filep[1])) 
-        { return 1; }
+        { return 1; } // highest priority to return py first
+        else if (std::filesystem::exists(filep[0]))
+        { return 2; } // 2nd priority to return exe
         return 0;
     }
+    // Joint MoTion Functor
     struct JointMotionFunctor {
         auto operator()(ControlGroupId groupId, PositionData& posData, float speed) const {
             return JointMotion(groupId, posData, speed);
@@ -112,203 +113,413 @@ namespace nymrobot {
     };
 
     void ymconnect::move_robot() {
-        std::unique_ptr<StatusInfo> tpstatus = std::make_unique<StatusInfo>();
+        static UIState ui_state;
+        setup_MOVE_ui(ui_state);
+        static auto LinepathStart = std::chrono::high_resolution_clock::now();
+
+        double Linepathelapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>
+            (std::chrono::high_resolution_clock::now() - LinepathStart).count();
+
+        // RENDER LINE PATH
+        if (ui_state.lineshpath && Linepathelapsed_seconds > 0.4f) {
+            LinepathStart = std::chrono::high_resolution_clock::now();
+
+            std::shared_ptr<nelems::oMesh> newmesh = std::make_shared<nelems::oMesh>();
+            if (!proMeshRb->get_mesh_byname("movepath__SKIP__", newmesh)) {
+                newmesh = std::make_shared<nelems::oMesh>();
+                newmesh->changeName("movepath__SKIP__");
+                newmesh->ID = proMeshRb->getCurrentTimeMillis(0);
+                newmesh->oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f);
+            }
+            else {
+                newmesh->delete_buffers();
+                newmesh->mVertexIndices.clear();
+                newmesh->mVertices.clear();
+            }
+            nelems::VertexHolder vertex{};
+            for (int i = 0; i < ui_state.coumove; ++i) {
+                vertex.mPos = glm::vec3(ui_state.rbpos[i][0], ui_state.rbpos[i][1], ui_state.rbpos[i][2] + 138.845);
+                vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
+                newmesh->add_vertex(vertex);
+                if (i > 0) {
+                    newmesh->add_vertex_index(i - 1);
+                    newmesh->add_vertex_index(i);
+                }
+            }
+            newmesh->init();
+            newmesh->selected = true;
+            proMeshRb->add_mesh(*newmesh);
+        }
+        if (status.StatusCode != 0) { return; }
+        // LAMBDA FOR MOTION
+        auto execute_move = [&](auto&& motion_functor) {
+            std::string stent = "Start the Motion to " + std::to_string(ui_state.coumove) + " points: ";
+            for (int j = 0; j < ui_state.coumove; ++j) {
+                ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+                stent += "\n" + std::to_string(j) + ": ";
+                for (int i = 0; i < 6; ++i) {
+                    ui_state.b1crpos->axisData[i] = ui_state.rbpos[j][i];
+                    stent += std::to_string(ui_state.rbpos[j][i]) + " ";
+                }
+                auto motion = motion_functor(ControlGroupId::R1, *ui_state.b1crpos, (std::is_same_v<decltype(motion_functor), JointMotionFunctor>) ? ui_state.spdjoint : ui_state.spdlinear);
+                *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(motion);
+            }
+            switchVisualizeMode = true;
+            *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+            *ui_state.tpstatus = controller->MotionManager->MotionStart();
+
+            *sttlogs << stent;
+            };
+        // MOTION
+        if (ui_state.joinflag) { execute_move(JointMotionFunctor{}); }
+        if (ui_state.linMFlag) { execute_move(LinearMotionFunctor{}); }
+        if (ui_state.circuflag) {
+            ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+            for (int i = 0; i < 6; ++i) {
+                ui_state.b1crpos->axisData[i] = ui_state.rbpos[0][i];
+            }
+            *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdjoint));
+
+            for (int j = 2; j < ui_state.coumove; j += 2) {
+                ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+                CoordinateArray coorarr;
+                for (int i = 0; i < 6; ++i) {
+                    ui_state.b1crpos->axisData[i] = ui_state.rbpos[j][i];
+                    coorarr[i] = ui_state.rbpos[j - 1][i];
+                }
+                *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *ui_state.b1crpos, coorarr, ui_state.spdlinear));
+            }
+            switchVisualizeMode = true;
+            *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+            *ui_state.tpstatus = controller->MotionManager->MotionStart();
+            *sttlogs << "Start the Circular Motion";
+        }
+    }
+
+        //std::unique_ptr<StatusInfo> tpstatus = std::make_unique<StatusInfo>();
+        //ImGui::Separator();
+        //ImGui::Begin("Attributes: ");
+        //std::unique_ptr<BaseAxisPositionVariableData> b1PositionData = std::make_unique<BaseAxisPositionVariableData>();
+        //std::unique_ptr<PositionData> b1origi = std::make_unique<PositionData>();
+        //std::unique_ptr<PositionData> b1crpos = std::make_unique<PositionData>();
+
+        //static std::vector<std::vector<float>> rbpos(3, std::vector<float>(6, 0.0f));
+        //static float spdlinear{};
+        //static float spdjoint{};
+        //static int coumove{ 3 };
+        //static auto LinepathStart = std::chrono::high_resolution_clock::now();
+        //ImGui::SetNextItemWidth(150);
+        //ImGui::InputInt("Times", &coumove, 1, 2);
+        //if (coumove < 1) { coumove = 1; }; ImGui::SameLine();
+        //bool joinflag = ImGui::Button("Joint Move"); ImGui::SameLine();
+        //bool circuflag = ImGui::Button("Circular Move"); ImGui::SameLine();
+        //bool linMFlag = ImGui::Button("Linear Move");ImGui::SameLine();
+        //static bool lineshpath{ false };
+        //if (ImGui::Button(lineshpath ? "MovePath On" : "MovePath Off")) {
+        //    lineshpath = !lineshpath; // Toggle MovePath
+        //    if (lineshpath){ *sttlogs << "Render the Move Path"; }
+        //    else { *sttlogs << "Stop the Move Path";proMeshRb->delete_byname("movepath__SKIP__"); }
+        //} 
+        //if (ImGui::Button("Loadpy")) {
+        //    int checkfilepysrc = check_files_in_directory();
+        //    std::vector<std::vector<double>> get6pos;
+        //    if (checkfilepysrc == 1) { get6pos = readpysrc.get_values_from_python(); }
+        //    else if (checkfilepysrc == 2) { get6pos = readpysrc.get_values_from_exe(); }
+        //    else if (checkfilepysrc == 0) { goto end; }
+        //    if (rbpos.size() < get6pos.size()) {
+        //        coumove = get6pos.size();
+        //        rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
+        //    }
+
+        //    for (size_t i = 0; i < get6pos.size(); ++i) {
+        //        for (size_t j = 0; j < 6; ++j) {
+        //            rbpos[i][j] = get6pos[i][j];
+        //        }
+        //    }
+        //end:
+        //    ;
+        //}
+        //ImGui::SameLine(); // Check the trajectory
+        //if (ImGui::Button("Clear Trajectory"))
+        //{
+        //    *tpstatus = controller->MotionManager->ClearAllTrajectory();
+        //    *tpstatus = controller->MotionManager->ClearGroupTrajectory(ControlGroupId::R1);
+        //    controller->ControlCommands->SetServos(SignalStatus::OFF);
+        //    *tpstatus = controller->MotionManager->MotionStart();
+        //    *sttlogs << "trying to clear trajectory";
+        //}ImGui::SameLine();
+        //if (ImGui::Button("Home"))  // Check the trajectory
+        //{
+        //    *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
+        //    *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1origi);
+        //    b1origi->coordinateType = CoordinateType::RobotCoordinate;
+        //    JointMotion r1home(ControlGroupId::R1, *b1origi, 3);
+        //    *tpstatus = controller->MotionManager->AddPointToTrajectory(r1home);
+        //    *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+        //    *tpstatus = controller->MotionManager->MotionStart();
+        //    *sttlogs << "Go back to the Home pos";
+        //}
+        //ImGui::SameLine();
+        //ImGui::Text("Linear spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        //ImGui::InputFloat("##LS", &spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
+        //ImGui::Text("Joint spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        //ImGui::InputFloat("##JS", &spdjoint, 0.0f, 0.0f, "%.2f");
+        //ImGui::Separator();
+        //for (int j = 0; j < coumove; ++j) {
+        //    if (rbpos.size() < static_cast<size_t>(coumove)) {
+        //        rbpos.resize(coumove, std::vector<float>(6, 0.0f));
+        //    }
+        //    if (ImGui::Button(("OrgPos " + std::to_string(j)).c_str())) {
+        //        for (int i = 0; i < 6; ++i) {
+        //            *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
+        //            *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1origi);
+        //            rbpos[j][i] = b1origi->axisData[i];
+        //        }
+        //        *sttlogs << "Update the Original Position for " << std::to_string(j);
+        //    }
+        //    ImGui::SameLine();
+        //    if (ImGui::Button(("CrtPos " + std::to_string(j)).c_str())) {
+        //        for (int i = 0; i < 6; ++i) {
+        //            *tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *b1crpos);
+        //            rbpos[j][i] = b1crpos->axisData[i];
+        //        }
+        //        *sttlogs << "Update the Current Position for " + std::to_string(j);
+
+        //    }
+        //    ImGui::SameLine();
+        //    ImGui::Text(" X:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        //    ImGui::InputFloat(("##X" + std::to_string(j)).c_str(), &rbpos[j][0], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+        //    ImGui::Text(" Y:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        //    ImGui::InputFloat(("##Y" + std::to_string(j)).c_str(), &rbpos[j][1], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+        //    ImGui::Text(" Z:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        //    ImGui::InputFloat(("##Z" + std::to_string(j)).c_str(), &rbpos[j][2], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+        //    ImGui::Text("Rx:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        //    ImGui::InputFloat(("##RX" + std::to_string(j)).c_str(), &rbpos[j][3], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+        //    ImGui::Text("Ry:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        //    ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &rbpos[j][4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+        //    ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        //    ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &rbpos[j][5], 0.0f, 0.0f, "%.2f");
+        //}
+
+        //double Linepathelapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>
+        //    (std::chrono::high_resolution_clock::now() - LinepathStart).count();
+
+
+        //if (lineshpath && Linepathelapsed_seconds > 0.4f) {
+        //    if (lineshpath && Linepathelapsed_seconds > 0.2) {
+        //        LinepathStart = std::chrono::high_resolution_clock::now();
+
+        //        std::shared_ptr<nelems::oMesh> newmesh = std::make_shared<nelems::oMesh>();
+        //        if (!proMeshRb->get_mesh_byname("movepath__SKIP__", newmesh)) {
+        //            newmesh = std::make_shared<nelems::oMesh>();
+        //            newmesh->changeName("movepath__SKIP__");
+        //            newmesh->ID = proMeshRb->getCurrentTimeMillis(0);
+        //            newmesh->oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f);
+        //        }
+        //        else {
+
+        //            newmesh->delete_buffers();
+        //            newmesh->mVertexIndices.clear();
+        //            newmesh->mVertices.clear();
+        //        }
+
+        //        nelems::VertexHolder vertex{};
+        //        for (int i = 0; i < coumove; ++i) {
+        //            vertex.mPos = glm::vec3(rbpos[i][0], rbpos[i][1], rbpos[i][2] + 138.845);
+        //            vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
+        //            newmesh->add_vertex(vertex);
+        //            if (i > 0) {
+        //                newmesh->add_vertex_index(i - 1);
+        //                newmesh->add_vertex_index(i);
+        //            }
+        //        }
+
+        //        newmesh->init();
+        //        newmesh->selected = true;
+        //        proMeshRb->add_mesh(*newmesh);
+        //    }
+        //}
+
+        //auto execute_move = [&](auto&& motion_functor) {
+        //    std::string stent = "Start the Motion to " + std::to_string(coumove) + " points: ";
+        //    for (int j = 0; j < coumove; ++j) {
+        //        b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+        //        stent += "\n" + std::to_string(j) + ": ";
+        //        for (int i = 0; i < 6; ++i) {
+        //            b1crpos->axisData[i] = rbpos[j][i];
+        //            stent += std::to_string(rbpos[j][i]) + " ";
+        //        }
+        //        auto motion = motion_functor(ControlGroupId::R1, *b1crpos, (std::is_same_v<decltype(motion_functor), JointMotionFunctor>) ? spdjoint : spdlinear);
+        //        *tpstatus = controller->MotionManager->AddPointToTrajectory(motion);
+        //    }
+        //    switchVisualizeMode = true;
+        //    *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+        //    *tpstatus = controller->MotionManager->MotionStart();
+        //   
+        //    *sttlogs << stent;
+        //    };
+
+        //if (joinflag) { execute_move(JointMotionFunctor{}); }
+        //if (linMFlag) { execute_move(LinearMotionFunctor{}); }
+        //if (circuflag) {
+        //    b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+        //    for (int i = 0; i < 6; ++i) {
+        //        b1crpos->axisData[i] = rbpos[0][i];
+        //    }
+        //    *tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *b1crpos, spdjoint));
+
+        //    for (int j = 2; j < coumove; j += 2) {
+        //        b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+        //        CoordinateArray coorarr;
+        //        for (int i = 0; i < 6; ++i) {
+        //            b1crpos->axisData[i] = rbpos[j][i];
+        //            coorarr[i] = rbpos[j - 1][i];
+        //        }
+        //        *tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *b1crpos, coorarr, spdlinear));
+        //    }
+        //    switchVisualizeMode = true;
+        //    *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+        //    *tpstatus = controller->MotionManager->MotionStart();
+        //    *sttlogs << "Start the Circular Motion";
+        //}
+
+        //ImGui::End();
+
+
+
+
+    /**
+ * @brief Set up the MOVE UI components in the ImGui interface.
+ *
+ * This function initializes and configures the various UI elements for controlling robot movements.
+ * It includes options for setting move counts, selecting movement types, loading position data,
+ * clearing trajectories, returning to the home position, and adjusting movement speeds.
+ *
+ * @param ui_state A reference to the UIState struct containing the state information for the UI and robot.
+ *
+ * Function Details:
+ * =================
+ * - Displays a separator and begins a new ImGui window titled "Attributes:".
+ * - Initializes a static variable `LinepathStart` to record the start time.
+ * - Creates an input field for setting the number of moves (`Times`) with a minimum value of 1.
+ * - Adds buttons for selecting joint, circular, and linear movements.
+ * - Toggles the display of the move path with the "MovePath On/Off" button, and logs the action.
+ * - Adds a "Loadpy" button to load position data from Python scripts or executables, resizing the robot position vector if necessary.
+ * - Adds a "Clear Trajectory" button to clear all robot trajectories, turn off servos, and start motion.
+ * - Adds a "Home" button to move the robot to its home position by reading and converting position data, then starting the motion.
+ * - Provides input fields for adjusting linear and joint speeds.
+ * - Displays and updates original and current positions for each move, allowing manual adjustments of position data (X, Y, Z, Rx, Ry, Rz).
+ */
+    void ymconnect::setup_MOVE_ui(UIState& ui_state)
+    {
         ImGui::Separator();
         ImGui::Begin("Attributes: ");
-        std::unique_ptr<BaseAxisPositionVariableData> b1PositionData = std::make_unique<BaseAxisPositionVariableData>();
-        std::unique_ptr<PositionData> b1origi = std::make_unique<PositionData>();
-        std::unique_ptr<PositionData> b1crpos = std::make_unique<PositionData>();
-
-        static std::vector<std::vector<float>> rbpos(3, std::vector<float>(6, 0.0f));
-        static float spdlinear{};
-        static float spdjoint{};
-        static int coumove{ 3 };
         static auto LinepathStart = std::chrono::high_resolution_clock::now();
         ImGui::SetNextItemWidth(150);
-        ImGui::InputInt("Times", &coumove, 1, 2);
-        if (coumove < 1) { coumove = 1; }; ImGui::SameLine();
-        bool joinflag = ImGui::Button("Joint Move"); ImGui::SameLine();
-        bool circuflag = ImGui::Button("Circular Move"); ImGui::SameLine();
-        bool linMFlag = ImGui::Button("Linear Move");ImGui::SameLine();
-        bool lineshpath{ false };
-        if (ImGui::Button(lineshpath ? "MovePath On" : "MovePath Off")) {
-            lineshpath = !lineshpath; // Toggle MovePath
-            if (lineshpath){ *sttlogs << "Render the Move Path"; }
-            else { *sttlogs << "Stop the Move Path";proMeshRb->delete_byname("movepath__SKIP__"); }
-        } ImGui::SameLine();
-
-
-        if (ImGui::Button("Res path")) { proMeshRb->delete_byname("movepath__SKIP__"); }
+        ImGui::InputInt("Times", &ui_state.coumove, 1, 2);
+        if (ui_state.coumove < 1) { ui_state.coumove = 1; }; ImGui::SameLine();
+        ui_state.joinflag = ImGui::Button("Joint Move"); ImGui::SameLine();
+        ui_state.circuflag = ImGui::Button("Circular Move"); ImGui::SameLine();
+        ui_state.linMFlag = ImGui::Button("Linear Move"); ImGui::SameLine();
+        if (ImGui::Button(ui_state.lineshpath ? "MovePath On" : "MovePath Off")) {
+            ui_state.lineshpath = !ui_state.lineshpath; // Toggle MovePath
+            if (ui_state.lineshpath) { *sttlogs << "Render the Move Path"; }
+            else { *sttlogs << "Stop the Move Path"; proMeshRb->delete_byname("movepath__SKIP__"); }
+        }
         if (ImGui::Button("Loadpy")) {
             int checkfilepysrc = check_files_in_directory();
             std::vector<std::vector<double>> get6pos;
             if (checkfilepysrc == 1) { get6pos = readpysrc.get_values_from_python(); }
             else if (checkfilepysrc == 2) { get6pos = readpysrc.get_values_from_exe(); }
-            else if (checkfilepysrc == 0) { goto end; }
-            if (rbpos.size() < get6pos.size()) {
-                coumove = get6pos.size();
-                rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
+            else if (checkfilepysrc == 0) { return; }
+            if (ui_state.rbpos.size() < get6pos.size()) {
+                ui_state.coumove = get6pos.size();
+                ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
             }
-
             for (size_t i = 0; i < get6pos.size(); ++i) {
                 for (size_t j = 0; j < 6; ++j) {
-                    rbpos[i][j] = get6pos[i][j];
+                    ui_state.rbpos[i][j] = get6pos[i][j];
                 }
             }
-        end:
-            ;
         }
         ImGui::SameLine(); // Check the trajectory
         if (ImGui::Button("Clear Trajectory"))
         {
-            *tpstatus = controller->MotionManager->ClearAllTrajectory();
-            *tpstatus = controller->MotionManager->ClearGroupTrajectory(ControlGroupId::R1);
+            *ui_state.tpstatus = controller->MotionManager->ClearAllTrajectory();
+            *ui_state.tpstatus = controller->MotionManager->ClearGroupTrajectory(ControlGroupId::R1);
+            controller->ControlCommands->SetServos(SignalStatus::OFF);
+            *ui_state.tpstatus = controller->MotionManager->MotionStart();
             *sttlogs << "trying to clear trajectory";
         }
-        if (ImGui::Button("Home"))  // Check the trajectory
+        ImGui::SameLine();
+        if (ImGui::Button("Home"))
         {
-            *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
-            *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1origi);
-            b1origi->coordinateType = CoordinateType::RobotCoordinate;
-            JointMotion r1home(ControlGroupId::R1, *b1origi, 3);
-            *tpstatus = controller->MotionManager->AddPointToTrajectory(r1home);
-            *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
-            *tpstatus = controller->MotionManager->MotionStart();
+            *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
+            *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
+            ui_state.b1origi->coordinateType = CoordinateType::RobotCoordinate;
+            JointMotion r1home(ControlGroupId::R1, *ui_state.b1origi, 3);
+            *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(r1home);
+            *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+            *ui_state.tpstatus = controller->MotionManager->MotionStart();
             *sttlogs << "Go back to the Home pos";
         }
         ImGui::SameLine();
         ImGui::Text("Linear spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("##LS", &spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
+        ImGui::InputFloat("##LS", &ui_state.spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
         ImGui::Text("Joint spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("##JS", &spdjoint, 0.0f, 0.0f, "%.2f");
+        ImGui::InputFloat("##JS", &ui_state.spdjoint, 0.0f, 0.0f, "%.2f");
         ImGui::Separator();
-        for (int j = 0; j < coumove; ++j) {
-            if (rbpos.size() < static_cast<size_t>(coumove)) {
-                rbpos.resize(coumove, std::vector<float>(6, 0.0f));
+        for (int j = 0; j < ui_state.coumove; ++j) {
+            if (ui_state.rbpos.size() < static_cast<size_t>(ui_state.coumove)) {
+                ui_state.rbpos.resize(ui_state.coumove, std::vector<float>(6, 0.0f));
             }
             if (ImGui::Button(("OrgPos " + std::to_string(j)).c_str())) {
                 for (int i = 0; i < 6; ++i) {
-                    *tpstatus = controller->Variables->BasePositionVariable->Read(0, *b1PositionData);
-                    *tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *b1origi);
-                    rbpos[j][i] = b1origi->axisData[i];
+                    *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
+                    *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
+                    ui_state.rbpos[j][i] = ui_state.b1origi->axisData[i];
                 }
                 *sttlogs << "Update the Original Position for " << std::to_string(j);
             }
             ImGui::SameLine();
             if (ImGui::Button(("CrtPos " + std::to_string(j)).c_str())) {
                 for (int i = 0; i < 6; ++i) {
-                    *tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *b1crpos);
-                    rbpos[j][i] = b1crpos->axisData[i];
+                    *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1crpos);
+                    ui_state.rbpos[j][i] = ui_state.b1crpos->axisData[i];
                 }
                 *sttlogs << "Update the Current Position for " + std::to_string(j);
-
             }
             ImGui::SameLine();
             ImGui::Text(" X:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##X" + std::to_string(j)).c_str(), &rbpos[j][0], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::InputFloat(("##X" + std::to_string(j)).c_str(), &ui_state.rbpos[j][0], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
             ImGui::Text(" Y:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##Y" + std::to_string(j)).c_str(), &rbpos[j][1], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::InputFloat(("##Y" + std::to_string(j)).c_str(), &ui_state.rbpos[j][1], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
             ImGui::Text(" Z:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##Z" + std::to_string(j)).c_str(), &rbpos[j][2], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::InputFloat(("##Z" + std::to_string(j)).c_str(), &ui_state.rbpos[j][2], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
             ImGui::Text("Rx:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RX" + std::to_string(j)).c_str(), &rbpos[j][3], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::InputFloat(("##RX" + std::to_string(j)).c_str(), &ui_state.rbpos[j][3], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
             ImGui::Text("Ry:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &rbpos[j][4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &ui_state.rbpos[j][4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
             ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &rbpos[j][5], 0.0f, 0.0f, "%.2f");
+            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &ui_state.rbpos[j][5], 0.0f, 0.0f, "%.2f");
         }
-
-        double Linepathelapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>
-            (std::chrono::high_resolution_clock::now() - LinepathStart).count();
-
-
-        if (lineshpath && Linepathelapsed_seconds > 0.4f) {
-            if (lineshpath && Linepathelapsed_seconds > 0.2) {
-                LinepathStart = std::chrono::high_resolution_clock::now();
-
-                std::shared_ptr<nelems::oMesh> newmesh = std::make_shared<nelems::oMesh>();
-                if (!proMeshRb->get_mesh_byname("movepath__SKIP__", newmesh)) {
-                    newmesh->changeName("movepath__SKIP__");
-                    newmesh->ID = proMeshRb->getCurrentTimeMillis(0);
-                    newmesh->oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f);
-                }
-                else {
-
-                    newmesh->delete_buffers();
-                    newmesh->mVertexIndices.clear();
-                    newmesh->mVertices.clear();
-                }
-
-                nelems::VertexHolder vertex{};
-                for (int i = 0; i < coumove; ++i) {
-                    vertex.mPos = glm::vec3(rbpos[i][0], rbpos[i][1], rbpos[i][2] + 138.845);
-                    vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
-                    newmesh->add_vertex(vertex);
-                    if (i > 0) {
-                        newmesh->add_vertex_index(i - 1);
-                        newmesh->add_vertex_index(i);
-                    }
-                }
-
-                newmesh->init();
-                newmesh->selected = true;
-                proMeshRb->add_mesh(*newmesh);
-            }
-        }
-
-        auto execute_move = [&](auto&& motion_functor) {
-            std::string stent = "Start the Motion to " + std::to_string(coumove) + " points: ";
-            for (int j = 0; j < coumove; ++j) {
-                b1crpos->coordinateType = CoordinateType::RobotCoordinate;
-                stent += "\n" + std::to_string(j) + ": ";
-                for (int i = 0; i < 6; ++i) {
-                    b1crpos->axisData[i] = rbpos[j][i];
-                    stent += std::to_string(rbpos[j][i]) + " ";
-                }
-                auto motion = motion_functor(ControlGroupId::R1, *b1crpos, (std::is_same_v<decltype(motion_functor), JointMotionFunctor>) ? spdjoint : spdlinear);
-                *tpstatus = controller->MotionManager->AddPointToTrajectory(motion);
-            }
-            switchVisualizeMode = true;
-            *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
-            *tpstatus = controller->MotionManager->MotionStart();
-           
-            *sttlogs << stent;
-            };
-
-        if (joinflag) { execute_move(JointMotionFunctor{}); }
-        if (linMFlag) { execute_move(LinearMotionFunctor{}); }
-        if (circuflag) {
-            b1crpos->coordinateType = CoordinateType::RobotCoordinate;
-            for (int i = 0; i < 6; ++i) {
-                b1crpos->axisData[i] = rbpos[0][i];
-            }
-            *tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *b1crpos, spdjoint));
-
-            for (int j = 2; j < coumove; j += 2) {
-                b1crpos->coordinateType = CoordinateType::RobotCoordinate;
-                CoordinateArray coorarr;
-                for (int i = 0; i < 6; ++i) {
-                    b1crpos->axisData[i] = rbpos[j][i];
-                    coorarr[i] = rbpos[j - 1][i];
-                }
-                *tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *b1crpos, coorarr, spdlinear));
-            }
-            switchVisualizeMode = true;
-            *tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
-            *tpstatus = controller->MotionManager->MotionStart();
-            *sttlogs << "Start the Circular Motion";
-        }
-
         ImGui::End();
     }
 
+    /**
+     * @brief Reads the robot's state and updates its position and status.
+     *
+     * This function periodically reads the robot's state and position data, updates the joint angles,
+     * checks for alarms, logs the robot's status and progress, and ensures that the joint angles are within specified limits.
+     * If any joint angle is out of limit, it stops the robot's motion and turns off the servos.
+     */
     void ymconnect::read_robot() {
         std::stringstream strget;
         StatusInfo tpstatus;
         PositionData raxisData{}, rposData{}, rjointangle{};
         static auto start = std::chrono::high_resolution_clock::now();
         ControllerStateData stateData{};
-
+        if (status.StatusCode != 0) {            return;        }
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(elapsed).count();
 

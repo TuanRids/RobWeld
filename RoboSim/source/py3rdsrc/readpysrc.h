@@ -1,6 +1,11 @@
+#ifdef _DEBUG
+#undef _DEBUG
+#include <python/Python.h>
+#define _DEBUG
+#else
+#include <python/Python.h>
+#endif
 
-
-#include "python/Python.h"
 #include <iostream>
 #pragma warning( push )
 #pragma warning( disable : 26819) //3rd party library

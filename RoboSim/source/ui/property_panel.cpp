@@ -121,8 +121,7 @@ namespace nui
             for (int i = 0; i < proMesh->size(); i++)
             {
                 auto mesh = proMesh->get_mesh_ptr(i);
-                if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
-                if (std::string(mesh->oname).find("__SKIP__") != std::string::npos) { continue; }
+                if (check_skip(mesh->oname)) { continue; }
 
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
@@ -209,7 +208,7 @@ namespace nui
             for (int i = 0; i < proMesh->size(); i++)
             {
                 mesh = proMesh->get_mesh_ptr(i);
-                if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
+                if (check_skip(mesh->oname)) { continue; }
                 if (mesh->selected == true)
                 {
                     ImGui::Text(mesh->oname); ImGui::SameLine();
@@ -248,7 +247,7 @@ namespace nui
                     if (mesh->selected && PreObId != mesh->ID)
                     {
                         PreObId = mesh->ID;
-                        if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
+                        if (check_skip(mesh->oname)) { continue; }
                         strcpy_s(aname, sizeof(aname), mesh->oname);
                         posrot_obj[0] = mesh->oMaterial.position.x;
                         posrot_obj[1] = mesh->oMaterial.position.y;
@@ -370,6 +369,7 @@ namespace nui
             for (int i = 0; i < proMesh->size(); i++)
             {
                 mesh = proMesh->get_mesh_ptr(i);
+                if (check_skip(mesh->oname)) { continue; }
                 if (mesh->selected == true)
                 {
                     clor = ImVec4(mesh->oMaterial.mColor.x, mesh->oMaterial.mColor.y, mesh->oMaterial.mColor.z, 1.0f);
@@ -448,6 +448,13 @@ namespace nui
         ImGui::Text("Draft Chart");
 
         ImGui::End();
+    }
+
+    bool Property_Panel::check_skip(const char(&name)[256])
+    {
+        if (std::string(name).find("RBSIMBase_") != std::string::npos) { return true; }
+		if (std::string(name).find("__SKIP__") != std::string::npos) { return true; }
+        return false;
     }
 
     void Property_Panel::sh_performance()

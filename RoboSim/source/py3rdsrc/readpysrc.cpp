@@ -31,8 +31,7 @@ bool readpysrc::initialize()
 
 
     if (size == 0) {
-        std::wcerr << L"Failed to get PYTHON_HOME environment variable" << std::endl;
-
+        
         // Read from ini file
         std::ifstream inputFile("robosim_ini.dat");
         json j;
@@ -121,10 +120,13 @@ std::vector<std::vector<double>> readpysrc::get_values_from_python() {
     }
 
     PyObject* pValue = PyObject_CallObject(pFunc, nullptr);
+        
+    bool gg = PyList_Check(pValue);
     if (!pValue) {
         PyErr_Print();
     }
     else {
+
         if (PyList_Check(pValue)) {
             Py_ssize_t outer_size = PyList_Size(pValue);
             for (Py_ssize_t i = 0; i < outer_size; ++i) {
@@ -144,7 +146,6 @@ std::vector<std::vector<double>> readpysrc::get_values_from_python() {
         }
         Py_DECREF(pValue);
     }
-
     Py_DECREF(pFunc);
     Py_DECREF(pModule);
     Py_Finalize();

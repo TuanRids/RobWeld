@@ -439,22 +439,19 @@ namespace nelems {
 
     void mMesh::delete_byname(const std::string& delmesh)
     {
-        std::vector<std::vector<std::shared_ptr<oMesh>>::iterator> iterators_to_delete;
+        auto new_end = std::remove_if(mMeshes->begin(), mMeshes->end(),
+            [&](const std::shared_ptr<oMesh>& mesh) {
+                if (std::string(mesh->oname).find(delmesh) != std::string::npos)
+                {
+                    mesh->delete_buffers();
+                    return true; 
+                }
+                return false;
+            });
 
-        for (auto it = mMeshes->begin(); it != mMeshes->end(); ++it)
-        {
-            if (std::string((*it)->oname).find(delmesh) != std::string::npos)
-            {
-                (*it)->delete_buffers();
-                iterators_to_delete.push_back(it);
-            }
-        }
-
-        for (auto it : iterators_to_delete)
-        {
-            mMeshes->erase(it);
-        }
+        mMeshes->erase(new_end, mMeshes->end());
     }
+
 
 
     void mMesh::add_mesh(oMesh& addnewmesh)
