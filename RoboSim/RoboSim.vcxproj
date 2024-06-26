@@ -72,6 +72,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\vcpkg\vcpkg\installed\x64-windows\include\pcl;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\vcpkg\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>false</VcpkgEnableManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -140,8 +145,9 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\libs\YMconnect;$(ProjectDir)\libs\python;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect.lib;python312.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\libs\YMconnect;$(ProjectDir)\libs\python;$(ProjectDir)\libs\pcl;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect.lib;python312.lib;pcl_io.lib;pcl_io_ply.lib
+;pcl_surface.lib;pcl_common.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>call "$(ProjectDir)Build_Setup.bat"</Command>
@@ -156,6 +162,8 @@
     <ClCompile Include="source\Command\ObHistory.h" />
     <ClCompile Include="source\elems\loadRobot.cpp" />
     <ClCompile Include="source\elems\TranRBMatrix.cpp" />
+    <ClCompile Include="source\mesh_import\pcltomesh.cpp" />
+    <ClCompile Include="source\mesh_import\pcltomesh.h" />
     <ClCompile Include="source\py3rdsrc\readpysrc.cpp" />
     <ClCompile Include="source\rigging\rigging.cpp" />
     <ClCompile Include="source\ui\FrameManage.cpp" />
@@ -276,6 +284,5 @@
     <Image Include="assets\Robo.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

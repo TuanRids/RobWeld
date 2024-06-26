@@ -3,7 +3,7 @@
 #include "ui/scene_view.h"
 #include "ui/uiAction.h"
 #include "render/ui_context.h"
-
+#include "mesh_import/pcltomesh.h"
 #pragma warning( push )
 #pragma warning( disable : 26819) //3rd party library
 #include "nlohmann/json.hpp"

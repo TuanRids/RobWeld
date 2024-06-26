@@ -125,6 +125,18 @@ namespace nui {
                 ImGui::EndMenu();
             }
 
+            if (ImGui::BeginMenu("3DPCL"))
+            {
+                if (ImGui::MenuItem("ImportPCL"))
+                {
+                    PclToMesh pclToMesh;
+                    pclToMesh.processPointCloud();
+                    pclToMesh.addToMesh();
+
+                }
+                ImGui::EndMenu();
+            }
+
             if (ImGui::BeginMenu("Chart"))
             {
                 if (ImGui::MenuItem("Show"))

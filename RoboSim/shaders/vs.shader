@@ -17,9 +17,9 @@ void main() {
     // An undetermined problem cause that the y axis is switched with the z axis.
     //  ************ Switch y axis and z axis together ************
     // Transform the vertex position to world space
-    WorldPos = vec3(model * vec4(aPosition.x, aPosition.z, aPosition.y, 1.0));
+    WorldPos = vec3(model * vec4(aPosition.x, aPosition.z, -aPosition.y, 1.0));
     Normal = mat3(transpose(inverse(model))) * aNormal;
 
     // Apply the model-view-projection transformation to the vertex position
-    gl_Position = projection * view * model * vec4(aPosition.x, aPosition.z, aPosition.y, 1.0f);
+    gl_Position = projection * view * model * vec4(aPosition.x, aPosition.z, -aPosition.y, 1.0f);
 }
