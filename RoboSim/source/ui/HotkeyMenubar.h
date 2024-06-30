@@ -4,6 +4,7 @@
 #include "ui/uiAction.h"
 #include "render/ui_context.h"
 #include "mesh_import/pcltomesh.h"
+#include "mutex"
 #pragma warning( push )
 #pragma warning( disable : 26819) //3rd party library
 #include "nlohmann/json.hpp"
@@ -23,7 +24,7 @@ namespace nui {
         static bool shint;
         std::string theme;
         nymrobot::ymconnect* mRobot;
-
+        std::mutex mtx;
     public:
         HotkeyMenubar() : scene_view(nullptr), mRobot(nullptr){
             scene_view = &nui::SceneView::getInstance();

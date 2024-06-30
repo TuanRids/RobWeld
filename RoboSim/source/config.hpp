@@ -1,0 +1,30 @@
+// config.hpp
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
+
+#include <string>
+
+namespace Config {
+    // == path to data ===
+    // robot model
+	constexpr const char* PATH_TO_ROBOTEMPLATE =  "RobotStandard//Yaskawa-gp8-113k.fbx";
+    // 3D data from Hung
+    constexpr const char* PATH_TO_3D_HUNG =  "check_pcl//RawData_2.txt";
+	// 3D data from Sang
+    constexpr const char* PATH_TO_3D_Sang =  "check_pcl//dataclean.txt";
+
+    // == IMPORTANT NAME & ADDRESS ===
+    // Address to Inte-Process Communication with Vision 
+    constexpr const char* IPC_GET_IMG = "Local\\ImgPytoCPP";
+    // Address to Inte-Process Communication with Vision 
+	constexpr const char* IPC_GET_DATA = "Local\\floatPytoCPP";
+    // Send mapping data with Vision 
+	constexpr const char* IPC_SEND_MAPPING = "Local\\MapCPPtoDictPy";
+    
+    
+    // Get robot Position from Robot 
+    constexpr const char* IPC_GET_POS = "Local\\PosPytoCPP";
+
+}
+
+#endif // CONFIG_HPP

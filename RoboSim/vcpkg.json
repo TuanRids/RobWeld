@@ -2,6 +2,6 @@
   "name": "your-project-name",
   "version-string": "1.0.0",
   "dependencies": [
-    "pcl"
+    "implot"
   ]
 }

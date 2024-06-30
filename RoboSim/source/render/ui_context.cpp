@@ -180,6 +180,7 @@ namespace nrender
       ImGui::RenderPlatformWindowsDefault();
       glfwMakeContextCurrent(backup_current_context);
     }
+
   }
 
   void UIContext::end()

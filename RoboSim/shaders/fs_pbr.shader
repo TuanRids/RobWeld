@@ -13,7 +13,7 @@ struct material {
 uniform material materialData;
 
 // lights
-uniform int LightModes; // 0 = single lights, 1 = world box 8 lights, 2 = no lights
+uniform int LightModes; // 0 = single lights, 1 = world box 8 lights, 3= no lights, 2 = 32 spherical lights
 uniform vec3 lightPosition;
 uniform vec3 lightColor;
 
@@ -61,6 +61,46 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
+vec3 uniformSampleSphere(float u1, float u2)
+{
+    float z = 1.0 - 2.0 * u1;
+    float r = sqrt(max(0.0, 1.0 - z * z));
+    float phi = 2.0 * PI * u2;
+    float x = r * cos(phi);
+    float y = r * sin(phi);
+    return vec3(x, y, z);
+}
+
+mat3 rotationMatrix(vec3 angles)
+{
+    float cx = cos(angles.x);
+    float sx = sin(angles.x);
+    float cy = cos(angles.y);
+    float sy = sin(angles.y);
+    float cz = cos(angles.z);
+    float sz = sin(angles.z);
+
+    mat3 rotX = mat3(
+        1.0, 0.0, 0.0,
+        0.0, cx, -sx,
+        0.0, sx, cx
+    );
+
+    mat3 rotY = mat3(
+        cy, 0.0, sy,
+        0.0, 1.0, 0.0,
+        -sy, 0.0, cy
+    );
+
+    mat3 rotZ = mat3(
+        cz, -sz, 0.0,
+        sz, cz, 0.0,
+        0.0, 0.0, 1.0
+    );
+
+    return rotZ * rotY * rotX;
+}
+
 void main()
 {
     vec3 N = normalize(Normal);
@@ -97,7 +137,7 @@ void main()
             vec3 H = normalize(V + L);
             float distance = length(lightPositions[i] - WorldPos);
             float attenuation = 1.0 / (distance * distance);
-            vec3 radiance = lightColor * attenuation*100;
+            vec3 radiance = lightColor * attenuation * 100;
 
             float NDF = DistributionGGX(N, H, roughness);
             float G = GeometrySmith(N, V, L, roughness);
@@ -117,12 +157,46 @@ void main()
     }
     else if (LightModes == 2)
     {
+        vec3 lightPositions[32];
+        for (int i = 0; i < 32; ++i)
+        {
+            float u1 = float(i) / 32.0;
+            float u2 = float(i + 1) / 32.0;
+            lightPositions[i] = 1000.0 * uniformSampleSphere(u1, u2);
+        }
+
+        mat3 rotation = rotationMatrix(lightPosition);
+
+        for (int i = 0; i < 32; ++i)
+        {
+            vec3 L = normalize(rotation * lightPositions[i] - WorldPos);
+            vec3 H = normalize(V + L);
+            float distance = length(rotation * lightPositions[i] - WorldPos);
+            float attenuation = 1.0 / (distance * distance);
+            vec3 radiance = lightColor * attenuation * 100;
+
+            float NDF = DistributionGGX(N, H, roughness);
+            float G = GeometrySmith(N, V, L, roughness);
+            vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+
+            vec3 nominator = NDF * G * F;
+            float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+            vec3 specular = nominator / max(denominator, 0.001); 
+
+            vec3 kS = F;
+            vec3 kD = vec3(1.0) - kS;
+            kD *= 1.0 - metallic;
+
+            float NdotL = max(dot(N, L), 0.0);
+            Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+        }
+    }
+    else if (LightModes == 3)
+    {
         //color and light intensity
         vec3 ambientLight = vec3(0.2, 0.2, 0.2); 
         Lo += ambientLight * albedo;
-
     }
-        
     else
     {
         vec3 L = normalize(lightPosition - WorldPos);
@@ -147,9 +221,10 @@ void main()
         Lo += (kD * albedo / PI + specular) * radiance * NdotL;
     }
 
+    // Apply tone mapping and gamma correction
     vec3 color = ambient + Lo;
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0 / 2.2));
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, 1.0); // Final color
 }

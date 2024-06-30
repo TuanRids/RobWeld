@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -93,14 +93,14 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)source;$(ProjectDir)include;$(ProjectDir)source\3rdparty\imgui-docking;$(ProjectDir)source\3rdparty\imgui-docking\backends;$(ProjectDir)source\3rdparty\plugins\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLEW_STATIC;_MBCS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)libs\gl;$(ProjectDir)libs\glfw;$(ProjectDir)libs\assimp;$(ProjectDir)libs\YMconnect;$(ProjectDir)libs\python;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect_D.lib;python312.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)libs\gl;$(ProjectDir)libs\glfw;$(ProjectDir)libs\assimp;$(ProjectDir)\\libs\YMconnect;$(ProjectDir)libs\python;$(ProjectDir)libs\pcl;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect_D.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>
@@ -146,8 +146,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\libs\YMconnect;$(ProjectDir)\libs\python;$(ProjectDir)\libs\pcl;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect.lib;python312.lib;pcl_io.lib;pcl_io_ply.lib
-;pcl_surface.lib;pcl_common.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>call "$(ProjectDir)Build_Setup.bat"</Command>
@@ -164,7 +163,7 @@
     <ClCompile Include="source\elems\TranRBMatrix.cpp" />
     <ClCompile Include="source\mesh_import\pcltomesh.cpp" />
     <ClCompile Include="source\mesh_import\pcltomesh.h" />
-    <ClCompile Include="source\py3rdsrc\readpysrc.cpp" />
+    <ClCompile Include="source\py3rdsrc\zmpdata.cpp" />
     <ClCompile Include="source\rigging\rigging.cpp" />
     <ClCompile Include="source\ui\FrameManage.cpp" />
     <ClCompile Include="source\ui\HotkeyMenubar.cpp" />
@@ -232,7 +231,7 @@
     <ClInclude Include="source\elems\material.h" />
     <ClInclude Include="source\elems\stb_image.h" />
     <ClInclude Include="source\elems\TranRBMatrix.h" />
-    <ClInclude Include="source\py3rdsrc\readpysrc.h" />
+    <ClInclude Include="source\py3rdsrc\zmpdata.h" />
     <ClInclude Include="source\rigging\point.h" />
     <ClInclude Include="source\rigging\rigging.h" />
     <ClInclude Include="source\ui\FrameManage.h" />

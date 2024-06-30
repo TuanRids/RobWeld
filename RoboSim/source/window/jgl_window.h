@@ -29,9 +29,9 @@ namespace nwindow
 
       GLFWwindow* mWindow;
       std::unique_ptr<LoadRobot> mLoadRobot;
-      // Render contexts
+      // UI context
       std::unique_ptr<UIContext> mUICtx;
-
+      // Render context
       std::unique_ptr<OpenGL_Context> mRenderCtx;
 
       // UI components

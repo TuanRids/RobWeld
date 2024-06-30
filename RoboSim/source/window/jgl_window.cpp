@@ -43,15 +43,6 @@ namespace nwindow
     mSceneView->SetMeshLoadCallback(
       [this](std::string filepath) { mSceneView->load_mesh(filepath,0); });
 
-    
-    
-    // MSAA
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4); // 4x MSAA
-    glEnable(GL_MULTISAMPLE);
-
 
     return mIsRunning;
   }

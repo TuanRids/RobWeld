@@ -21,6 +21,9 @@
 #pragma warning( pop )
 #include "Eigen/Dense"
 
+#include "py3rdsrc/zmpdata.h"
+
+
 #include <Windows.h>
 #include "render/ui_context.h"
 #include "ymrobot/ymconnect.h"
@@ -48,9 +51,10 @@ namespace nui
         float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
         nymrobot::ymconnect* mRobot;
         StatusLogs* sttlogs;
+        std::unique_ptr<zmpdata> IPreceiver;
     public:
         Property_Panel():
-            proMesh(nullptr),mesh(nullptr), mRobot(nullptr), mctshader(nullptr), sttlogs(nullptr)
+            proMesh(nullptr),mesh(nullptr), mRobot(nullptr), mctshader(nullptr), sttlogs(nullptr), IPreceiver(nullptr)
         {
             for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
             std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
@@ -64,6 +68,7 @@ namespace nui
             ImGuiIO& io = ImGui::GetIO();
             std::string fontPath = "C:/Windows/Fonts/" + std::string(content) + ".ttf";
             io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
+            IPreceiver = std::make_unique<zmpdata>();
         }
         void render(nui::SceneView* mScene, GLFWwindow* mWindow);
         void material_frame(nui::SceneView* scene_view);

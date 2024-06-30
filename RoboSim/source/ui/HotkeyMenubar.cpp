@@ -9,6 +9,7 @@ namespace nui {
 
 	void HotkeyMenubar::mMenuBar(GLFWwindow* mWindow)
     {
+        std::lock_guard<std::mutex> lock(mtx);
         if (!mRobot)
         {
             mRobot = &nymrobot::ymconnect::getInstance();
@@ -301,6 +302,7 @@ namespace nui {
 
     void HotkeyMenubar::hint(bool show)
     {
+        std::lock_guard<std::mutex> lock(mtx);
         nrender::UIContext::get_theme(theme);
         static float pos_x, pos_y;
         nui::FrameManage::getViewportSize(pos_x, pos_y); 

@@ -11,7 +11,7 @@
 #include <cmath>
 #include "chrono"
 
-
+#include "thread"
 
 using namespace Eigen;
 
@@ -31,10 +31,14 @@ namespace nui
         if (!sttlogs) { sttlogs = &StatusLogs::getInstance(); }
         //****************************************************
 
+
         static nui::HotkeyMenubar hotkey_manage;
         hotkey_manage.mMenuBar(mWindow);
         hotkey_manage.mHotkey(mWindow);
         hotkey_manage.commandLogs(); // show command logs
+
+
+        IPreceiver->render();
 
         //****************************************************
         //Main Properties
@@ -54,8 +58,6 @@ namespace nui
         ImGui::Begin("StatusLogs", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
         ImGui::TextUnformatted(sttlogs->getStatus().c_str());
         ImGui::End();
-
-
 
         mRobot->render();
         camera_frame(scene_view); // show camera properties
@@ -405,7 +407,7 @@ namespace nui
         {
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
             nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
-            static const char* items[] = { "Single Point Light", "WorldBox 8 Lights", "NoLights" };
+            static const char* items[] = { "Single Point Light", "WorldBox 8 Lights","WorldBox 32 Lights" ,"NoLights" };
             ImGui::Combo("SetLight", &scene_view->get_light()->lightmode, items, IM_ARRAYSIZE(items)); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Light Intensity", &scene_view->get_light()->mStrength, 0.00f, 1000.0f);
 

@@ -5,7 +5,7 @@
 #include <string>
 
 #include <filesystem>
-
+#include "pch.h"
 #pragma warning( push )
 #pragma warning( disable : 26819) //3rd party library
 #include "nlohmann/json.hpp"
@@ -30,7 +30,7 @@ public:
     {
         fs::path currentDir = fs::current_path();
 
-        fs::path filePath = currentDir / "RobotStandard\\Yaskawa-gp8-113k.fbx";
+        fs::path filePath = currentDir / Config::PATH_TO_ROBOTEMPLATE;
 
         std::string filePathStr = filePath.string();
 

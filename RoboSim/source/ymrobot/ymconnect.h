@@ -4,7 +4,7 @@
 #include "imgui.h"
 #include "elems/mesh.h"
 #include <iomanip> 
-#include <py3rdsrc/readpysrc.h>
+
 #include <vector>
 #include <sstream>
 #include "ui/statuslogs.h"
@@ -55,7 +55,7 @@ namespace nymrobot {
         UINT32 restime = 10;
         bool switchVisualizeMode = false;
         std::vector<std::vector<float>> limitangle;
-        readpysrc readpysrc;
+
         float angle[6];
         nelems::mMesh* proMeshRb = nullptr;
         std::stringstream resultmsg;

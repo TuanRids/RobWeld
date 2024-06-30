@@ -42,6 +42,12 @@ namespace nrender
     // so that we can use it in callback functions
     auto glWindow = glfwCreateWindow(window->Width, window->Height, window->Title.c_str(), nullptr, NULL);//    glfwSetWindowPos(glWindow, 0, 30);
 
+    // MSAA
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4); // 4x MSAA
+    glEnable(GL_MULTISAMPLE);
+
     window->set_native_window(glWindow);
 
     if (!glWindow)

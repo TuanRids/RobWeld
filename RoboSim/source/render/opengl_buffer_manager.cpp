@@ -89,12 +89,18 @@ namespace nrender
       glBindTexture(GL_TEXTURE_2D, mTexId);
 
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mWidth, mHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexId, 0);
+
+
+      GLfloat maxAniso = 0.0f;
+      glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
 
       glCreateTextures(GL_TEXTURE_2D, 1, &mDepthId);
       glBindTexture(GL_TEXTURE_2D, mDepthId);
@@ -109,9 +115,7 @@ namespace nrender
 
       GLenum buffers[4] = { GL_COLOR_ATTACHMENT0 };
       glDrawBuffers(mTexId, buffers);
-      //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Set to wireframe mode
-     
-      // check OpenGL error
+
       unbind();
   }
 

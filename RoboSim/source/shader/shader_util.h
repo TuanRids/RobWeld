@@ -32,12 +32,10 @@ namespace nshaders
 		void set_f1(float v, const std::string& name);
 		void set_f3(float a, float b, float c, const std::string& name);
 
+		void set_vec2(const glm::vec2& vec2, const std::string& name);  
 		void set_vec3(const glm::vec3& vec3, const std::string& name);
 		void set_vec4(const glm::vec4& vec4, const std::string& name);
 		bool load_compute_shader(const std::string& compute_shader_file);
-
-
-
 	};
 }
 

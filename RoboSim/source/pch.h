@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iostream>
 #include <memory>
+#include "config.hpp"
 
 #include "imgui.h"
 #include <ImFileBrowser.h>

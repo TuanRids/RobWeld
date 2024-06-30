@@ -4,9 +4,15 @@
 #include "map"
 #include <filesystem>
 #include "render/opengl_buffer_manager.h"
-#include <thread>
 #include <unordered_set>
 #include <functional>
+
+
+
+#include <omp.h>
+#include <vector>
+
+
 
 namespace nelems {
     void oMesh::rotate(float angleX, float angleY, float angleZ) {
@@ -128,6 +134,50 @@ namespace nelems {
 
     }
 
+    void oMesh::calculate_normals()
+    {
+        // Reset normals
+                #pragma omp parallel for
+        for (size_t i = 0; i < mVertices.size(); ++i) {
+            mVertices[i].mNormal = glm::vec3(0.0f);
+        }
+
+        // Compute normals
+                #pragma omp parallel for
+        for (size_t i = 0; i < mVertexIndices.size(); i += 3) {
+            unsigned int i0 = mVertexIndices[i];
+            unsigned int i1 = mVertexIndices[i + 1];
+            unsigned int i2 = mVertexIndices[i + 2];
+
+            glm::vec3 v0 = mVertices[i0].mPos;
+            glm::vec3 v1 = mVertices[i1].mPos;
+            glm::vec3 v2 = mVertices[i2].mPos;
+
+            glm::vec3 edge1 = v1 - v0;
+            glm::vec3 edge2 = v2 - v0;
+            glm::vec3 normal = glm::cross(edge1, edge2);
+            float area = glm::length(normal) * 0.5f;
+
+            normal = glm::normalize(normal);
+
+                #pragma omp atomic
+            mVertices[i0].mNormal += normal * area;
+
+                #pragma omp atomic
+            mVertices[i1].mNormal += normal * area;
+
+                #pragma omp atomic
+            mVertices[i2].mNormal += normal * area;
+        }
+
+        // Normalize the result
+                #pragma omp parallel for
+        for (size_t i = 0; i < mVertices.size(); ++i) {
+            mVertices[i].mNormal = glm::normalize(mVertices[i].mNormal);
+        }
+
+    }
+
 }
 
 
@@ -227,6 +277,7 @@ namespace nelems {
                 newMesh.oMaterial.mOxyz.zs = newMesh.oMaterial.position;
                 newMesh.oMaterial.mOxyz.ze = newMesh.oMaterial.position + glm::vec3(0.0f, 0.0f, 1000.0f);
                 mMeshes->push_back(std::make_shared<oMesh>(newMesh));
+
             }
             return true;
         }
@@ -324,10 +375,12 @@ namespace nelems {
             OBox.render_lines();    shader->set_material(OBoy.oMaterial, "materialData");
             OBoy.render_lines();    shader->set_material(OBoz.oMaterial, "materialData");
             OBoz.render_lines();
+            OBox.unbind(); OBoy.unbind(); OBoz.unbind();
         }
         shader->set_i1(2, "LightModes");
         shader->set_material(mCoorSystem->oMaterial, "materialData");
         mCoorSystem->render_lines();
+		mCoorSystem->unbind();
     }
 
     void mMesh::createGridSys(float gridNo, float step) {

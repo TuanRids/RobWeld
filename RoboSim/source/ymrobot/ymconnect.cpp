@@ -241,9 +241,9 @@ namespace nymrobot {
         if (ImGui::Button("Loadpy")) {
             int checkfilepysrc = check_files_in_directory();
             std::vector<std::vector<double>> get6pos;
-            if (checkfilepysrc == 1) { get6pos = readpysrc.get_values_from_python(); }
-            else if (checkfilepysrc == 2) { get6pos = readpysrc.get_values_from_exe(); }
-            else if (checkfilepysrc == 0) { return; }
+            // if (checkfilepysrc == 1) { get6pos = readpysrc.get_values_from_python(); }
+            // else if (checkfilepysrc == 2) { get6pos = readpysrc.get_values_from_exe(); }
+            if (checkfilepysrc == 0) { return; }
             if (ui_state.rbpos.size() < get6pos.size()) {
                 ui_state.coumove = get6pos.size();
                 ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));

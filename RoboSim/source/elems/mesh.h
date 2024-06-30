@@ -67,7 +67,7 @@ namespace nelems {
         std::size_t get_vertices_size() const { return mVertices.size(); }
         // get vertex indices
         std::vector<unsigned int> get_vertex_indices() { return mVertexIndices; }
-
+        void calculate_normals();
         //--------------------------------------------------------------------------------
         void render() { if (hide) { return; } mRenderBufferMgr->draw(static_cast<int>(mVertexIndices.size())); }
         void render_lines() { if (hide) { return; } mRenderBufferMgr->draw_lines(static_cast<int>(mVertexIndices.size())); }
