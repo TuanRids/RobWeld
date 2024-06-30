@@ -76,7 +76,17 @@ namespace nymrobot {
         connect_robot();
         //if (status.StatusCode != 0) { return; }
 
-        ImGui::Begin("Robot Control");
+        static int x{ 200 }, y{ 400 };
+        static float pos_x, pos_y,sizex,sizey;
+        nui::FrameManage::getViewportSize(pos_x, pos_y);
+        nui::FrameManage::get3DSize(sizex, sizey);
+        ImGui::SetNextWindowPos(ImVec2(pos_x + 15, pos_y + 223)); // Set the position of the frame
+        ImGui::SetNextWindowSize(ImVec2(sizex*0.15, sizey*0.6)); // Set the size of the frame
+        ImGui::Begin("Robot Status", nullptr,
+            ImGuiWindowFlags_NoDocking | // Cannot be docked
+            ImGuiWindowFlags_NoBackground | // Do not display background
+            ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
+
         if (ImGui::Button("Clear Fault")) {
             std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
             *temptstt = controller->Faults->ClearAllFaults();

@@ -242,7 +242,7 @@ namespace nui {
                 nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Left ||
                 nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Middle)
             {
-                hint(shint);
+                //hint(shint);
             }
         }
     }

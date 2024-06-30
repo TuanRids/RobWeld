@@ -16,6 +16,10 @@ namespace nui {
 
         // Setter for crActiveGui variable
         static void setCrActiveGui(const std::string& frameName, bool isActive);
+        // getter 3D size
+        static void set3DSize(float& x, float& y) { vdsize_x = x; vdsize_y = y; }
+        // setter 3D size
+        static void get3DSize(float& x, float& y) { x =vdsize_x ; y = vdsize_y; }
 
         //getter for viewport position
         static void getViewportSize(float& x, float& y) {x = viewport_x;y = viewport_y;}
@@ -38,6 +42,8 @@ namespace nui {
 
         // viewport position
         static float viewport_x, viewport_y;
+        // viewport size
+        static float vdsize_x, vdsize_y;
     };
 
 }

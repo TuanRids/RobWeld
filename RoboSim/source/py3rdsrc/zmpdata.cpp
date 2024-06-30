@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "zmpdata.h"
-
+#include "ui/FrameManage.h"
 zmpdata::zmpdata() : image_texture(0) {}
 
 zmpdata::~zmpdata() {
@@ -64,7 +64,14 @@ void zmpdata::render() {
         }
     }
 
-    ImGui::Begin("Camera Vision");
+    static float pos_x, pos_y, size_x, size_y;
+    nui::FrameManage::getViewportSize(pos_x, pos_y);
+    nui::FrameManage::get3DSize(size_x, size_y);
+
+    ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ size_x*0.7, pos_y + 35)); // Set the position of the frame
+    ImGui::SetNextWindowSize(ImVec2(size_x*0.298, size_y * 0.8)); // Set the size of the frame
+    ImGui::Begin("Camera Vision", nullptr,
+        ImGuiWindowFlags_NoBackground); // Do not display background
     
     if (ImGui::Button("Send 0")) { TriggerToPy["Send1"] = 1; } ImGui::SameLine();
     if (ImGui::Button("Send 1")) { TriggerToPy["Send2"] = 1; }ImGui::SameLine();

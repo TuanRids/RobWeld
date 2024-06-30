@@ -216,7 +216,6 @@ namespace nelems {
             glm::vec3(0.0, 0.5, 0.0), glm::vec3(1.0, 0.8, 0.2), glm::vec3(0.0, 0.6, 0.4),
             glm::vec3(0.2, 0.1, 0.1), glm::vec3(0.04, 0.04, 0.4), glm::vec3(0.4, 0.1, 0.7)
         };
-
         const uint32_t cMeshImportFlags =
             aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices|
             aiProcess_ValidateDataStructure;

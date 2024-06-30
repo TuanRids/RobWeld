@@ -4,7 +4,7 @@
 #include "imgui.h"
 #include "elems/mesh.h"
 #include <iomanip> 
-
+#include "ui/FrameManage.h"
 #include <vector>
 #include <sstream>
 #include "ui/statuslogs.h"

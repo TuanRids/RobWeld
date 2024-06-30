@@ -42,15 +42,16 @@ namespace nui
 
         //****************************************************
         //Main Properties
-        layer_frame(scene_view); // define selectedID
 
         if (ImGui::Begin("Properties"))
         {
-
-            obInfo_frame(); // show object info such as vertices and vertex indices
-            ImGui::Separator();
+            layer_frame(scene_view); // define selectedID
+            obInfo_frame(); // show object info such as vertices and vertex 
             coordinate_frame(); // show the position
+            ImGui::Separator();
+            ImGui::Separator();
             material_frame(scene_view); // show material properties
+            camera_frame(scene_view); // show camera properties
             ImGui::End();
         }
         //****************************************************
@@ -60,8 +61,8 @@ namespace nui
         ImGui::End();
 
         mRobot->render();
-        camera_frame(scene_view); // show camera properties
-        sh_performance();
+
+        // sh_performance();
 
         Robot_Controls_table();
     }
@@ -70,12 +71,13 @@ namespace nui
     void Property_Panel::camera_frame(nui::SceneView* scene_view)
     {
         ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
-        if (ImGui::Begin("CameraSetting", nullptr))
-        {
+        static int axisLength{ 1000 };
+        static float newnear{ 1.0f }, newfar{ 10000.0f }; // Far =0 => Render error
+        static int newzoom(50); static int gridNum(15); static int gridStep(40);
+
+        if (ImGui::CollapsingHeader("CameraSetting", false))        {
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
             ImGui::Separator();
-            static float newnear{ 1.0f }, newfar{ 10000.0f }; // Far =0 => Render error
-            static int newzoom(50); static int gridNum(15); static int gridStep(40);
             ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f"); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Far", &newfar, 1.0f, 20000.0f, "%.0f"); ImGui::SetNextItemWidth(150);
@@ -84,117 +86,110 @@ namespace nui
             ImGui::SliderInt("GridNum", &gridNum, 0, 200); ImGui::SetNextItemWidth(150);
             ImGui::SliderInt("GridStep", &gridStep, 0, 200); ImGui::SetNextItemWidth(150);
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
-            static int axisLength{ 1000 };
             ImGui::SliderInt("AxisLength", &axisLength, 0, 5000);
-
-
-            SceneView::getInstance().setNear(newnear);
-            SceneView::getInstance().setFar(newfar);
-            SceneView::getInstance().setZoom(newzoom);
-            ImGui::End();
-            // grid
-            proMesh->createGridSys(gridNum, gridStep);
-            proMesh->set_axis_length(axisLength);
-
         }
+        SceneView::getInstance().setNear(newnear);
+        SceneView::getInstance().setFar(newfar);
+        SceneView::getInstance().setZoom(newzoom);
+        // grid
+        proMesh->createGridSys(gridNum, gridStep);
+        proMesh->set_axis_length(axisLength);
     }
     void Property_Panel::layer_frame(nui::SceneView* scene_view)
     {
-        ImGui::Begin("Layer", nullptr);
-        nui::FrameManage::setCrActiveGui("Layer", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
+        if (ImGui::CollapsingHeader("Layer", ImGuiTreeNodeFlags_DefaultOpen)) {
+            nui::FrameManage::setCrActiveGui("Layer", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
 
-        static int lastSelectedIndex = -1; // To remember the last selected index for range selection
-        static std::vector<bool> selectionStates; // To track selection states
+            static int lastSelectedIndex = -1; // To remember the last selected index for range selection
+            static std::vector<bool> selectionStates; // To track selection states
 
-        if (proMesh->size() > 0)
-        {
-            // Resize selectionStates if necessary
-            if (selectionStates.size() != proMesh->size()) {
-                selectionStates.resize(proMesh->size(), false);
-            }
-
-            ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
-            ImGui::BeginTable("Objects", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX);
-            ImGui::TableSetupColumn("Sel");
-            ImGui::TableSetupColumn("Name");
-            ImGui::TableSetupColumn("Hide");
-            ImGui::TableHeadersRow();
-
-            for (int i = 0; i < proMesh->size(); i++)
+            if (proMesh->size() > 0)
             {
-                auto mesh = proMesh->get_mesh_ptr(i);
-                if (check_skip(mesh->oname)) { continue; }
+                // Resize selectionStates if necessary
+                if (selectionStates.size() != proMesh->size()) {
+                    selectionStates.resize(proMesh->size(), false);
+                }
 
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
+                ImGui::BeginChild("TableChild", ImVec2(0, 180), true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+                ImGui::BeginTable("Objects", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX);
+                ImGui::TableSetupColumn("Sel");
+                ImGui::TableSetupColumn("Name");
+                ImGui::TableSetupColumn("Hide");
+                ImGui::TableHeadersRow();
 
-                bool isSelected = selectionStates[i];
-                if (ImGui::Checkbox(("##Select" + std::to_string(i)).c_str(), &isSelected))
+                for (int i = 0; i < proMesh->size(); i++)
                 {
-                    if (ImGui::GetIO().KeyShift && lastSelectedIndex != -1)
-                    {
-                        int start = (lastSelectedIndex < i) ? lastSelectedIndex : i;
-                        int end = (lastSelectedIndex > i) ? lastSelectedIndex : i;
-                        bool selectRange = !selectionStates[start];
+                    auto mesh = proMesh->get_mesh_ptr(i);
+                    if (check_skip(mesh->oname)) { continue; }
 
-                        for (int j = start; j <= end; j++)
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+
+                    bool isSelected = selectionStates[i];
+                    if (ImGui::Checkbox(("##Select" + std::to_string(i)).c_str(), &isSelected))
+                    {
+                        if (ImGui::GetIO().KeyShift && lastSelectedIndex != -1)
                         {
-                            selectionStates[j] = selectRange;
-                            auto mesh = proMesh->get_mesh_ptr(j);
-                            mesh->selected = selectRange;
-                            if (selectRange) {
-                                selectedMeshes.insert(mesh->ID);
+                            int start = (lastSelectedIndex < i) ? lastSelectedIndex : i;
+                            int end = (lastSelectedIndex > i) ? lastSelectedIndex : i;
+                            bool selectRange = !selectionStates[start];
+
+                            for (int j = start; j <= end; j++)
+                            {
+                                selectionStates[j] = selectRange;
+                                auto mesh = proMesh->get_mesh_ptr(j);
+                                mesh->selected = selectRange;
+                                if (selectRange) {
+                                    selectedMeshes.insert(mesh->ID);
+                                }
+                                else {
+                                    selectedMeshes.erase(mesh->ID);
+                                }
                             }
-                            else {
+                        }
+                        else
+                        {
+                            selectionStates[i] = isSelected;
+                            mesh->selected = isSelected;
+                            if (isSelected)
+                            {
+                                selectedMeshes.insert(mesh->ID);
+                                lastSelectedIndex = i;
+                            }
+                            else
+                            {
                                 selectedMeshes.erase(mesh->ID);
                             }
                         }
                     }
-                    else
+
+                    ImGui::TableNextColumn();
+                    ImGui::Text(mesh->oname);
+                    ImGui::TableNextColumn();
+                    ImGui::Checkbox(("##Hide" + std::to_string(i)).c_str(), &mesh->hide);
+
+                    if (selectionStates[i])
                     {
-                        selectionStates[i] = isSelected;
-                        mesh->selected = isSelected;
-                        if (isSelected)
-                        {
-                            selectedMeshes.insert(mesh->ID);
-                            lastSelectedIndex = i;
-                        }
-                        else
-                        {
-                            selectedMeshes.erase(mesh->ID);
-                        }
+                        ImU32 yellowColorU32 = ImGui::ColorConvertFloat4ToU32(ImVec4(0.25f, 0.42f, 1.0f, 1.0f));
+                        ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, yellowColorU32);
                     }
                 }
+                ImGui::EndTable();
+                ImGui::EndChild();
 
-                ImGui::TableNextColumn();
-                ImGui::Text(mesh->oname);
-                ImGui::TableNextColumn();
-                ImGui::Checkbox(("##Hide" + std::to_string(i)).c_str(), &mesh->hide);
-
-                if (selectionStates[i])
-                {
-                    ImU32 yellowColorU32 = ImGui::ColorConvertFloat4ToU32(ImVec4(0.25f, 0.42f, 1.0f, 1.0f));
-                    ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, yellowColorU32);
-                }
             }
-            ImGui::EndTable();
+            ImGui::Separator();
         }
-        ImGui::Separator();
-        ImGui::End();
     }
-
-
 
     void Property_Panel::obInfo_frame()
     {
-        static int x{ 200 }, y{ 200 };
-        static float pos_x, pos_y;
+        static float pos_x, pos_y, sizex, sizey;
         nui::FrameManage::getViewportSize(pos_x, pos_y);
+        nui::FrameManage::get3DSize(sizex, sizey);
         ImGui::SetNextWindowPos(ImVec2(pos_x + 15, pos_y + 35)); // Set the position of the frame
-        ImGui::SetNextWindowSize(ImVec2(x, y)); // Set the size of the frame
-        ImGui::Begin("H1", nullptr,
-            ImGuiWindowFlags_NoTitleBar | // Do not display title bar
-            ImGuiWindowFlags_NoCollapse | // Cannot collapse
+        ImGui::SetNextWindowSize(ImVec2(sizex * 0.15, sizey * 0.2)); // Set the size of the frame
+        ImGui::Begin("Vertices & Vertex Indices", nullptr,
             ImGuiWindowFlags_NoDocking | // Cannot be docked
             ImGuiWindowFlags_NoBackground | // Do not display background
             ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
@@ -202,9 +197,6 @@ namespace nui
             //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 0.6f, 1.0f)); // Set text color to white and 50% transparent
         //elsei
 
-
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.3f, 0.0f, 1.0f)); // Set text color to red and 50% transparent
-        ImGui::Text("Vertices & Vertex Indices"); ImGui::Separator();
         if (proMesh->check_selected() != 0)
         {
             for (int i = 0; i < proMesh->size(); i++)
@@ -228,8 +220,6 @@ namespace nui
                 ImGui::Text(": %lld - %lld", mesh->mVertices.size(), mesh->mVertexIndices.size());
             }
         }
-        ImGui::PopStyleColor();
-        x = ImGui::GetWindowWidth(); y = ImGui::GetWindowHeight();
         ImGui::End();
     }
     void Property_Panel::coordinate_frame()
@@ -365,7 +355,7 @@ namespace nui
 
         static ImVec4 clor = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
         static float rness = 0.5f; static float mlic = 0.5f;
-        if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
+        if (ImGui::CollapsingHeader("Material", false))
         {
             ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
             for (int i = 0; i < proMesh->size(); i++)
@@ -403,7 +393,7 @@ namespace nui
             }
         }
         /// Light
-        if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
+        if (ImGui::CollapsingHeader("Light", false))
         {
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
             nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f); ImGui::SetNextItemWidth(150);

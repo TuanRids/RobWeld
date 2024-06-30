@@ -112,7 +112,7 @@ namespace nui
             mCamera->update(mShader.get());
             ImVec2 viewportWindowPos = ImGui::GetWindowPos();
             nui::FrameManage::setViewportSize(viewportWindowPos.x, viewportWindowPos.y);
-
+            nui::FrameManage::set3DSize(mSize.x, mSize.y);
             // Add rendered texture to ImGUI scene window
             uint64_t textureID = mFrameBuffer->get_texture();
 
