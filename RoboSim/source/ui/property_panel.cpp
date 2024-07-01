@@ -48,8 +48,6 @@ namespace nui
             layer_frame(scene_view); // define selectedID
             obInfo_frame(); // show object info such as vertices and vertex 
             coordinate_frame(); // show the position
-            ImGui::Separator();
-            ImGui::Separator();
             material_frame(scene_view); // show material properties
             camera_frame(scene_view); // show camera properties
             ImGui::End();
@@ -66,8 +64,10 @@ namespace nui
 
         Robot_Controls_table();
     }
+    
     ////===========================================================================================
     //// Main Frames 
+
     void Property_Panel::camera_frame(nui::SceneView* scene_view)
     {
         ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
@@ -181,7 +181,6 @@ namespace nui
             ImGui::Separator();
         }
     }
-
     void Property_Panel::obInfo_frame()
     {
         static float pos_x, pos_y, sizex, sizey;
@@ -227,7 +226,6 @@ namespace nui
 
         if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen)) //&&mesh
         {
-            ImGui::Separator();
             bool pressOk = ImGui::Button("UPDATE");
             if (proMesh->check_selected() == 1)
             {
@@ -441,14 +439,12 @@ namespace nui
 
         ImGui::End();
     }
-
     bool Property_Panel::check_skip(const char(&name)[256])
     {
         if (std::string(name).find("RBSIMBase_") != std::string::npos) { return true; }
 		if (std::string(name).find("__SKIP__") != std::string::npos) { return true; }
         return false;
     }
-
     void Property_Panel::sh_performance()
     {
         static int x{ 200 }, y{ 200 };
@@ -492,7 +488,7 @@ namespace nui
 
     }
 
-    //================================================================================================
+    //===============================================================================================
 
     void nui::Property_Panel::Robot_Controls_table()
     {
@@ -534,13 +530,17 @@ namespace nui
         };      
 
         ImGui::Begin("Robot Controls", nullptr);
+
         static bool CtrFlag = false;
-        if (ImGui::Button(CtrFlag ? "Visualize" : "LiveSync")) {
-            CtrFlag = !CtrFlag;
-            if (CtrFlag) {
-                mRobot->setSwitchVisualize();
+        if (ImGui::BeginPopupContextItem("Robot Controls Popup", ImGuiPopupFlags_MouseButtonRight)) {
+            if (ImGui::MenuItem("Toggle Control Flag")) {
+                CtrFlag = !CtrFlag;                mRobot->setSwitchVisualize();
+
             }
+            ImGui::EndPopup();
+
         }
+
         prehand[0] = base[5]->oMaterial.position.x;
         prehand[1] = base[5]->oMaterial.position.y;
         prehand[2] = base[5]->oMaterial.position.z;
@@ -550,30 +550,40 @@ namespace nui
         if (CtrFlag == false) {
             // Get joint angles
             mRobot->get_angle(ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]);
-
             // Show Joints Data
             ImVec4 vecred(0.0f, 0.0f, 1.0f, 1.0f); 
 
-            for (int i = 0; i < 6; i += 2) {
+            for (int i = 0; i < 6; ++i) {
+                // Start a new child for each joint group
+                ImGui::BeginChild((std::string("JointGroup") + std::to_string(i)).c_str(), ImVec2(110, 85), true);
+                ImGui::BeginGroup();
+
+                // Display joint angle
                 ImGui::TextColored(vecred, "Joint %d: %.2f", i + 1, ang[i]);
-                ImGui::SameLine();
-                ImGui::Dummy(ImVec2(30.0f, 0.0f));
-                ImGui::SameLine();
-                ImGui::TextColored(vecred, "Joint %d: %.2f", i + 2, ang[i + 1]);
+
+                // Display limits
+                ImGui::Text("Min: "); ImGui::SameLine();
                 ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_0").c_str(), &limangle[i][0], 0, 0, "%.2f");
 
-                for (int j = 0; j < 2; ++j) {
-                    ImGui::Text((std::string("J") + std::to_string(i + 1) + " Lim" + std::to_string(j + 1)).c_str());
-                    ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-                    ImGui::InputFloat(("##" + std::to_string(i) + "_" + std::to_string(j)).c_str(), &limangle[i][j], 0, 0, "%.2f");
-                    ImGui::SameLine();
+                ImGui::Text("Max:"); ImGui::SameLine();
+                ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_1").c_str(), &limangle[i][1], 0, 0, "%.2f");
 
-                    ImGui::Text((std::string("J") + std::to_string(i + 2) + " Lim" + std::to_string(j + 1)).c_str());
-                    ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-                    ImGui::InputFloat(("##" + std::to_string(i + 1) + "_" + std::to_string(j)).c_str(), &limangle[i + 1][j], 0, 0, "%.2f");
-                    
+                // End the group
+                ImGui::EndGroup();
+                ImGui::EndChild();
+
+                // Add some spacing between groups
+                if (i % 3 == 2) {
+                    //ImGui::Dummy(ImVec2(5.0f, 5.0f));  // Add a larger space after each row of three joints
+                }
+                else {
+                    ImGui::SameLine();  // Adjust spacing as needed
                 }
             }
+
+
             mRobot->set_limitangle(limangle);
         }
         // Control Mode:
@@ -652,8 +662,6 @@ namespace nui
             bs->create_buffers(); }
         ImGui::End();
     }
-
-
     void nui::Property_Panel::rotateJoint(size_t jointIndex, float& ang, float& pre, const float tolerance,
         std::vector<std::shared_ptr <nelems::oMesh>>& base,
         float diffX, float diffY, float diffZ)
@@ -724,5 +732,4 @@ namespace nui
             pre = std::round(ang * 100.0f) / 100.0f;
         }
     }
-
 }

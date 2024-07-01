@@ -69,7 +69,7 @@ void zmpdata::render() {
     nui::FrameManage::get3DSize(size_x, size_y);
 
     ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ size_x*0.7, pos_y + 35)); // Set the position of the frame
-    ImGui::SetNextWindowSize(ImVec2(size_x*0.298, size_y * 0.8)); // Set the size of the frame
+    ImGui::SetNextWindowSize(ImVec2(size_x*0.295, size_y * 0.8)); // Set the size of the frame
     ImGui::Begin("Camera Vision", nullptr,
         ImGuiWindowFlags_NoBackground); // Do not display background
     

@@ -52,6 +52,8 @@ namespace nui
         nymrobot::ymconnect* mRobot;
         StatusLogs* sttlogs;
         std::unique_ptr<zmpdata> IPreceiver;
+
+        bool CtrFlag = false; // Livesync & visualize
     public:
         Property_Panel():
             proMesh(nullptr),mesh(nullptr), mRobot(nullptr), mctshader(nullptr), sttlogs(nullptr), IPreceiver(nullptr)
@@ -92,7 +94,7 @@ namespace nui
         }
         
         void SaveIniFile(const std::string& key, const std::string& value);
-
+        void SwitchVisualLiveSync(){ CtrFlag = !CtrFlag; }
       };
 }
 

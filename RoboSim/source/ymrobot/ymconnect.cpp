@@ -237,7 +237,7 @@ namespace nymrobot {
         ImGui::Separator();
         ImGui::Begin("Attributes: ");
         static auto LinepathStart = std::chrono::high_resolution_clock::now();
-        ImGui::SetNextItemWidth(150);
+        ImGui::SetNextItemWidth(80);
         ImGui::InputInt("Times", &ui_state.coumove, 1, 2);
         if (ui_state.coumove < 1) { ui_state.coumove = 1; }; ImGui::SameLine();
         ui_state.joinflag = ImGui::Button("Joint Move"); ImGui::SameLine();
