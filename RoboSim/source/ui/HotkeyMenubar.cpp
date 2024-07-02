@@ -10,10 +10,6 @@ namespace nui {
 	void HotkeyMenubar::mMenuBar(GLFWwindow* mWindow)
     {
         std::lock_guard<std::mutex> lock(mtx);
-        if (!mRobot)
-        {
-            mRobot = &nymrobot::ymconnect::getInstance();
-        }
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
@@ -102,7 +98,8 @@ namespace nui {
                             }
                         }
                     }
-                    for (int i = 0; i < menuFont.size(); ++i) {
+                    // TODO UPDATE FONT
+                    for (int i = 0; i < 40; ++i) {
                         if (ImGui::MenuItem(menuFont[i].c_str())) {
                             if (std::filesystem::exists("C:/Windows/Fonts/" + std::string(menuFont[i]) + ".ttf")) {
                                 SaveIniFile("font", menuFont[i]);
@@ -242,7 +239,7 @@ namespace nui {
                 nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Left ||
                 nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Middle)
             {
-                //hint(shint);
+                // hint(shint);
             }
         }
     }

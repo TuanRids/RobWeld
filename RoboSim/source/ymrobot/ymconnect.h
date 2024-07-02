@@ -8,6 +8,7 @@
 #include <vector>
 #include <sstream>
 #include "ui/statuslogs.h"
+#include "py3rdsrc/zmpdata.h"
 /// Struct used for interfacing between the UI and the Move Robot functionality. 
 /// The Move Robot is a critical function of this software, facilitating various types of robot movements.
 ///
@@ -56,23 +57,24 @@ namespace nymrobot {
         bool switchVisualizeMode = false;
         std::vector<std::vector<float>> limitangle;
 
+        static std::vector<std::vector<float>> get6pos; // Get 6 positions from shared memory
+
         float angle[6];
         nelems::mMesh* proMeshRb = nullptr;
         std::stringstream resultmsg;
-        nui::StatusLogs* sttlogs = nullptr;
-        ymconnect();
-        ~ymconnect();
-
-        ymconnect(const ymconnect&) = delete;
-        ymconnect(ymconnect&&) = delete;
-        ymconnect& operator=(const ymconnect&) = delete;
-        ymconnect& operator=(ymconnect&&) = delete;
+        std::unique_ptr<nui::StatusLogs> sttlogs;
+        std::unique_ptr<zmpdata> shmdata;
 
     public:
-        static ymconnect& getInstance() {
-            static ymconnect instance;
-            return instance;
+        ymconnect() : controller(nullptr), angle{}, sttlogs(nullptr), shmdata(nullptr) {
+            YMConnect::OpenConnection("192.168.0.0", status, restime);
+            sttlogs = std::make_unique<nui::StatusLogs>();
+            shmdata = std::make_unique<zmpdata>();
         }
+        ~ymconnect();
+        // setter for get6pos from shared memory. Only take when != -1. zmpdata
+        void setter_get6pos(const std::vector<std::vector<float>>& get6pos_) { get6pos = get6pos_; }
+
         // Connect to robot
         void connect_robot();
 		// Disconnect from robot
@@ -81,8 +83,6 @@ namespace nymrobot {
         void render();
         // Limangle for Robot
         void set_limitangle(const std::vector<std::vector<float>>& getlim) { limitangle = getlim; }
-        // Check files in directory
-        int check_files_in_directory();
         // Move Robot
         void move_robot();
 		// Setup UI

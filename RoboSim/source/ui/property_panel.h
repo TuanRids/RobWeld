@@ -49,8 +49,8 @@ namespace nui
         std::unordered_set<long long> selectedMeshes;
         std::shared_ptr<nshaders::Shader> mctshader;
         float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
-        nymrobot::ymconnect* mRobot;
-        StatusLogs* sttlogs;
+        std::unique_ptr<nymrobot::ymconnect> mRobot;
+        std::unique_ptr<StatusLogs> sttlogs;
         std::unique_ptr<zmpdata> IPreceiver;
 
         bool CtrFlag = false; // Livesync & visualize
@@ -58,19 +58,17 @@ namespace nui
         Property_Panel():
             proMesh(nullptr),mesh(nullptr), mRobot(nullptr), mctshader(nullptr), sttlogs(nullptr), IPreceiver(nullptr)
         {
+
             for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
             std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
-            if (file.is_open())
-            {
-                json j; file >> j;
-                if (j.find("font") != j.end()) {
-                    content = j["font"].get<std::string>();
-                }
-            }
+            if (file.is_open()) { json j; file >> j; if (j.find("font") != j.end()) { content = j["font"].get<std::string>(); } }
             ImGuiIO& io = ImGui::GetIO();
             std::string fontPath = "C:/Windows/Fonts/" + std::string(content) + ".ttf";
             io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
+
             IPreceiver = std::make_unique<zmpdata>();
+            mRobot = std::make_unique<nymrobot::ymconnect>();
+            sttlogs = std::make_unique<StatusLogs>();
         }
         void render(nui::SceneView* mScene, GLFWwindow* mWindow);
         void material_frame(nui::SceneView* scene_view);

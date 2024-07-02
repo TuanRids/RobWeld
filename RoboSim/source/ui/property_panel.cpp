@@ -20,43 +20,26 @@ namespace nui
     // long long nui::Property_Panel::selectedID = 0;
     void Property_Panel::render(nui::SceneView* scene_view, GLFWwindow* mWindow)
     {
-        if (!proMesh) {
-            proMesh = &nelems::mMesh::getInstance();
-        }
-        // robotic arm
-        if (!mRobot)
-        {
-            mRobot = &nymrobot::ymconnect::getInstance();
-        }
-        if (!sttlogs) { sttlogs = &StatusLogs::getInstance(); }
-        //****************************************************
+        if (!proMesh) {proMesh = &nelems::mMesh::getInstance();}
 
 
         static nui::HotkeyMenubar hotkey_manage;
         hotkey_manage.mMenuBar(mWindow);
         hotkey_manage.mHotkey(mWindow);
-        hotkey_manage.commandLogs(); // show command logs
-
 
         IPreceiver->render();
-
-        //****************************************************
-        //Main Properties
-
-        if (ImGui::Begin("Properties"))
-        {
-            layer_frame(scene_view); // define selectedID
-            obInfo_frame(); // show object info such as vertices and vertex 
-            coordinate_frame(); // show the position
-            material_frame(scene_view); // show material properties
-            camera_frame(scene_view); // show camera properties
-            ImGui::End();
-        }
-        //****************************************************
-		//Show StatusLogs
-        ImGui::Begin("StatusLogs", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-        ImGui::TextUnformatted(sttlogs->getStatus().c_str());
+        
+        ImGui::Begin("Properties");
+        layer_frame(scene_view); // define selectedID
+        obInfo_frame(); // show object info such as vertices and vertex 
+        coordinate_frame(); // show the position
+        material_frame(scene_view); // show material properties
+        camera_frame(scene_view); // show camera properties
         ImGui::End();
+
+
+        ImGui::Begin("StatusLogs", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+        ImGui::TextWrapped(sttlogs->getStatus().c_str());        ImGui::End();
 
         mRobot->render();
 
@@ -65,9 +48,6 @@ namespace nui
         Robot_Controls_table();
     }
     
-    ////===========================================================================================
-    //// Main Frames 
-
     void Property_Panel::camera_frame(nui::SceneView* scene_view)
     {
         ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
@@ -186,9 +166,9 @@ namespace nui
         static float pos_x, pos_y, sizex, sizey;
         nui::FrameManage::getViewportSize(pos_x, pos_y);
         nui::FrameManage::get3DSize(sizex, sizey);
-        ImGui::SetNextWindowPos(ImVec2(pos_x + 15, pos_y + 35)); // Set the position of the frame
+        ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ sizex * 0.83, pos_y + 35)); // Set the position of the frame
         ImGui::SetNextWindowSize(ImVec2(sizex * 0.15, sizey * 0.2)); // Set the size of the frame
-        ImGui::Begin("Vertices & Vertex Indices", nullptr,
+        ImGui::Begin("Vertices & Vertex Indices", nullptr, 
             ImGuiWindowFlags_NoDocking | // Cannot be docked
             ImGuiWindowFlags_NoBackground | // Do not display background
             ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
@@ -487,9 +467,6 @@ namespace nui
         ImGui::End();
 
     }
-
-    //===============================================================================================
-
     void nui::Property_Panel::Robot_Controls_table()
     {
         // *****************************************************
@@ -535,10 +512,8 @@ namespace nui
         if (ImGui::BeginPopupContextItem("Robot Controls Popup", ImGuiPopupFlags_MouseButtonRight)) {
             if (ImGui::MenuItem("Toggle Control Flag")) {
                 CtrFlag = !CtrFlag;                mRobot->setSwitchVisualize();
-
             }
             ImGui::EndPopup();
-
         }
 
         prehand[0] = base[5]->oMaterial.position.x;

@@ -23,15 +23,13 @@ namespace nui {
         static bool waitloop[6];
         static bool shint;
         std::string theme;
-        nymrobot::ymconnect* mRobot;
         std::mutex mtx;
     public:
-        HotkeyMenubar() : scene_view(nullptr), mRobot(nullptr){
+        HotkeyMenubar() : scene_view(nullptr){
             scene_view = &nui::SceneView::getInstance();
-            
         }
         ////====    ==============MENU BAR==================
-        void commandLogs(){ uiaction.Command_Logs(); }
+        //void commandLogs(){  }
         void mMenuBar(GLFWwindow* mWindow);
         
         void mHotkey(GLFWwindow* mWindow);

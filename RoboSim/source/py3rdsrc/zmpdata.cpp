@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "zmpdata.h"
 #include "ui/FrameManage.h"
-zmpdata::zmpdata() : image_texture(0) {}
+zmpdata::zmpdata() : image_texture(0) {  }
+
+std::vector<std::vector<float>> zmpdata::shared_get6pos = std::vector<std::vector<float>>(50, std::vector<float>(6, -99999.0f));
 
 zmpdata::~zmpdata() {
     if (image_texture != 0) {
@@ -9,9 +11,7 @@ zmpdata::~zmpdata() {
     }
 }
 
-
-void zmpdata::render_send() {
-    std::lock_guard<std::mutex> lock(mtx);  // Lock mutex
+void zmpdata::send_datatoIPC() {
 
     const char* ipc_send_mapping = Config::IPC_SEND_MAPPING;
 
@@ -40,115 +40,222 @@ void zmpdata::render_send() {
     CloseHandle(hMapFile);
 }
 
-void zmpdata::render() {
-    auto start = std::chrono::high_resolution_clock::now();
-
-    cv::Mat img;
-    int frame_count;
-    float rotation_speed;
-
-    if (receive_data(img, frame_count, rotation_speed)) {
-        if (!img.empty()) {
-            // Call Imshow to reformat data for ImGui
-            cv::imshow("Hidden", img);
-            cv::waitKey(1);
-
-            // Hide the main window
-            HWND hwnd = FindWindow(NULL, TEXT("Hidden"));
-            if (hwnd != NULL) { ShowWindow(hwnd, SW_HIDE); }
-            if (image_texture != 0) { glDeleteTextures(1, &image_texture); }
-
-            // Convert image to texture for ImGui
-            image_texture = matToTexture(img, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE);
-            // std::cout << "Received frame count: " << frame_count << ", rotation speed: " << rotation_speed << std::endl;
-        }
-    }
-
+void zmpdata::Display_info()
+{
     static float pos_x, pos_y, size_x, size_y;
     nui::FrameManage::getViewportSize(pos_x, pos_y);
     nui::FrameManage::get3DSize(size_x, size_y);
 
-    ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ size_x*0.7, pos_y + 35)); // Set the position of the frame
-    ImGui::SetNextWindowSize(ImVec2(size_x*0.295, size_y * 0.8)); // Set the size of the frame
-    ImGui::Begin("Camera Vision", nullptr,
-        ImGuiWindowFlags_NoBackground); // Do not display background
-    
-    if (ImGui::Button("Send 0")) { TriggerToPy["Send1"] = 1; } ImGui::SameLine();
-    if (ImGui::Button("Send 1")) { TriggerToPy["Send2"] = 1; }ImGui::SameLine();
-    if (ImGui::Button("Send 2")) { TriggerToPy["Send3"] = 1; }ImGui::SameLine();
-    if (ImGui::Button("Send 3")) { TriggerToPy["Send4"] = 1; }
+    ImGui::SetNextWindowPos(ImVec2(pos_x + 15, pos_y + 35)); // Set the position of the frame
+    ImGui::SetNextWindowSize(ImVec2(size_x * 0.2, size_y * 0.97 - 35)); // Set the size of the frame
+    ImGui::Begin("Camera Vision (R)", nullptr,
+        ImGuiWindowFlags_NoDocking |    // Cannot be docked
+        ImGuiWindowFlags_NoBackground | // Do not display background
+        ImGuiWindowFlags_NoNavFocus);
+
+    if (ImGui::BeginPopupContextItem("Vision Popup", ImGuiPopupFlags_MouseButtonRight)) {
+        if (ImGui::MenuItem("Run Inspection Plan")) { TriggerToPy["Send1"] = 1; }
+        if (ImGui::MenuItem("Start Robot Left")) { TriggerToPy["Send2"] = 1; }
+        if (ImGui::MenuItem("Start Robot Right")) { TriggerToPy["Send3"] = 1; }
+        if (ImGui::MenuItem("Stop RB")) { TriggerToPy["Send4"] = 1; }
+        if (ImGui::MenuItem("Clean")) { clean_image(); }
+        if (ImGui::MenuItem("Home")) { TriggerToPy["Send5"] = 1; }
+        if (ImGui::MenuItem("Stop All")) { TriggerToPy["Send6"] = 1; }
+        ImGui::EndPopup();
+    }
     if (image_texture != 0) {
         ImVec2 winsize = ImGui::GetWindowSize();  // get the size of the window
         float scale_ratio = (float)img.cols / (float)img.rows;
 
         ImVec2 image_size;
-        if (winsize.x / scale_ratio > winsize.y) {
-            image_size.x = winsize.y * scale_ratio;
-            image_size.y = winsize.y;
+        float half_winsize_y = winsize.y / 2.0f;
+        if (winsize.x / scale_ratio > half_winsize_y) {
+            image_size.x = half_winsize_y * scale_ratio;
+            image_size.y = half_winsize_y;
         }
-		else {
-			image_size.x = winsize.x;
-			image_size.y = winsize.x / scale_ratio;
-		}
+        else {
+            image_size.x = winsize.x;
+            image_size.y = winsize.x / scale_ratio;
+        }
         ImGui::Image((void*)(intptr_t)image_texture, image_size);
     }
-    ImGui::End();
+    
+    if (image_texture_below != 0) {
+        ImVec2 winsize = ImGui::GetWindowSize();  // get the size of the window
+        float scale_ratio = (float)img_below.cols / (float)img_below.rows;
 
-    render_send();
+        ImVec2 image_size;
+        float half_winsize_y = winsize.y / 2.0f;
+        if (winsize.x / scale_ratio > half_winsize_y) {
+            image_size.x = half_winsize_y * scale_ratio;
+            image_size.y = half_winsize_y;
+        }
+        else {
+            image_size.x = winsize.x;
+            image_size.y = winsize.x / scale_ratio;
+        }
+        ImGui::Image((void*)(intptr_t)image_texture_below, image_size);
+    }
+    ImGui::End();
+}
+
+void zmpdata::getter_6pos(std::vector<std::vector<float>>& get6pos) {
+    std::vector<std::vector<float>> temptemp;
+    const float epsilon = 1.1f; 
+
+    for (const auto& pos : shared_get6pos) {
+        float cc = std::fabs(pos[0] + 99999.0f);
+        if (cc > epsilon) {
+            temptemp.push_back(pos);
+        }
+        else {
+            break;
+        }
+    }
+
+    if (!temptemp.empty()) {
+        get6pos = temptemp;
+    }
+}
+
+
+void zmpdata::render() {
+
+    int frame_count;
+    float rotation_speed;
+
+    if (receive_data(img, img_below, frame_count, rotation_speed)) {
+        if (!img.empty()) {
+            // Delete old texture
+            if (image_texture != 0) {
+                glDeleteTextures(1, &image_texture);
+                image_texture = 0; 
+            }
+            if (image_texture != 0) { glDeleteTextures(1, &image_texture); }
+            // Convert image to texture for ImGui
+            image_texture = matToTexture(img, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE);
+        }
+        if (!img_below.empty()) {
+            // delete old texture
+            if (image_texture_below != 0) {
+                glDeleteTextures(1, &image_texture_below);
+                image_texture_below = 0;
+            }
+            if (image_texture_below != 0) { glDeleteTextures(1, &image_texture_below); }
+
+            // Convert image to texture for ImGui
+            image_texture_below = matToTexture(img_below, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE);
+        }
+    }
+    
+    Display_info();
+    send_datatoIPC();
     reset_TriggerToPy();
+}
+
+void zmpdata::clean_image()
+{
+    glDeleteTextures(1, &image_texture);
+    image_texture = 0;
+    glDeleteTextures(1, &image_texture_below);
+    image_texture_below = 0;
 }
 
 void zmpdata::reset_TriggerToPy() {
     static auto start = std::chrono::high_resolution_clock::now();
     auto end = std::chrono::high_resolution_clock::now();
     if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() > 500) {  // Changed to 500ms
-        TriggerToPy["Send1"] = 0;
-        TriggerToPy["Send2"] = 0;
-        TriggerToPy["Send3"] = 0;
-        TriggerToPy["Send4"] = 0;
+        for (int i = 1; i <= 9; ++i) {
+            TriggerToPy["Send" + std::to_string(i)] = 0;
+        }
         start = std::chrono::high_resolution_clock::now();
     }
 }
 
-bool zmpdata::receive_data(cv::Mat& img, int& frame_count, float& rotation_speed) {
-    std::lock_guard<std::mutex> lock(mtx);  // Lock mutex
+bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, float& rotation_speed) {
     const char* img_shm_name = Config::IPC_GET_IMG;
+    const char* img_shm_name_below = Config::IPC_GET_IMG_BELOW;
     const char* data_shm_name = Config::IPC_GET_DATA;
+    const char* data_shm_rospos = Config::IPC_GET_POS;
 
     // Open the shared memory objects
     HANDLE hMapFileImg = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(img_shm_name));
+    HANDLE hMapFileImgBelow = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(img_shm_name_below));
     HANDLE hMapFileData = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(data_shm_name));
+    HANDLE hMapFileRosPos = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,TEXT(data_shm_rospos));
 
-    if (hMapFileImg == NULL || hMapFileData == NULL) {
+    if (hMapFileImg == NULL && hMapFileImgBelow == NULL && hMapFileData == NULL && hMapFileRosPos == NULL) {
         return false;
     }
+
     // Map the shared memory objects
-    LPCTSTR pBufImg = (LPCTSTR)MapViewOfFile(hMapFileImg, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-    LPCTSTR pBufData = (LPCTSTR)MapViewOfFile(hMapFileData, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+    LPCTSTR pBufImg = (hMapFileImg != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileImg, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
+    LPCTSTR pBufImgBelow = (hMapFileImgBelow != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileImgBelow, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
+    LPCTSTR pBufData = (hMapFileData != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileData, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
+    LPCTSTR pBufPos = (hMapFileRosPos != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileRosPos, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
 
-    if (pBufImg == NULL || pBufData == NULL) {
+    // Check if all mapped buffers are NULL
+    if (pBufImg == NULL && pBufImgBelow == NULL && pBufData == NULL) {
         if (pBufImg != NULL) UnmapViewOfFile(pBufImg);
+        if (pBufImgBelow != NULL) UnmapViewOfFile(pBufImgBelow);
         if (pBufData != NULL) UnmapViewOfFile(pBufData);
-        CloseHandle(hMapFileImg);
-        CloseHandle(hMapFileData);
+        if (hMapFileImg != NULL) CloseHandle(hMapFileImg);
+        if (hMapFileImgBelow != NULL) CloseHandle(hMapFileImgBelow);
+        if (hMapFileData != NULL) CloseHandle(hMapFileData);
+		if (hMapFileRosPos != NULL) CloseHandle(hMapFileRosPos);
         return false;
     }
 
-    // Read image data from shared memory
-    std::vector<uchar> img_vec(reinterpret_cast<const uchar*>(pBufImg), reinterpret_cast<const uchar*>(pBufImg) + 640 * 480 * 3);
-    img = cv::imdecode(img_vec, cv::IMREAD_COLOR);
+    // Read image data from shared memory (IMG)
+    if (pBufImg != NULL) {
+        std::vector<uchar> img_vec(reinterpret_cast<const uchar*>(pBufImg), reinterpret_cast<const uchar*>(pBufImg) + 640 * 480 * 3);
+        img = cv::imdecode(img_vec, cv::IMREAD_COLOR);
+        UnmapViewOfFile(pBufImg);
+        CloseHandle(hMapFileImg);
+    }
+    else {
+        img.release();  // release the image if no data
+    }
+
+    // Read image data from shared memory (IMG_BELOW)
+    if (pBufImgBelow != NULL) {
+        std::vector<uchar> img_below_vec(reinterpret_cast<const uchar*>(pBufImgBelow), reinterpret_cast<const uchar*>(pBufImgBelow) + 640 * 480 * 3);
+        img_below = cv::imdecode(img_below_vec, cv::IMREAD_COLOR);
+        UnmapViewOfFile(pBufImgBelow);
+        CloseHandle(hMapFileImgBelow);
+    }
+    else {
+        img_below.release();  // release the image if no data
+    }
 
     // Read frame count and rotation speed from shared memory
-    void* data_ptr = (void*)pBufData;
-    std::memcpy(&frame_count, data_ptr, sizeof(int));
-    std::memcpy(&rotation_speed, static_cast<char*>(data_ptr) + sizeof(int), sizeof(float));
+    if (pBufData != NULL) {
+        void* data_ptr = (void*)pBufData;
+        std::memcpy(&frame_count, data_ptr, sizeof(int));
+        std::memcpy(&rotation_speed, static_cast<char*>(data_ptr) + sizeof(int), sizeof(float));
+        UnmapViewOfFile(pBufData);
+        CloseHandle(hMapFileData);
+    }
+    else {
+        frame_count = 0;
+        rotation_speed = 0.0f;
+    }
 
-    // Clean up
-    UnmapViewOfFile(pBufImg);
-    UnmapViewOfFile(pBufData);
-    CloseHandle(hMapFileImg);
-    CloseHandle(hMapFileData);
+    // Read robot position from shared memory, if not return -99999
+	if (pBufPos != NULL) {
+        float* pos_ptr = (float*)pBufPos;
+        for (size_t i = 0; i < 50; ++i) {
+            if (pos_ptr[i * 6] == -99999.0f) { break; } // end of shared memory
 
+            for (size_t j = 0; j < 6; ++j) {shared_get6pos[i][j] = pos_ptr[i * 6 + j];}
+        }
+        UnmapViewOfFile(pBufPos);
+		CloseHandle(hMapFileRosPos);
+	}
+    else
+    {
+        shared_get6pos[0][0] = -99999.0f;
+    }
     return true;
 }
 

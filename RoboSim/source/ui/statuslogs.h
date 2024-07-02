@@ -5,20 +5,18 @@
 #include <string>
 #include <sstream>
 #include <ctime>
-#include <mutex>
 #include <imgui.h>
 
 namespace nui {
     class StatusLogs {
     public:
-        static StatusLogs& getInstance() {
-            static StatusLogs instance;
-            return instance;
-        }
+
+        StatusLogs() {}
+        ~StatusLogs() {}
+        StatusLogs(const StatusLogs&) = delete;
+        StatusLogs& operator=(const StatusLogs&) = delete;
 
         void setStatus(const std::string& status) {
-            std::lock_guard<std::mutex> lock(mutex);
-
             // Get current time
             std::time_t now = std::time(nullptr);
             std::tm localTime;
@@ -50,10 +48,7 @@ namespace nui {
         }
 
     private:
-        StatusLogs() {}
-        ~StatusLogs() {}
-        StatusLogs(const StatusLogs&) = delete;
-        StatusLogs& operator=(const StatusLogs&) = delete;
+
 
         void updateCurrentStatus() {
             std::ostringstream oss;
@@ -63,9 +58,8 @@ namespace nui {
             currentStatus = oss.str();
         }
 
-        mutable std::mutex mutex;
         std::deque<std::string> statusQueue;
-        std::string currentStatus;
+        static std::string currentStatus;
         const size_t maxSize = 10; // Maximum number of status messages to keep
     };
 }

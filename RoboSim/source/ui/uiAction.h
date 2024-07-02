@@ -114,10 +114,6 @@ namespace nui
 			if (obAction == nullptr) return;
 			obAction->redocmd();
 		}
-		void Command_Logs()
-		{;
-			obAction->Command_Logs();	
-		}
 		void SaveToFile() {
 			if (proMesh->size() == 0) {std::cout << "Error: Mesh not loaded" << std::endl;}
 			else { robFileIO.SaveToFile(*proMesh);}}

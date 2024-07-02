@@ -9,9 +9,7 @@ namespace fs = std::filesystem;
 
 namespace nymrobot {
 
-    ymconnect::ymconnect() : controller(nullptr), angle{} {
-        YMConnect::OpenConnection("192.168.0.0", status, restime);
-    }
+    std::vector<std::vector<float>> ymconnect::get6pos(3, std::vector<float>(6, 0.0f));
 
     ymconnect::~ymconnect() {
         if (status.StatusCode == 0) {
@@ -25,7 +23,7 @@ namespace nymrobot {
         static char connect_content[100] = "Welcome";
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.3f, 0.2f, 1.0f));
         ImGui::Begin("GetIP", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-        ImGui::SetWindowSize(ImVec2(400, 100));
+        //ImGui::SetWindowSize(ImVec2(400, 100));
         ImGui::SetNextItemWidth(120);
         ImGui::InputText("IP", ip_address, sizeof(ip_address));
         if (status.StatusCode == 0) { strcpy_s(connect_content, "Connected."); }
@@ -70,27 +68,26 @@ namespace nymrobot {
     void ymconnect::render() {
         // get proMeshRb and Statuslogs
         if (!proMeshRb) { proMeshRb = &nelems::mMesh::getInstance(); }
-        if (!sttlogs) { sttlogs = &nui::StatusLogs::getInstance(); }
-
 
         connect_robot();
-        //if (status.StatusCode != 0) { return; }
 
         static int x{ 200 }, y{ 400 };
         static float pos_x, pos_y,sizex,sizey;
         nui::FrameManage::getViewportSize(pos_x, pos_y);
         nui::FrameManage::get3DSize(sizex, sizey);
-        ImGui::SetNextWindowPos(ImVec2(pos_x + 15, pos_y + 223)); // Set the position of the frame
-        ImGui::SetNextWindowSize(ImVec2(sizex*0.15, sizey*0.6)); // Set the size of the frame
+        ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ sizex*0.83, pos_y + sizey * 0.25)); // Set the position of the frame
+        ImGui::SetNextWindowSize(ImVec2(sizex*0.15, sizey*0.73)); // Set the size of the frame
         ImGui::Begin("Robot Status", nullptr,
             ImGuiWindowFlags_NoDocking | // Cannot be docked
             ImGuiWindowFlags_NoBackground | // Do not display background
             ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
 
-        if (ImGui::Button("Clear Fault")) {
+        if (ImGui::Button("Clear Fault") && status.StatusCode == 0) {
+            
             std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
             *temptstt = controller->Faults->ClearAllFaults();
             if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
+            
         }
         move_robot();
         read_robot();
@@ -98,29 +95,14 @@ namespace nymrobot {
         if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }
         ImGui::End();
     }
-    // check files in directory
-    int ymconnect::check_files_in_directory() {
-        std::vector<std::filesystem::path> filep;
-        filep.push_back( std::filesystem::current_path() / "pysrc" / "postocpp.exe");
-        filep.push_back(std::filesystem::current_path() / "pysrc" / "postocpp.py");
-        if (std::filesystem::exists(filep[1])) 
-        { return 1; } // highest priority to return py first
-        else if (std::filesystem::exists(filep[0]))
-        { return 2; } // 2nd priority to return exe
-        return 0;
-    }
-    // Joint MoTion Functor
-    struct JointMotionFunctor {
-        auto operator()(ControlGroupId groupId, PositionData& posData, float speed) const {
-            return JointMotion(groupId, posData, speed);
-        }
-    };
 
-    struct LinearMotionFunctor {
-        auto operator()(ControlGroupId groupId, PositionData& posData, float speed) const {
+
+    struct JointMotionFunctor {auto operator()(ControlGroupId groupId, PositionData& posData, float speed) const {
+            return JointMotion(groupId, posData, speed);
+        }};
+    struct LinearMotionFunctor {auto operator()(ControlGroupId groupId, PositionData& posData, float speed) const {
             return LinearMotion(groupId, posData, speed);
-        }
-    };
+        }};
 
     void ymconnect::move_robot() {
         static UIState ui_state;
@@ -205,67 +187,38 @@ namespace nymrobot {
             *sttlogs << "Start the Circular Motion";
         }
     }
-    
-
-
-
-
-    /**
- * @brief Set up the MOVE UI components in the ImGui interface.
- *
- * This function initializes and configures the various UI elements for controlling robot movements.
- * It includes options for setting move counts, selecting movement types, loading position data,
- * clearing trajectories, returning to the home position, and adjusting movement speeds.
- *
- * @param ui_state A reference to the UIState struct containing the state information for the UI and robot.
- *
- * Function Details:
- * =================
- * - Displays a separator and begins a new ImGui window titled "Attributes:".
- * - Initializes a static variable `LinepathStart` to record the start time.
- * - Creates an input field for setting the number of moves (`Times`) with a minimum value of 1.
- * - Adds buttons for selecting joint, circular, and linear movements.
- * - Toggles the display of the move path with the "MovePath On/Off" button, and logs the action.
- * - Adds a "Loadpy" button to load position data from Python scripts or executables, resizing the robot position vector if necessary.
- * - Adds a "Clear Trajectory" button to clear all robot trajectories, turn off servos, and start motion.
- * - Adds a "Home" button to move the robot to its home position by reading and converting position data, then starting the motion.
- * - Provides input fields for adjusting linear and joint speeds.
- * - Displays and updates original and current positions for each move, allowing manual adjustments of position data (X, Y, Z, Rx, Ry, Rz).
- */
+  
     void ymconnect::setup_MOVE_ui(UIState& ui_state)
     {
         ImGui::Separator();
         ImGui::Begin("Attributes: ");
         static auto LinepathStart = std::chrono::high_resolution_clock::now();
         ImGui::SetNextItemWidth(80);
-        ImGui::InputInt("Times", &ui_state.coumove, 1, 2);
+        ImGui::InputInt("##", &ui_state.coumove, 1, 2);
         if (ui_state.coumove < 1) { ui_state.coumove = 1; }; ImGui::SameLine();
-        ui_state.joinflag = ImGui::Button("Joint Move"); ImGui::SameLine();
-        ui_state.circuflag = ImGui::Button("Circular Move"); ImGui::SameLine();
-        ui_state.linMFlag = ImGui::Button("Linear Move"); ImGui::SameLine();
-        if (ImGui::Button(ui_state.lineshpath ? "MovePath On" : "MovePath Off")) {
+        ui_state.joinflag = ImGui::Button("Joint"); ImGui::SameLine();
+        ui_state.circuflag = ImGui::Button("Circular"); ImGui::SameLine();
+        ui_state.linMFlag = ImGui::Button("Linear"); ImGui::SameLine();
+        if (ImGui::Button(ui_state.lineshpath ? "Path On" : "Path Off")) {
             ui_state.lineshpath = !ui_state.lineshpath; // Toggle MovePath
             if (ui_state.lineshpath) { *sttlogs << "Render the Move Path"; }
             else { *sttlogs << "Stop the Move Path"; proMeshRb->delete_byname("movepath__SKIP__"); }
         }
-        if (ImGui::Button("Loadpy")) {
-            int checkfilepysrc = check_files_in_directory();
-            std::vector<std::vector<double>> get6pos;
-            // if (checkfilepysrc == 1) { get6pos = readpysrc.get_values_from_python(); }
-            // else if (checkfilepysrc == 2) { get6pos = readpysrc.get_values_from_exe(); }
-            if (checkfilepysrc == 0) { return; }
-            if (ui_state.rbpos.size() < get6pos.size()) {
-                ui_state.coumove = get6pos.size();
-                ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
-            }
-            for (size_t i = 0; i < get6pos.size(); ++i) {
-                for (size_t j = 0; j < 6; ++j) {
-                    ui_state.rbpos[i][j] = get6pos[i][j];
-                }
+        
+        ImGui::SameLine();
+
+        shmdata->getter_6pos(get6pos);
+        if (ui_state.rbpos.size() < get6pos.size()) {
+            ui_state.coumove = get6pos.size();
+            ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
+        }
+        for (size_t i = 0; i < get6pos.size(); ++i) {
+            for (size_t j = 0; j < 6; ++j) {
+                ui_state.rbpos[i][j] = get6pos[i][j];
             }
         }
         ImGui::SameLine(); // Check the trajectory
-        if (ImGui::Button("Clear Trajectory"))
+        if (ImGui::Button("Clear") && status.StatusCode == 0)
         {
             *ui_state.tpstatus = controller->MotionManager->ClearAllTrajectory();
             *ui_state.tpstatus = controller->MotionManager->ClearGroupTrajectory(ControlGroupId::R1);
@@ -274,7 +227,7 @@ namespace nymrobot {
             *sttlogs << "trying to clear trajectory";
         }
         ImGui::SameLine();
-        if (ImGui::Button("Home"))
+        if (ImGui::Button("Home") && status.StatusCode == 0)
         {
             *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
             *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
@@ -295,7 +248,7 @@ namespace nymrobot {
             if (ui_state.rbpos.size() < static_cast<size_t>(ui_state.coumove)) {
                 ui_state.rbpos.resize(ui_state.coumove, std::vector<float>(6, 0.0f));
             }
-            if (ImGui::Button(("OrgPos " + std::to_string(j)).c_str())) {
+            if (ImGui::Button(("OrgPos " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
                 for (int i = 0; i < 6; ++i) {
                     *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
                     *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
@@ -304,7 +257,7 @@ namespace nymrobot {
                 *sttlogs << "Update the Original Position for " << std::to_string(j);
             }
             ImGui::SameLine();
-            if (ImGui::Button(("CrtPos " + std::to_string(j)).c_str())) {
+            if (ImGui::Button(("CrtPos " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
                 for (int i = 0; i < 6; ++i) {
                     *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1crpos);
                     ui_state.rbpos[j][i] = ui_state.b1crpos->axisData[i];
@@ -328,13 +281,6 @@ namespace nymrobot {
         ImGui::End();
     }
 
-    /**
-     * @brief Reads the robot's state and updates its position and status.
-     *
-     * This function periodically reads the robot's state and position data, updates the joint angles,
-     * checks for alarms, logs the robot's status and progress, and ensures that the joint angles are within specified limits.
-     * If any joint angle is out of limit, it stops the robot's motion and turns off the servos.
-     */
     void ymconnect::read_robot() {
         std::stringstream strget;
         StatusInfo tpstatus;

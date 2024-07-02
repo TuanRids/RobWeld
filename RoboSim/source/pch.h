@@ -14,10 +14,12 @@
 #include "imgui.h"
 #include <ImFileBrowser.h>
 
-/// UPDATE DRAW LINES, POINTS						=> 
-/// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.		=> 
-/// ADD DRAW TEXT									=> 
-// GL includes
+/// 
+/// UPDATE UNDO REDO COMMANDS. CURRENTLY ITS TOO COMPLICATED
+/// 
+/// IMPROVE RENDER QUALITY!!!!
+/// 
+
 
 #include <gl/glew.h>
 #include <GLFW/glfw3.h>m

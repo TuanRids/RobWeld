@@ -1,4 +1,6 @@
 #pragma once
+#include "pch.h"  // config in pch
+
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
@@ -12,29 +14,27 @@
 #include <imgui_impl_opengl3.h>
 #include <map>
 #include <Windows.h>
-#include "pch.h"  // config in pch
-#include <mutex>
-
-
 class zmpdata {
 public:
     zmpdata();
     ~zmpdata();
-    // Show Vision Data
     void render();
-	// Send data to Shared_Memory
-    void render_send();
+    void send_datatoIPC();
+    void Display_info();
 
+    void getter_6pos(std::vector<std::vector<float>>& get6pos);
 private:
     GLuint image_texture;
+    GLuint image_texture_below;
+    cv::Mat img;
+    cv::Mat img_below;
     std::map<std::string, bool> TriggerToPy;
-    std::mutex mtx;  // Add mutex for synchronization
 
+    bool SharedMemoryTrigger = false;
+    static std::vector<std::vector<float>> shared_get6pos;
 
-    // Reset TriggerToPy value to 0 after 300ms
+    void clean_image();
     void reset_TriggerToPy();
-    // Receive data from Shared_Memory
-    bool receive_data(cv::Mat& img, int& frame_count, float& rotation_speed);
-    // Send data to Shared_Memory
+    bool receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, float& rotation_speed);
     GLuint matToTexture(const cv::Mat& mat, GLenum minFilter, GLenum magFilter, GLenum wrapFilter);
 };

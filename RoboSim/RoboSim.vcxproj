@@ -103,6 +103,8 @@
       <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect_D.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
+      <SubSystem>
+      </SubSystem>
     </Link>
     <PostBuildEvent />
     <PreBuildEvent>
@@ -147,6 +149,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\libs\YMconnect;$(ProjectDir)\libs\python;$(ProjectDir)\libs\pcl;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>
+      </SubSystem>
     </Link>
     <PreBuildEvent>
       <Command>call "$(ProjectDir)Build_Setup.bat"</Command>
@@ -156,6 +160,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\Command\CommandSys.cpp" />
     <ClCompile Include="source\Command\ObHistory.cpp" />
     <ClCompile Include="source\Command\Transform.cpp" />
     <ClCompile Include="source\Command\ObHistory.h" />
@@ -225,6 +230,7 @@
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="source\3rdparty\plugins\imgui\ImFileBrowser.h" />
+    <ClInclude Include="source\Command\CommandSys.h" />
     <ClInclude Include="source\Command\dcommand.h" />
     <ClInclude Include="source\Command\Transform.h" />
     <ClInclude Include="source\elems\loadRobot.h" />
@@ -262,6 +268,7 @@
     <ClInclude Include="source\pch.h" />
     <ClInclude Include="source\shader\shader_util.h" />
     <ClInclude Include="source\window\window.h" />
+    <ClInclude Include="source\ymrobot\RobotInterface.h" />
     <ClInclude Include="source\ymrobot\ymmotion.h" />
   </ItemGroup>
   <ItemGroup>
