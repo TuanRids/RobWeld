@@ -1,19 +1,15 @@
 #pragma once
 #include "pch.h"  // config in pch
 
+#include <Windows.h>
 #include <opencv2/opencv.hpp>
-#include <iostream>
-#include <vector>
-#include <string>
+
 #include <stdexcept>
 #include <chrono>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
 #include <map>
-#include <Windows.h>
+#include "ui/statuslogs.h"
+#include "ui/FrameManage.h"
+
 class zmpdata {
 public:
     zmpdata();
@@ -29,9 +25,12 @@ private:
     cv::Mat img;
     cv::Mat img_below;
     std::map<std::string, bool> TriggerToPy;
-
+    
     bool SharedMemoryTrigger = false;
     static std::vector<std::vector<float>> shared_get6pos;
+
+    unsigned int stt_id = 999;
+    std::unique_ptr<nui::StatusLogs> sttlogs;
 
     void clean_image();
     void reset_TriggerToPy();

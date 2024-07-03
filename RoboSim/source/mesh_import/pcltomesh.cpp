@@ -6,6 +6,8 @@
 #include <map>
 #include <omp.h>
 
+#include <Eigen/Dense>
+
 
 #include <assimp/scene.h>
 #include <assimp/Exporter.hpp>
@@ -21,7 +23,6 @@
 #include <pcl/kdtree/kdtree_flann.h> // For nearest neighbors
 #include <pcl/surface/poisson.h> // Alternatively, using Poisson surface reconstruction
 
-
 // segmentation
 #include <vector>
 #include <string>
@@ -30,16 +31,16 @@
 #include <cmath>
 #include "elems/vertex_holder.h"
 
-
+#include "chrono"
 
 
 
 
 
 void PclToMesh::filterZeroValues() {
-
+    auto start = std::chrono::high_resolution_clock::now();
     std::vector<std::vector<std::vector<float>>> data; // data format [rows][cols][3]
-    // Load data ===================================================================================================================
+    // Load data: ONLY have Z values
     std::ifstream file(filePath);
     if (file.is_open()) {
         std::string line;
@@ -57,8 +58,7 @@ void PclToMesh::filterZeroValues() {
     else {
         throw std::runtime_error("Could not open file " + filePath);
     }
-
-    // Remove rows with all zero values =============================================================================================
+    // Remove rows with all zero values 
     for (auto it = data.begin(); it != data.end();) {
         bool allZero = true;
         for (const auto& val : *it) {
@@ -74,7 +74,8 @@ void PclToMesh::filterZeroValues() {
             ++it;
         }
     }
-    // Remove columns with all zero values ===========================================================================================
+    std::cout << "remzero" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
+    // Remove columns with all zero values 
     if (!data.empty()) {
         size_t numCols = data[0].size();
 
@@ -95,7 +96,8 @@ void PclToMesh::filterZeroValues() {
             }
         }
     }
-    // Fill in missing values by the next non-zero value =================================================================================
+    std::cout << "Remove col" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
+    // Fill in missing values by the next non-zero value 
     for (auto& row : data) {
         for (size_t col = 0; col < row.size(); ++col) {
             if (row[col][2] == 0) {
@@ -108,7 +110,7 @@ void PclToMesh::filterZeroValues() {
             }
         }
     }
-
+    std::cout << "fillzero" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
     float x_size = 100.0f; // mm
     float y_size = 200.0f; // mm
     size_t num_rows = data.size();
@@ -116,7 +118,7 @@ void PclToMesh::filterZeroValues() {
     float x_spacing = x_size / (num_cols - 1);
     float y_spacing = y_size / (num_rows - 1);
 
-	// Reshape data to 3D ===========================================================================================================
+	// Reshape data to 3D 
     std::vector<std::vector<std::vector<float>>> newData(num_rows, std::vector<std::vector<float>>(num_cols, std::vector<float>(3)));
     for (size_t i = 0; i < num_rows; ++i) {
         for (size_t j = 0; j < num_cols; ++j) {
@@ -139,8 +141,101 @@ void PclToMesh::filterZeroValues() {
             ptCloud.push_back(point);
         }
     }
-
+    std::cout <<"end" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
 }
+
+/* void PclToMesh::filterZeroValues() {
+    auto start = std::chrono::high_resolution_clock::now();
+    std::vector<std::vector<float>> data; // data format [rows][cols]
+
+    // Load data: ONLY have Z values
+    std::ifstream file(filePath);
+    if (file.is_open()) {
+        std::string line;
+        while (std::getline(file, line)) {
+            std::vector<float> row;
+            std::stringstream ss(line);
+            float value;
+            while (ss >> value) {
+                row.push_back(value);
+            }
+            data.push_back(row);
+        }
+        file.close();
+    }
+    else {
+        throw std::runtime_error("Could not open file " + filePath);
+    }
+
+    std::cout << "Time load " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
+
+    // Convert to Eigen matrix
+    Eigen::MatrixXf mat(data.size(), data[0].size());
+    for (size_t i = 0; i < data.size(); ++i) {
+        for (size_t j = 0; j < data[i].size(); ++j) {
+            mat(i, j) = data[i][j];
+        }
+    }
+
+    // Remove rows with all zero values
+    Eigen::MatrixXf nonZeroRows = mat.rowwise().any() ? mat : Eigen::MatrixXf();
+    mat = nonZeroRows;
+
+    std::cout << "Time remove zero rows " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
+
+    // Remove columns with all zero values
+    Eigen::MatrixXf nonZeroCols = mat.colwise().any() ? mat : Eigen::MatrixXf();
+    mat = nonZeroCols;
+
+    std::cout << "Time remove zero cols " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
+
+    // Fill missing values with the next non-zero value
+    for (int i = 0; i < mat.rows(); ++i) {
+        for (int j = 0; j < mat.cols(); ++j) {
+            if (mat(i, j) == 0) {
+                for (int k = j + 1; k < mat.cols(); ++k) {
+                    if (mat(i, k) != 0) {
+                        mat(i, j) = mat(i, k);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    std::cout << "Time fill zero values " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
+
+    float x_size = 100.0f; // mm
+    float y_size = 200.0f; // mm
+    size_t num_rows = mat.rows();
+    size_t num_cols = mat.cols();
+    float x_spacing = x_size / (num_cols - 1);
+    float y_spacing = y_size / (num_rows - 1);
+
+    // Prepare point cloud
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
+    cloud->width = num_cols;
+    cloud->height = num_rows;
+    cloud->is_dense = false;
+    cloud->points.resize(cloud->width * cloud->height);
+
+    for (size_t i = 0; i < num_rows; ++i) {
+        for (size_t j = 0; j < num_cols; ++j) {
+            float x = j * x_spacing;
+            float y = i * y_spacing;
+            float z = mat(i, j);
+            cloud->points[i * num_cols + j] = pcl::PointXYZ(x, y, z);
+        }
+    }
+
+    std::cout << "Time to create point cloud " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
+
+    ptCloud = cloud;
+
+    std::cout << "End " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
+}*/
+
+
 
 void PclToMesh::createMesh() {
     auto& proMesh = nelems::mMesh::getInstance();
@@ -389,6 +484,7 @@ void exportToOBJ(const nelems::oMesh& oMeshObject, const std::string& outputFile
 
 
 void PclToMesh::createMesh_pcl() {
+    auto start = std::chrono::high_resolution_clock::now();
     // Load point cloud data into PCL format
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
     for (const auto& point : ptCloud) {
@@ -397,14 +493,13 @@ void PclToMesh::createMesh_pcl() {
     cloud->width = ptCloud.size();
     cloud->height = 1;
     cloud->is_dense = false;
-
+    std::cout << "Time load " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
     // Downsample the point cloud to speed up processing
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudFiltered(new pcl::PointCloud<pcl::PointXYZ>());
     pcl::VoxelGrid<pcl::PointXYZ> voxelGrid;
     voxelGrid.setInputCloud(cloud);             // ************ ************ 1 reduce for slower but more accurate
     voxelGrid.setLeafSize(0.1f, 0.1f, 0.1f); // Adjust the leaf size to be more aggressive 0.05 & 0.001
-    voxelGrid.filter(*cloudFiltered);
-
+    std::cout << "Time downsample " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
     // Estimate normals using the OpenMP version for parallel processing
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> normalEstimation;
     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>());
@@ -413,22 +508,22 @@ void PclToMesh::createMesh_pcl() {
     normalEstimation.setSearchMethod(tree); // ************ ************ increase setKSearch for more accurate but slower
     normalEstimation.setKSearch(20); // Reduced number of neighbors for faster computation 40 50
     normalEstimation.compute(*normals);
-
+    std::cout << "Time estimate Normals " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
     // Concatenate the XYZ and normal fields
     pcl::PointCloud<pcl::PointNormal>::Ptr cloudWithNormals(new pcl::PointCloud<pcl::PointNormal>());
     pcl::concatenateFields(*cloudFiltered, *normals, *cloudWithNormals);
-
+    std::cout << "Time concatenate " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
     // Create search tree
     pcl::search::KdTree<pcl::PointNormal>::Ptr treeWithNormals(new pcl::search::KdTree<pcl::PointNormal>());
     treeWithNormals->setInputCloud(cloudWithNormals);
-
+    std::cout << "Time create search tree " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
     // Manually create the mesh
     pcl::PolygonMesh::Ptr triangles(new pcl::PolygonMesh());
     pcl::Poisson<pcl::PointNormal> poisson;  // ************ ************ increase depth for more accurate but slower
     poisson.setDepth(10); // Set the depth of the tree used for reconstruction 8 10
     poisson.setInputCloud(cloudWithNormals);
     poisson.reconstruct(*triangles);
-
+    std::cout << "Time poisson " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
     // Convert PCL mesh to oMesh format
     oMeshObject.changeName("Poisson_Mesh");
     oMeshObject.oMaterial.mColor = glm::vec3(0.2f, 0.4f, 0.75f);
@@ -473,7 +568,7 @@ void PclToMesh::processPointCloud() {
     // Sang xyz
     //loadDataCrXyz();
     createMesh_pcl();
-    segmentPointCloud();
+    //segmentPointCloud();
 }
 
 void PclToMesh::addToMesh() {

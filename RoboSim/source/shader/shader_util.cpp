@@ -114,7 +114,7 @@ namespace nshaders
 
 	void Shader::set_vec3(const glm::vec3& vec3, const std::string& name)
 	{
-		GLint myLoc = glGetUniformLocation(get_program_id(), name.c_str());
+ 		GLint myLoc = glGetUniformLocation(get_program_id(), name.c_str());
 		glProgramUniform3fv(get_program_id(), myLoc, 1, glm::value_ptr(vec3));
 	}
 	void Shader::set_material(const Material& mat, const std::string& name)

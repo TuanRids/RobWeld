@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "zmpdata.h"
-#include "ui/FrameManage.h"
-zmpdata::zmpdata() : image_texture(0) {  }
+
+zmpdata::zmpdata() : image_texture(0) { sttlogs = std::make_unique<nui::StatusLogs>(); }
 
 std::vector<std::vector<float>> zmpdata::shared_get6pos = std::vector<std::vector<float>>(50, std::vector<float>(6, -99999.0f));
 
@@ -63,6 +63,12 @@ void zmpdata::Display_info()
         if (ImGui::MenuItem("Stop All")) { TriggerToPy["Send6"] = 1; }
         ImGui::EndPopup();
     }
+    
+    if (ImGui::Button("R Insp")) { TriggerToPy["Send1"] = 1; }   ImGui::SameLine();
+    if (ImGui::Button("R Left")) { TriggerToPy["Send2"] = 1; }  ImGui::SameLine();
+    if (ImGui::Button("R Right")) { TriggerToPy["Send3"] = 1; } ImGui::SameLine();
+    if (ImGui::Button("Stop")) { TriggerToPy["Send4"] = 1; }
+
     if (image_texture != 0) {
         ImVec2 winsize = ImGui::GetWindowSize();  // get the size of the window
         float scale_ratio = (float)img.cols / (float)img.rows;
@@ -172,19 +178,22 @@ void zmpdata::reset_TriggerToPy() {
     }
 }
 
+
 bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, float& rotation_speed) {
-    const char* img_shm_name = Config::IPC_GET_IMG;
-    const char* img_shm_name_below = Config::IPC_GET_IMG_BELOW;
-    const char* data_shm_name = Config::IPC_GET_DATA;
-    const char* data_shm_rospos = Config::IPC_GET_POS;
+    const char* img_shm_name = Config::IPC_GET_IMG;             // Get Image
+    const char* img_shm_name_below = Config::IPC_GET_IMG_BELOW; // Get Image Below
+    const char* data_shm_name = Config::IPC_GET_DATA;           // Get Data
+    const char* data_shm_rospos = Config::IPC_GET_POS;          // Get ROS Position
+    const char* dat_shm_status = Config::IPC_GET_STATUS;        // Get Status  
 
     // Open the shared memory objects
     HANDLE hMapFileImg = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(img_shm_name));
     HANDLE hMapFileImgBelow = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(img_shm_name_below));
     HANDLE hMapFileData = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(data_shm_name));
-    HANDLE hMapFileRosPos = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,TEXT(data_shm_rospos));
+    HANDLE hMapFileRosPos = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(data_shm_rospos));
+    HANDLE hMapFileStatus = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(dat_shm_status));
 
-    if (hMapFileImg == NULL && hMapFileImgBelow == NULL && hMapFileData == NULL && hMapFileRosPos == NULL) {
+    if (hMapFileImg == NULL && hMapFileImgBelow == NULL && hMapFileData == NULL && hMapFileRosPos == NULL || hMapFileStatus == NULL) {
         return false;
     }
 
@@ -193,7 +202,7 @@ bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, f
     LPCTSTR pBufImgBelow = (hMapFileImgBelow != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileImgBelow, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
     LPCTSTR pBufData = (hMapFileData != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileData, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
     LPCTSTR pBufPos = (hMapFileRosPos != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileRosPos, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
-
+    LPCTSTR pBufStatus = (hMapFileStatus != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileStatus, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
     // Check if all mapped buffers are NULL
     if (pBufImg == NULL && pBufImgBelow == NULL && pBufData == NULL) {
         if (pBufImg != NULL) UnmapViewOfFile(pBufImg);
@@ -202,7 +211,8 @@ bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, f
         if (hMapFileImg != NULL) CloseHandle(hMapFileImg);
         if (hMapFileImgBelow != NULL) CloseHandle(hMapFileImgBelow);
         if (hMapFileData != NULL) CloseHandle(hMapFileData);
-		if (hMapFileRosPos != NULL) CloseHandle(hMapFileRosPos);
+        if (hMapFileRosPos != NULL) CloseHandle(hMapFileRosPos);
+        if (hMapFileStatus != NULL) CloseHandle(hMapFileStatus);
         return false;
     }
 
@@ -213,9 +223,7 @@ bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, f
         UnmapViewOfFile(pBufImg);
         CloseHandle(hMapFileImg);
     }
-    else {
-        img.release();  // release the image if no data
-    }
+    else { img.release(); }
 
     // Read image data from shared memory (IMG_BELOW)
     if (pBufImgBelow != NULL) {
@@ -224,13 +232,11 @@ bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, f
         UnmapViewOfFile(pBufImgBelow);
         CloseHandle(hMapFileImgBelow);
     }
-    else {
-        img_below.release();  // release the image if no data
-    }
+    else { img_below.release(); }
 
     // Read frame count and rotation speed from shared memory
     if (pBufData != NULL) {
-        void* data_ptr = (void*)pBufData;
+        void* data_ptr = const_cast<void*>(reinterpret_cast<const void*>(pBufData));
         std::memcpy(&frame_count, data_ptr, sizeof(int));
         std::memcpy(&rotation_speed, static_cast<char*>(data_ptr) + sizeof(int), sizeof(float));
         UnmapViewOfFile(pBufData);
@@ -242,22 +248,48 @@ bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, f
     }
 
     // Read robot position from shared memory, if not return -99999
-	if (pBufPos != NULL) {
-        float* pos_ptr = (float*)pBufPos;
+    if (pBufPos != NULL) {
+        float* pos_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufPos));
         for (size_t i = 0; i < 50; ++i) {
             if (pos_ptr[i * 6] == -99999.0f) { break; } // end of shared memory
 
-            for (size_t j = 0; j < 6; ++j) {shared_get6pos[i][j] = pos_ptr[i * 6 + j];}
+            for (size_t j = 0; j < 6; ++j) { shared_get6pos[i][j] = pos_ptr[i * 6 + j]; }
         }
         UnmapViewOfFile(pBufPos);
-		CloseHandle(hMapFileRosPos);
-	}
-    else
-    {
+        CloseHandle(hMapFileRosPos);
+    }
+    else {
         shared_get6pos[0][0] = -99999.0f;
     }
+
+    // Read status from shared memory
+    if (pBufStatus != NULL) {
+        unsigned int key;
+        char value[252]; // assuming value length is 252 bytes
+
+        // Copy key
+        if (memcpy_s(&key, sizeof(unsigned int), pBufStatus, sizeof(unsigned int)) != 0) {
+            std::cerr << "Error copying key from shared memory." << std::endl;
+        }
+
+        // Copy value
+        if (memcpy_s(value, sizeof(value), const_cast<char*>(reinterpret_cast<const char*>(pBufStatus)) + sizeof(unsigned int), 252) != 0) {
+            std::cerr << "Error copying value from shared memory." << std::endl;
+        }
+        value[251] = '\0'; // Ensure null-termination
+
+        if (key != stt_id)
+        {
+			stt_id = key;
+            *sttlogs << value;
+        }
+        UnmapViewOfFile(pBufStatus);
+        CloseHandle(hMapFileStatus);
+    }
+
     return true;
 }
+
 
 GLuint zmpdata::matToTexture(const cv::Mat& mat, GLenum minFilter, GLenum magFilter, GLenum wrapFilter) {
     // Generate a number for our textureID's unique handle

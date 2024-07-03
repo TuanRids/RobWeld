@@ -19,6 +19,8 @@ namespace Config {
 
     // Address to Inte-Process Communication with Vision 
     constexpr const char* IPC_GET_IMG_BELOW = "Local\\ImgPytoCPPBelow";
+    // Address to Inte-Process Communication with Vision 
+    constexpr const char* IPC_GET_STATUS = "Local\\StatusPytoCPP";
 
     // Address to Inte-Process Communication with Vision 
 	constexpr const char* IPC_GET_DATA = "Local\\floatPytoCPP";

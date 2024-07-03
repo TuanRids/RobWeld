@@ -2,7 +2,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-
 namespace nui {
     /*
     FrameManage is a singleton class that manages the active GUI frame

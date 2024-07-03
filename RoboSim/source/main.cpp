@@ -3,15 +3,9 @@
 
 int main(void)
 {
- 
-#ifdef _DEBUG
-    AllocConsole();
-    freopen("CONOUT$", "w", stdout);
-    freopen("CONOUT$", "w", stderr);
-    std::cout << "Debug mode: Console is visible." << std::endl;
-#else
-    FreeConsole();
-#endif
+
+  //FreeConsole();
+
   auto app = std::make_unique<Application>("RoboSim");
   app->loop();
 
