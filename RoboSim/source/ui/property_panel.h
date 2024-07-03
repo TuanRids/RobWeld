@@ -50,7 +50,7 @@ namespace nui
         std::shared_ptr<nshaders::Shader> mctshader;
         float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
         std::unique_ptr<nymrobot::ymconnect> mRobot;
-        std::unique_ptr<StatusLogs> sttlogs;
+        nui::StatusLogs* sttlogs;
         std::unique_ptr<zmpdata> IPreceiver;
 
         bool CtrFlag = false; // Livesync & visualize
@@ -68,7 +68,7 @@ namespace nui
 
             IPreceiver = std::make_unique<zmpdata>();
             mRobot = std::make_unique<nymrobot::ymconnect>();
-            sttlogs = std::make_unique<StatusLogs>();
+            sttlogs = &nui::StatusLogs::getInstance();
         }
         void render(nui::SceneView* mScene, GLFWwindow* mWindow);
         void material_frame(nui::SceneView* scene_view);

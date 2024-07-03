@@ -9,7 +9,7 @@ namespace Config {
     // robot model
 	constexpr const char* PATH_TO_ROBOTEMPLATE =  "RobotStandard//Yaskawa-gp8-113k.fbx";
     // 3D data from Hung
-    constexpr const char* PATH_TO_3D_HUNG =  "check_pcl//RawData_2.txt";
+    static constexpr const char* PATH_TO_3D_HUNG =  "check_pcl//datascan_processed.txt";
 	// 3D data from Sang
     constexpr const char* PATH_TO_3D_Sang =  "check_pcl//dataclean.txt";
 

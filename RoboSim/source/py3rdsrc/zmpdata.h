@@ -30,7 +30,7 @@ private:
     static std::vector<std::vector<float>> shared_get6pos;
 
     unsigned int stt_id = 999;
-    std::unique_ptr<nui::StatusLogs> sttlogs;
+    nui::StatusLogs* sttlogs;
 
     void clean_image();
     void reset_TriggerToPy();

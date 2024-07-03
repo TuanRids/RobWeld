@@ -129,7 +129,6 @@ namespace nui {
                 {
                     PclToMesh pclToMesh;
                     pclToMesh.processPointCloud();
-                    pclToMesh.addToMesh();
 
                 }
                 ImGui::EndMenu();

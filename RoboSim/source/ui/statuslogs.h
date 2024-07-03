@@ -10,9 +10,11 @@
 namespace nui {
     class StatusLogs {
     public:
+        static StatusLogs& getInstance() {
+            static StatusLogs instance;
+            return instance;
+        }
 
-        StatusLogs() {}
-        ~StatusLogs() {}
         StatusLogs(const StatusLogs&) = delete;
         StatusLogs& operator=(const StatusLogs&) = delete;
 
@@ -48,7 +50,8 @@ namespace nui {
         }
 
     private:
-
+        StatusLogs() {}
+        ~StatusLogs() = default; 
 
         void updateCurrentStatus() {
             std::ostringstream oss;
@@ -59,9 +62,10 @@ namespace nui {
         }
 
         std::deque<std::string> statusQueue;
-        static std::string currentStatus;
-        const size_t maxSize = 10; // Maximum number of status messages to keep
+        std::string currentStatus;
+        const size_t maxSize = 50; // Maximum number of status messages to keep
     };
+
 }
 
 #endif // NUI_STATUSLOGS_H

@@ -37,7 +37,7 @@ struct UIState {
     bool joinflag{ false };
     bool circuflag{ false };
     bool linMFlag{ false };
-    bool lineshpath{ false };
+    bool lineshpath{ true };
     float spdlinear{};
     float spdjoint{};
     std::vector<std::vector<float>> rbpos{ std::vector<std::vector<float>>(3, std::vector<float>(6, 0.0f)) };
@@ -62,13 +62,13 @@ namespace nymrobot {
         float angle[6];
         nelems::mMesh* proMeshRb = nullptr;
         std::stringstream resultmsg;
-        std::unique_ptr<nui::StatusLogs> sttlogs;
+        nui::StatusLogs* sttlogs;
         std::unique_ptr<zmpdata> shmdata;
 
     public:
         ymconnect() : controller(nullptr), angle{}, sttlogs(nullptr), shmdata(nullptr) {
             YMConnect::OpenConnection("192.168.0.0", status, restime);
-            sttlogs = std::make_unique<nui::StatusLogs>();
+            sttlogs = &nui::StatusLogs::getInstance();
             shmdata = std::make_unique<zmpdata>();
         }
         ~ymconnect();

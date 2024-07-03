@@ -12,6 +12,8 @@
 #include "config.hpp"
 #include <stdexcept>
 #include <chrono>
+#include "set"
+#include "map"
 
 #include "imgui.h"
 #include <imgui_impl_glfw.h>
@@ -19,11 +21,13 @@
 
 #include <ImFileBrowser.h>
 
-/// 
+
 /// UPDATE UNDO REDO COMMANDS. CURRENTLY ITS TOO COMPLICATED
 /// 
 /// IMPROVE RENDER QUALITY!!!!
 /// 
+/// 1. Fix ratio Robot
+/// 2. Add move between 2 points by moving type
 
 
 #include <gl/glew.h>

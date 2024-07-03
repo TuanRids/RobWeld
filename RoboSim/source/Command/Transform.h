@@ -11,13 +11,13 @@ namespace ncommand
 {
     class MoveOb : public Command {
     private:
-        std::unique_ptr<nui::StatusLogs> sttlogs;
+        nui::StatusLogs* sttlogs;
         std::shared_ptr<nelems::oMesh> mesh;
         nelems::mMesh* proMesh;
         float mx,my,mz;
     public:
         MoveOb(nelems::mMesh* obj, float x, float y, float z) : proMesh(obj), sttlogs(nullptr),
-            mesh(nullptr),mx(x),my(y),mz(z) { sttlogs = std::make_unique<nui::StatusLogs>(); }
+            mesh(nullptr), mx(x), my(y), mz(z) { sttlogs = &nui::StatusLogs::getInstance(); }
         ~MoveOb() { mesh = nullptr; proMesh = nullptr; }
         void execute( std::deque<std::string> &cmdIDs, int reverse, std::deque<std::string> &cmdIDs_redo) override;
         bool isValid() const override {return (mx != 0.0f || my != 0.0f || mz != 0.0f);}
@@ -28,12 +28,13 @@ namespace ncommand
     class RotateOb : public Command
     {
     private:
-        std::unique_ptr<nui::StatusLogs> sttlogs;
+        nui::StatusLogs* sttlogs;
         std::shared_ptr<nelems::oMesh> mesh;
         nelems::mMesh* proMesh;
         float rx, ry, rz;
     public:
-        RotateOb(nelems::mMesh* obj, float x, float y, float z) : mesh(nullptr),rx(x),ry(y),rz(z),proMesh(obj), sttlogs(nullptr) { sttlogs = std::make_unique<nui::StatusLogs>(); }
+        RotateOb(nelems::mMesh* obj, float x, float y, float z) : mesh(nullptr),rx(x),ry(y),rz(z),proMesh(obj), sttlogs(nullptr) 
+        { sttlogs = &nui::StatusLogs::getInstance(); }
         ~RotateOb() { mesh = nullptr; proMesh = nullptr; }
         void execute( std::deque<std::string> &cmdIDs, int reverse, std::deque<std::string> &cmdIDs_redo) override;
         bool isValid() const override { return (rx != 0.0f || ry != 0.0f || rz != 0.0f); }
@@ -44,12 +45,12 @@ namespace ncommand
     class delOb : public Command
     {
     private:
-        std::unique_ptr<nui::StatusLogs> sttlogs;
+        nui::StatusLogs* sttlogs;
         nelems::oMesh* mesh;
         nelems::mMesh* proMesh;
     public:
         delOb(nelems::mMesh* obj) : proMesh(obj), sttlogs(nullptr),
-            mesh(nullptr) { sttlogs = std::make_unique<nui::StatusLogs>(); }
+            mesh(nullptr) { sttlogs = &nui::StatusLogs::getInstance(); }
         ~delOb() { mesh = nullptr; proMesh = nullptr; }
         void execute( std::deque<std::string> &cmdIDs, int reverse, std::deque<std::string> &cmdIDs_redo) override;
         

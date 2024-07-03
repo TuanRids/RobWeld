@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "zmpdata.h"
 
-zmpdata::zmpdata() : image_texture(0) { sttlogs = std::make_unique<nui::StatusLogs>(); }
+zmpdata::zmpdata() : image_texture(0) {    sttlogs = &nui::StatusLogs::getInstance();}
 
 std::vector<std::vector<float>> zmpdata::shared_get6pos = std::vector<std::vector<float>>(50, std::vector<float>(6, -99999.0f));
 

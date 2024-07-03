@@ -9,7 +9,7 @@ namespace fs = std::filesystem;
 
 namespace nymrobot {
 
-    std::vector<std::vector<float>> ymconnect::get6pos(3, std::vector<float>(6, 0.0f));
+    std::vector<std::vector<float>> ymconnect::get6pos(0, std::vector<float>(6, 0.0f));
 
     ymconnect::~ymconnect() {
         if (status.StatusCode == 0) {
@@ -83,7 +83,7 @@ namespace nymrobot {
             ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
 
         if (ImGui::Button("Clear Fault") && status.StatusCode == 0) {
-            
+            resultmsg.str(" ");
             std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
             *temptstt = controller->Faults->ClearAllFaults();
             if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
@@ -212,9 +212,11 @@ namespace nymrobot {
             ui_state.coumove = get6pos.size();
             ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
         }
-        for (size_t i = 0; i < get6pos.size(); ++i) {
-            for (size_t j = 0; j < 6; ++j) {
-                ui_state.rbpos[i][j] = get6pos[i][j];
+        if (get6pos.size() > 0) {
+            for (size_t i = 0; i < get6pos.size(); ++i) {
+                for (size_t j = 0; j < 6; ++j) {
+                    ui_state.rbpos[i][j] = get6pos[i][j];
+                }
             }
         }
         ImGui::SameLine(); // Check the trajectory
