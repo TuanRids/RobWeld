@@ -506,10 +506,9 @@ namespace nelems {
 
 
 
-    void mMesh::add_mesh(oMesh& addnewmesh)
+    void mMesh::add_mesh(std::shared_ptr<oMesh> addnewmesh)
     {
-
-        mMeshes->push_back(std::make_shared<oMesh>(addnewmesh));
+        mMeshes->push_back(addnewmesh);
     }
 
     void mMesh::set_OBxyz(float length, oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz) {

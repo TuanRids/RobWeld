@@ -59,7 +59,7 @@ namespace nymrobot {
 
     void ymconnect::disconnect_robot(bool showmsg) {
         if (status.StatusCode == 0) {
-            YMConnect::OpenConnection("192.168.0.0", status);
+            YMConnect::OpenConnection("192.168.0.0", status,restime);
             controller = nullptr;
         }
         if (showmsg) { ImGui::OpenPopup("Disconnected"); }
@@ -82,13 +82,13 @@ namespace nymrobot {
             ImGuiWindowFlags_NoBackground | // Do not display background
             ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
 
-        if (ImGui::Button("Clear Fault") && status.StatusCode == 0) {
+        /*if (ImGui::Button("Clear Fault") && status.StatusCode == 0) {
             resultmsg.str(" ");
             std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
             *temptstt = controller->Faults->ClearAllFaults();
             if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
             
-        }
+        }*/
         move_robot();
         read_robot();
         ImGui::Separator();
@@ -115,76 +115,69 @@ namespace nymrobot {
         // RENDER LINE PATH
         if (ui_state.lineshpath && Linepathelapsed_seconds > 0.4f) {
             LinepathStart = std::chrono::high_resolution_clock::now();
+            std::shared_ptr<nelems::oMesh> mesh; static bool newmesh_flag = false;
+            for (int i = 0; i < proMeshRb->size(); i++)
+            {
+                mesh = proMeshRb->get_mesh_ptr(i);
+                if (std::string(mesh->oname).find("movepath__SKIP") != std::string::npos) {
+                    break; }
+                else { mesh = nullptr; }
+            }
 
-            std::shared_ptr<nelems::oMesh> newmesh = std::make_shared<nelems::oMesh>();
-            if (!proMeshRb->get_mesh_byname("movepath__SKIP__", newmesh)) {
-                newmesh = std::make_shared<nelems::oMesh>();
-                newmesh->changeName("movepath__SKIP__");
-                newmesh->ID = proMeshRb->getCurrentTimeMillis(0);
-                newmesh->oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f);
+            if (mesh == nullptr) {
+                mesh = std::make_shared<nelems::oMesh>();
+                mesh->changeName("movepath__SKIP__");
+                mesh->ID = proMeshRb->getCurrentTimeMillis(0);
+                mesh->oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f); newmesh_flag = true;
             }
             else {
-                newmesh->delete_buffers();
-                newmesh->mVertexIndices.clear();
-                newmesh->mVertices.clear();
+                mesh->delete_buffers();
+                mesh->mVertexIndices.clear();
+                mesh->mVertices.clear();
             }
             nelems::VertexHolder vertex{};
             for (int i = 0; i < ui_state.coumove; ++i) {
                 vertex.mPos = glm::vec3(ui_state.rbpos[i][0], ui_state.rbpos[i][1], ui_state.rbpos[i][2] ); 
                 vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
-                newmesh->add_vertex(vertex);
+                mesh->add_vertex(vertex);
                 if (i > 0) {
-                    newmesh->add_vertex_index(i - 1);
-                    newmesh->add_vertex_index(i);
+                    mesh->add_vertex_index(i - 1);
+                    mesh->add_vertex_index(i);
                 }
             }
-            newmesh->init();
-            newmesh->selected = true;
-            proMeshRb->add_mesh(*newmesh);
+            mesh->init();
+            mesh->selected = true;
+            if (newmesh_flag) { proMeshRb->add_mesh(mesh); newmesh_flag = false; }
         }
         if (status.StatusCode != 0) { return; }
-        // LAMBDA FOR MOTION
-        auto execute_move = [&](auto&& motion_functor) {
+        if (ui_state.START_Flag)
+        {
             std::string stent = "Start the Motion to " + std::to_string(ui_state.coumove) + " points: ";
-            for (int j = 0; j < ui_state.coumove; ++j) {
+            for (int jn = 0; jn < ui_state.coumove; ++jn) {
+                // setting the position
                 ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
-                stent += "\n" + std::to_string(j) + ": ";
-                for (int i = 0; i < 6; ++i) {
-                    ui_state.b1crpos->axisData[i] = ui_state.rbpos[j][i];
-                    stent += std::to_string(ui_state.rbpos[j][i]) + " ";
+                for (int ic = 0; ic < 6; ++ic) {
+                    ui_state.b1crpos->axisData[ic] = ui_state.rbpos[jn][ic];
                 }
-                auto motion = motion_functor(ControlGroupId::R1, *ui_state.b1crpos, (std::is_same_v<decltype(motion_functor), JointMotionFunctor>) ? ui_state.spdjoint : ui_state.spdlinear);
-                *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(motion);
-            }
-            switchVisualizeMode = true;
-            *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
-            *ui_state.tpstatus = controller->MotionManager->MotionStart();
-
-            *sttlogs << stent;
-            };
-        // MOTION
-        if (ui_state.joinflag) { execute_move(JointMotionFunctor{}); }
-        if (ui_state.linMFlag) { execute_move(LinearMotionFunctor{}); }
-        if (ui_state.circuflag) {
-            ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
-            for (int i = 0; i < 6; ++i) {
-                ui_state.b1crpos->axisData[i] = ui_state.rbpos[0][i];
-            }
-            *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdjoint));
-
-            for (int j = 2; j < ui_state.coumove; j += 2) {
-                ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
-                CoordinateArray coorarr;
-                for (int i = 0; i < 6; ++i) {
-                    ui_state.b1crpos->axisData[i] = ui_state.rbpos[j][i];
-                    coorarr[i] = ui_state.rbpos[j - 1][i];
+                // execute 1: Linear, 2: Circular, 3: Joint, 4: Mid-Cir
+                if (ui_state.movTypes[jn] == 1)
+                {
+                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(LinearMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdlinear));
                 }
-                *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *ui_state.b1crpos, coorarr, ui_state.spdlinear));
+                else if (ui_state.movTypes[jn] == 3)
+                {
+                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdjoint));
+                }
+                else if (ui_state.movTypes[jn] == 2) // circular
+                {
+                    CoordinateArray coorarr;
+                    for (int im = 0; im < 6; ++im) {
+                        coorarr[im] = ui_state.rbpos[jn - 1][im]; // corrdinate of the previous point
+                    }
+                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *ui_state.b1crpos, coorarr, ui_state.spdlinear));
+                }
+                else if (ui_state.movTypes[jn] == 4) { continue; } // skip as mid point
             }
-            switchVisualizeMode = true;
-            *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
-            *ui_state.tpstatus = controller->MotionManager->MotionStart();
-            *sttlogs << "Start the Circular Motion";
         }
     }
   
@@ -196,9 +189,8 @@ namespace nymrobot {
         ImGui::SetNextItemWidth(80);
         ImGui::InputInt("##", &ui_state.coumove, 1, 2);
         if (ui_state.coumove < 1) { ui_state.coumove = 1; }; ImGui::SameLine();
-        ui_state.joinflag = ImGui::Button("Joint"); ImGui::SameLine();
-        ui_state.circuflag = ImGui::Button("Circular"); ImGui::SameLine();
-        ui_state.linMFlag = ImGui::Button("Linear"); ImGui::SameLine();
+        ui_state.START_Flag = ImGui::Button("Start"); ImGui::SameLine();
+
         if (ImGui::Button(ui_state.lineshpath ? "Path On" : "Path Off")) {
             ui_state.lineshpath = !ui_state.lineshpath; // Toggle MovePath
             if (ui_state.lineshpath) { *sttlogs << "Render the Move Path"; }
@@ -211,6 +203,7 @@ namespace nymrobot {
         if (ui_state.rbpos.size() < get6pos.size()) {
             ui_state.coumove = get6pos.size();
             ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
+            ui_state.movTypes.resize(get6pos.size(), 1);
         }
         if (get6pos.size() > 0) {
             for (size_t i = 0; i < get6pos.size(); ++i) {
@@ -222,6 +215,10 @@ namespace nymrobot {
         ImGui::SameLine(); // Check the trajectory
         if (ImGui::Button("Clear") && status.StatusCode == 0)
         {
+            std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
+            *temptstt = controller->Faults->ClearAllFaults();
+            if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
+
             *ui_state.tpstatus = controller->MotionManager->ClearAllTrajectory();
             *ui_state.tpstatus = controller->MotionManager->ClearGroupTrajectory(ControlGroupId::R1);
             controller->ControlCommands->SetServos(SignalStatus::OFF);
@@ -241,16 +238,20 @@ namespace nymrobot {
             *sttlogs << "Go back to the Home pos";
         }
         ImGui::SameLine();
-        ImGui::Text("Linear spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::Text("Lin spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
         ImGui::InputFloat("##LS", &ui_state.spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
         ImGui::Text("Joint spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
         ImGui::InputFloat("##JS", &ui_state.spdjoint, 0.0f, 0.0f, "%.2f");
         ImGui::Separator();
+
+        std::vector<const char*> selection = { "Linear", "Circular", "Joint","Mid-Cur"};
+
         for (int j = 0; j < ui_state.coumove; ++j) {
             if (ui_state.rbpos.size() < static_cast<size_t>(ui_state.coumove)) {
                 ui_state.rbpos.resize(ui_state.coumove, std::vector<float>(6, 0.0f));
+                ui_state.movTypes.resize(ui_state.coumove, 0);
             }
-            if (ImGui::Button(("OrgPos " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
+            if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
                 for (int i = 0; i < 6; ++i) {
                     *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
                     *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
@@ -259,7 +260,7 @@ namespace nymrobot {
                 *sttlogs << "Update the Original Position for " << std::to_string(j);
             }
             ImGui::SameLine();
-            if (ImGui::Button(("CrtPos " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
+            if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
                 for (int i = 0; i < 6; ++i) {
                     *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1crpos);
                     ui_state.rbpos[j][i] = ui_state.b1crpos->axisData[i];
@@ -278,7 +279,10 @@ namespace nymrobot {
             ImGui::Text("Ry:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
             ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &ui_state.rbpos[j][4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
             ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &ui_state.rbpos[j][5], 0.0f, 0.0f, "%.2f");
+            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &ui_state.rbpos[j][5], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
+            ImGui::Text("Type:"); ImGui::SameLine(); ImGui::SetNextItemWidth(70);
+            std::string label = "##movtyp" + std::to_string(j);
+            ImGui::Combo(label.c_str(), &ui_state.movTypes[j], selection.data(), selection.size());
         }
         ImGui::End();
     }
@@ -325,6 +329,8 @@ namespace nymrobot {
 
         if (isOutOfLimit && stateData.isRunning) {
             controller->MotionManager->MotionStop();
+            controller->MotionManager->ClearAllTrajectory();
+            controller->MotionManager->ClearGroupTrajectory(ControlGroupId::R1);
             controller->ControlCommands->SetServos(SignalStatus::OFF);
             *sttlogs << "Error: Joint angle is out of limit\n\t Let use Pendant to move the robot to the ";
         }

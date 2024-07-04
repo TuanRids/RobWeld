@@ -9,7 +9,7 @@
 #include <map>
 #include "ui/statuslogs.h"
 #include "ui/FrameManage.h"
-
+#include "mesh_import/pcltomesh.h"
 class zmpdata {
 public:
     zmpdata();
@@ -17,6 +17,7 @@ public:
     void render();
     void send_datatoIPC();
     void Display_info();
+    void trigger_3DCreator();
 
     void getter_6pos(std::vector<std::vector<float>>& get6pos);
 private:
@@ -28,6 +29,7 @@ private:
     
     bool SharedMemoryTrigger = false;
     static std::vector<std::vector<float>> shared_get6pos;
+    static std::vector<std::vector<float>> shared_3Ddata;
 
     unsigned int stt_id = 999;
     nui::StatusLogs* sttlogs;

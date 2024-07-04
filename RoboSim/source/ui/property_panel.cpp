@@ -201,10 +201,8 @@ namespace nui
                     mesh = proMesh->get_mesh_ptr(i);
                     if (mesh->selected && PreObId != mesh->ID)
                     {
-                        if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
-                        if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
-                        PreObId = mesh->ID;
                         if (check_skip(mesh->oname)) { continue; }
+                        PreObId = mesh->ID;
                         strcpy_s(aname, sizeof(aname), mesh->oname);
                         posrot_obj[0] = mesh->oMaterial.position.x;
                         posrot_obj[1] = mesh->oMaterial.position.y;
@@ -241,6 +239,7 @@ namespace nui
                     for (int i = 0; i < proMesh->size(); i++)
                     {
                         mesh = proMesh->get_mesh_ptr(i);
+                        if (check_skip(mesh->oname)) { continue; }
                         if (mesh->selected) { break; }
                     }
                     float movex = posrot_obj[0] - mesh->oMaterial.position.x;
@@ -292,8 +291,7 @@ namespace nui
                         // change name if aname is not empty
                         for (int j = 0; j < proMesh->size(); j++)
                         {
-                            if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
-                            if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
+                            if (check_skip(mesh->oname)) { continue; }
                             mesh = proMesh->get_mesh_ptr(j);
                             if (mesh->selected) {
                                 strncpy_s(mesh->oname, aname, sizeof(mesh->oname) - 1);
@@ -608,12 +606,12 @@ namespace nui
             }
             pre[0] = pre[1] = pre[2] = pre[3] = pre[4] = pre[5] = 0;
             // rotateJoint(6, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
-            rotateJoint(5, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
+            rotateJoint(5, ang[5], pre[5], tolerance, base, -(ang[5] - pre[5]), 0, 0);
             rotateJoint(4, ang[4], pre[4], tolerance, base, 0, -(ang[4] - pre[4]), 0);
-            rotateJoint(3, ang[3], pre[3], tolerance, base, ang[3] - pre[3], 0, 0);
+            rotateJoint(3, ang[3], pre[3], tolerance, base, -(ang[3] - pre[3]), 0, 0);
             rotateJoint(2, ang[2], pre[2], tolerance, base, 0, -(ang[2] - pre[2]), 0);
             rotateJoint(1, ang[1], pre[1], tolerance, base, 0, (ang[1] - pre[1]), 0);
-            rotateJoint(0, ang[0], pre[0], tolerance, base, 0, 0, -(ang[0] - pre[0]));
+            rotateJoint(0, ang[0], pre[0], tolerance, base, 0, 0, (ang[0] - pre[0]));
 
 
         }

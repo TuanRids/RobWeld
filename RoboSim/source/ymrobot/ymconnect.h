@@ -34,10 +34,10 @@
 ///            Initialized with a new PositionData object.
 struct UIState {
     int coumove{ 3 };
-    bool joinflag{ false };
-    bool circuflag{ false };
-    bool linMFlag{ false };
+    bool START_Flag{ false };
     bool lineshpath{ true };
+    // 1: Linear, 2: Circular, 3: Joint 4: Mid-Cir
+    std::vector<int> movTypes = std::vector<int>(50, 0);
     float spdlinear{};
     float spdjoint{};
     std::vector<std::vector<float>> rbpos{ std::vector<std::vector<float>>(3, std::vector<float>(6, 0.0f)) };

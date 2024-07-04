@@ -136,7 +136,7 @@ namespace nelems {
         void set_OBxyz(float length, oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz);
         void delete_selected();
         void delete_byname(const std::string& delmesh);
-        void add_mesh(oMesh& addnewmesh);
+        void add_mesh(std::shared_ptr<oMesh> addnewmesh);
         // setter axis length
         void set_axis_length(const int& length) { axis_length = length; }
     private:

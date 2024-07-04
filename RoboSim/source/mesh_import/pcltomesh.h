@@ -13,7 +13,7 @@ public:
 
     PclToMesh() { proMesh = &nelems::mMesh::getInstance(); sttlogs = &nui::StatusLogs::getInstance(); }
     void processPointCloud();
-
+    void setter_data(const std::vector<std::vector<float>>& setterdata) { data = setterdata; }
 private:
 
     float x_size = 100.0f; // mm
@@ -24,4 +24,5 @@ private:
     void Create3DPCL(const float &SizeLeaf, const unsigned int &poidepth);
     nelems::mMesh* proMesh;
     nui::StatusLogs* sttlogs;
+    std::vector<std::vector<float>> data;
 };

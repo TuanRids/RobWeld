@@ -25,11 +25,10 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
         start = std::chrono::high_resolution_clock::now();
         };
 
-    std::vector<std::vector<float>> data;
     nelems::oMesh oMeshObject;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
 
-    std::ifstream file(filePath);
+    /*std::ifstream file(filePath);
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line)) {
@@ -42,8 +41,9 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
             data.push_back(row);
         }
         file.close();
-    }
-    else {
+    }*/
+    
+    if (data.size() < 10) {
         *sttlogs << "[ERROR] Could not open file!";
         return;
     }
@@ -152,8 +152,11 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
     center /= static_cast<float>(oMeshObject.mVertices.size());
     oMeshObject.oMaterial.position = center;
 
+    oMeshObject.ID = proMesh->getCurrentTimeMillis(0);
     oMeshObject.calculate_normals();
     oMeshObject.init();
+    oMeshObject.move(500-center.x, 0-center.y, -300-center.z);
+    oMeshObject.create_buffers();
     proMesh->pushback(oMeshObject);
 
     logTime("Mesh conversion completed");
@@ -161,7 +164,7 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
 
 
 void PclToMesh::processPointCloud() {
-    Create3DPCL(0.5, 10); 
+    Create3DPCL(0.5, 8); 
     // Normal: 0.5, 12           6s
 	// Fastest: 0.5, 10        1.5s
 	// Detailest: 0.05, 12      20s
