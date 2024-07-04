@@ -7,14 +7,15 @@
 #include <iostream>
 
 struct OBxyz {
+    float size{ 300.0f };
     glm::vec3 xs{ 0.0f, 0.0f, 0.0f }; // Ox start point
-    glm::vec3 xe{ 1000.0f, 0.0f, 0.0f }; // Ox end point
+    glm::vec3 xe{ size, 0.0f, 0.0f }; // Ox end point
 
     glm::vec3 ys{ 0.0f, 0.0f, 0.0f }; // Oy start point
-    glm::vec3 ye{ 0.0f, 1000.0f, 0.0f }; // Oy end point
+    glm::vec3 ye{ 0.0f, size, 0.0f }; // Oy end point
 
     glm::vec3 zs{ 0.0f, 0.0f, 0.0f }; // Oz start point
-    glm::vec3 ze{ 0.0f, 0.0f, 1000.0f }; // Oz end point
+    glm::vec3 ze{ 0.0f, 0.0f, size }; // Oz end point
 
     void update(const glm::vec3& position, const glm::vec3& rotation) {
         // Create the rotation matrix from the rotation vector (Euler angles)
@@ -58,10 +59,6 @@ struct Material {
     glm::vec3 position{ 0.0f, 0.0f, 0.0f };
     glm::vec3 rotation{ 0.0f, 0.0f, 0.0f };
     OBxyz mOxyz;
-
-    void updateOxyz() {
-        mOxyz.update(position, rotation);
-    }
 
 
 };

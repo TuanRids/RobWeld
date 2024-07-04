@@ -1,11 +1,10 @@
 #pragma once
 #include "pch.h"
-#include <Eigen/Dense>
 #include <stdexcept>
 #include <chrono>
 #include "elems/mesh.h"
 #include "ui/statuslogs.h"
-#include <thread>
+
 
 
 
@@ -22,7 +21,7 @@ private:
 
     std::string filePath = Config::PATH_TO_3D_HUNG;
 
-    void Create3DPCL();
+    void Create3DPCL(const float &SizeLeaf, const unsigned int &poidepth);
     nelems::mMesh* proMesh;
     nui::StatusLogs* sttlogs;
 };

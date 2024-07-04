@@ -90,10 +90,10 @@ namespace nelems
 	void set_rotation_center(const glm::vec3& position)
 	{
 		// Update the focus to the new position
-		mFocus = {position.x,position.z,position.y};
+		mFocus = {position.x,position.z,-position.y};
 
 		// Set the distance to 1 to zoom in to the new position
-		mDistance = 10.0f;
+		mDistance = 300.0f;
 
 		// Calculate the direction vector from the current position to the new position
 		glm::vec3 direction = mFocus - mPosition;

@@ -123,6 +123,8 @@ namespace nelems {
             int count = 0;
             for (const auto& mesh : *mMeshes) {
                 if (mesh->selected) {
+                    if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
+                    if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
                     count++;
                     if (count > 1) {
                         return 2;

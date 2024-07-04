@@ -1,9 +1,6 @@
-﻿#include "pch.h"
+﻿#define _CRT_SECURE_NO_WARNINGS
+#include "pch.h"
 #include "pclToMesh.h"
-
-
-#include <Eigen/Dense>
-
 
 #include <assimp/scene.h>
 #include <assimp/Exporter.hpp>
@@ -19,7 +16,7 @@
 #include "omp.h"
 
 
-void PclToMesh::Create3DPCL() {
+void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth) {
     auto start = std::chrono::high_resolution_clock::now();
     auto logTime = [&](const std::string& message) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
@@ -81,7 +78,7 @@ void PclToMesh::Create3DPCL() {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudFiltered(new pcl::PointCloud<pcl::PointXYZ>());
     pcl::VoxelGrid<pcl::PointXYZ> voxelGrid;
     voxelGrid.setInputCloud(cloud);
-    voxelGrid.setLeafSize(1.0f, 1.0f, 1.0f);
+    voxelGrid.setLeafSize(SizeLeaf, SizeLeaf, SizeLeaf);
     voxelGrid.filter(*cloudFiltered);
 
     if (cloudFiltered->empty()) {
@@ -96,7 +93,7 @@ void PclToMesh::Create3DPCL() {
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
     normalEstimation.setInputCloud(cloudFiltered);
     normalEstimation.setSearchMethod(tree);
-    normalEstimation.setKSearch(100);
+    normalEstimation.setKSearch(10);
     normalEstimation.compute(*normals);
 
     if (normals->empty()) {
@@ -126,7 +123,12 @@ void PclToMesh::Create3DPCL() {
 
     pcl::PolygonMesh::Ptr triangles(new pcl::PolygonMesh());
     pcl::Poisson<pcl::PointNormal> poisson;
-    poisson.setDepth(8);
+    poisson.setDepth(poidepth);   // Depth field
+    poisson.setIsoDivide(8);    // Number of iso divisions
+	poisson.setManifold(true);  // Manifold mesh
+	poisson.setSamplesPerNode(5); // Number of samples per node
+	poisson.setPointWeight(4.0f); // Point weight
+	poisson.setSearchMethod(treeWithNormals);
     poisson.setInputCloud(cloudWithNormals);
     poisson.reconstruct(*triangles);
 
@@ -143,13 +145,13 @@ void PclToMesh::Create3DPCL() {
         oMeshObject.add_vertex(vh);
     }
 
-    oMeshObject.oMaterial.position = glm::vec3(oMeshObject.mVertices[0].mPos[0], oMeshObject.mVertices[0].mPos[1], oMeshObject.mVertices[0].mPos[2]);
+    for (const auto& polygon : triangles->polygons) {for (const auto& index : polygon.vertices) {oMeshObject.add_vertex_index(index);}}
 
-    for (const auto& polygon : triangles->polygons) {
-        for (const auto& index : polygon.vertices) {
-            oMeshObject.add_vertex_index(index);
-        }
-    }
+    glm::vec3 center = glm::vec3(0.0f);
+    for (const auto& vertex : oMeshObject.mVertices) {center += vertex.mPos;    }
+    center /= static_cast<float>(oMeshObject.mVertices.size());
+    oMeshObject.oMaterial.position = center;
+
     oMeshObject.calculate_normals();
     oMeshObject.init();
     proMesh->pushback(oMeshObject);
@@ -159,7 +161,10 @@ void PclToMesh::Create3DPCL() {
 
 
 void PclToMesh::processPointCloud() {
-    Create3DPCL(); 
+    Create3DPCL(0.5, 10); 
+    // Normal: 0.5, 12           6s
+	// Fastest: 0.5, 10        1.5s
+	// Detailest: 0.05, 12      20s
 }
 
 

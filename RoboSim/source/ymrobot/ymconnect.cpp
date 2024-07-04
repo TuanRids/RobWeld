@@ -130,7 +130,7 @@ namespace nymrobot {
             }
             nelems::VertexHolder vertex{};
             for (int i = 0; i < ui_state.coumove; ++i) {
-                vertex.mPos = glm::vec3(ui_state.rbpos[i][0], ui_state.rbpos[i][1], ui_state.rbpos[i][2] + 138.845);
+                vertex.mPos = glm::vec3(ui_state.rbpos[i][0], ui_state.rbpos[i][1], ui_state.rbpos[i][2] ); 
                 vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
                 newmesh->add_vertex(vertex);
                 if (i > 0) {

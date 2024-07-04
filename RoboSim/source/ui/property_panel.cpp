@@ -175,29 +175,14 @@ namespace nui
         //if (theme == "dark")
             //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 0.6f, 1.0f)); // Set text color to white and 50% transparent
         //elsei
-
-        if (proMesh->check_selected() != 0)
-        {
-            for (int i = 0; i < proMesh->size(); i++)
-            {
-                mesh = proMesh->get_mesh_ptr(i);
-                if (check_skip(mesh->oname)) { continue; }
-                if (mesh->selected == true)
-                {
-                    ImGui::Text(mesh->oname); ImGui::SameLine();
-                    ImGui::Text(": %lld - %lld", mesh->mVertices.size(), mesh->mVertexIndices.size());
-                }
-            }
-        }
-        else
-        {
-            for (int i = 0; i < proMesh->size(); i++) {
-                mesh = proMesh->get_mesh_ptr(i);
-                if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
-                if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
-                ImGui::Text(mesh->oname); ImGui::SameLine();
-                ImGui::Text(": %lld - %lld", mesh->mVertices.size(), mesh->mVertexIndices.size());
-            }
+        
+        for (int i = 0; i < proMesh->size(); i++) {
+            mesh = proMesh->get_mesh_ptr(i);
+            if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
+            if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
+            
+            ImVec4 color = mesh->selected ? ImVec4(1.0f, 0.0f, 0.0f, 1.0f) : ImVec4(0.27f, 0.78f, 0.69f, 1.0f);
+            ImGui::TextColored(color, "%s: %lld - %lld", mesh->oname, mesh->mVertices.size(), mesh->mVertexIndices.size());
         }
         ImGui::End();
     }
@@ -216,6 +201,8 @@ namespace nui
                     mesh = proMesh->get_mesh_ptr(i);
                     if (mesh->selected && PreObId != mesh->ID)
                     {
+                        if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
+                        if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
                         PreObId = mesh->ID;
                         if (check_skip(mesh->oname)) { continue; }
                         strcpy_s(aname, sizeof(aname), mesh->oname);
@@ -305,6 +292,8 @@ namespace nui
                         // change name if aname is not empty
                         for (int j = 0; j < proMesh->size(); j++)
                         {
+                            if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
+                            if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
                             mesh = proMesh->get_mesh_ptr(j);
                             if (mesh->selected) {
                                 strncpy_s(mesh->oname, aname, sizeof(mesh->oname) - 1);
