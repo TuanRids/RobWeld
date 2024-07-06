@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // Std includes
 #include <string>
@@ -9,29 +9,29 @@
 #include <sstream>
 #include <iostream>
 #include <memory>
+#include "config.hpp"
+#include <stdexcept>
+#include <chrono>
+#include "set"
+#include "map"
 
 #include "imgui.h"
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include <ImFileBrowser.h>
 
-/// SETUP RELEASE
-/// TEST RELEASE
-/// Shader Problems
+
+/// UPDATE UNDO REDO COMMANDS. CURRENTLY ITS TOO COMPLICATED
 /// 
-/// BIG PROBLEMS: COOR REWITE 2 cases				=> Fixed
-/// Check: Rotate original, rotate degree update	=> fixed
-/// Resize Problems									=> Fixed
-/// properties to a hint on viewport
-/// camera position on viewport
+/// IMPROVE RENDER QUALITY!!!!
 /// 
-/// TEST ROBOT
-/// UPDATE DRAW LINES, POINTS
-/// ADD DRAW SPHERE, CYLINDER, BOX, CONE, ETC.
-/// ADD DRAW TEXT
+/// 1. Fix ratio Robot
+/// 2. Add move between 2 points by moving type
 
 
-// GL includes
 #include <gl/glew.h>
-#include <GLFW/glfw3.h>
+#include <GLFW/glfw3.h>m
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

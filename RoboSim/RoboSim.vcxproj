@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -72,6 +72,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\vcpkg\vcpkg\installed\x64-windows\include\pcl;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\vcpkg\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>false</VcpkgEnableManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,14 +93,19 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)source;$(ProjectDir)include;$(ProjectDir)source\3rdparty\imgui-docking;$(ProjectDir)source\3rdparty\imgui-docking\backends;$(ProjectDir)source\3rdparty\plugins\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLEW_STATIC;_MBCS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)libs\gl;$(ProjectDir)libs\glfw;$(ProjectDir)libs\assimp;$(ProjectDir)libs\YMconnect;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\\libs\YMconnect;$(ProjectDir)\libs\python;$(ProjectDir)\libs\pcl;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect_D.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+      <SubSystem>
+      </SubSystem>
     </Link>
     <PostBuildEvent />
     <PreBuildEvent>
@@ -134,12 +144,15 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\libs\YMconnect;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\libs\gl;$(ProjectDir)\libs\glfw;$(ProjectDir)\libs\assimp;$(ProjectDir)\libs\YMconnect;$(ProjectDir)\libs\python;$(ProjectDir)\libs\pcl;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;glew32s.lib;opengl32.lib;assimp-vc142-mtd.lib;YMConnect.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>
+      </SubSystem>
     </Link>
     <PreBuildEvent>
       <Command>call "$(ProjectDir)Build_Setup.bat"</Command>
@@ -149,12 +162,19 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\Command\CommandSys.cpp" />
     <ClCompile Include="source\Command\ObHistory.cpp" />
     <ClCompile Include="source\Command\Transform.cpp" />
     <ClCompile Include="source\Command\ObHistory.h" />
-    <ClCompile Include="source\elems\arrowCoor.cpp" />
+    <ClCompile Include="source\elems\loadRobot.cpp" />
+    <ClCompile Include="source\elems\TranRBMatrix.cpp" />
+    <ClCompile Include="source\mesh_import\pcltomesh.cpp" />
+    <ClCompile Include="source\mesh_import\pcltomesh.h" />
+    <ClCompile Include="source\py3rdsrc\zmpdata.cpp" />
+    <ClCompile Include="source\rigging\rigging.cpp" />
     <ClCompile Include="source\ui\FrameManage.cpp" />
     <ClCompile Include="source\ui\HotkeyMenubar.cpp" />
+    <ClCompile Include="source\ui\RdrawChart.cpp" />
     <ClCompile Include="source\ui\scene_view.cpp" />
     <ClCompile Include="source\ui\property_panel.cpp" />
     <ClCompile Include="source\render\opengl_context.cpp" />
@@ -185,6 +205,7 @@
     <ClCompile Include="source\elems\vertex_holder.cpp" />
     <ClCompile Include="source\render\opengl_buffer_manager.cpp" />
     <ClCompile Include="source\render\ui_context.cpp" />
+    <ClCompile Include="source\ui\statuslogs.cpp" />
     <ClCompile Include="source\ui\uiAction.cpp" />
     <ClCompile Include="source\utils\RobsFileIO.h" />
     <ClCompile Include="source\window\jgl_window.cpp" />
@@ -211,13 +232,20 @@
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="source\3rdparty\plugins\imgui\ImFileBrowser.h" />
+    <ClInclude Include="source\Command\CommandSys.h" />
     <ClInclude Include="source\Command\dcommand.h" />
     <ClInclude Include="source\Command\Transform.h" />
-    <ClInclude Include="source\elems\arrowCoor.h" />
+    <ClInclude Include="source\elems\loadRobot.h" />
     <ClInclude Include="source\elems\material.h" />
     <ClInclude Include="source\elems\stb_image.h" />
+    <ClInclude Include="source\elems\TranRBMatrix.h" />
+    <ClInclude Include="source\py3rdsrc\zmpdata.h" />
+    <ClInclude Include="source\rigging\point.h" />
+    <ClInclude Include="source\rigging\rigging.h" />
     <ClInclude Include="source\ui\FrameManage.h" />
     <ClInclude Include="source\ui\HotkeyMenubar.h" />
+    <ClInclude Include="source\ui\RdrawChart.h" />
+    <ClInclude Include="source\ui\statuslogs.h" />
     <ClInclude Include="source\ui\uiAction.h" />
     <ClInclude Include="source\utils\imgui_widgets.h" />
     <ClInclude Include="source\ui\scene_view.h" />
@@ -242,6 +270,7 @@
     <ClInclude Include="source\pch.h" />
     <ClInclude Include="source\shader\shader_util.h" />
     <ClInclude Include="source\window\window.h" />
+    <ClInclude Include="source\ymrobot\RobotInterface.h" />
     <ClInclude Include="source\ymrobot\ymmotion.h" />
   </ItemGroup>
   <ItemGroup>
@@ -263,6 +292,5 @@
     <Image Include="assets\Robo.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

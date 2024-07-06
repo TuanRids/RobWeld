@@ -13,10 +13,10 @@
 
 #include "ui/property_panel.h"
 #include "ui/scene_view.h"
-
+#include "elems/loadRobot.h"
 #include "elems/mesh.h"
 #include "ui/uiAction.h"
-#include "ymrobot/ymconnect.h"
+
 using namespace nui;
 using namespace nelems;
 using namespace nrender;
@@ -28,17 +28,15 @@ namespace nwindow
   private:
 
       GLFWwindow* mWindow;
-
-      // Render contexts
+      std::unique_ptr<LoadRobot> mLoadRobot;
+      // UI context
       std::unique_ptr<UIContext> mUICtx;
-
+      // Render context
       std::unique_ptr<OpenGL_Context> mRenderCtx;
 
       // UI components
       std::unique_ptr<nui::Property_Panel> mPropertyPanel;
 
-      //robotic 
-      nymrobot::ymconnect* mRobot;
 
       nui::SceneView* mSceneView;
       // Command pattern for all looping
@@ -46,7 +44,7 @@ namespace nwindow
       bool mIsRunning;
   public:
     GLWindow() :
-      mSceneView(nullptr), mIsRunning(true), mWindow(nullptr),  mPropertyPanel(nullptr) , mRobot(nullptr)
+      mSceneView(nullptr), mIsRunning(true), mWindow(nullptr),  mPropertyPanel(nullptr) 
     {
       mUICtx = std::make_unique<UIContext>();
       mRenderCtx = std::make_unique<OpenGL_Context>();

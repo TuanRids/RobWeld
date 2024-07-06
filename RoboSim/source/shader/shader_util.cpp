@@ -53,6 +53,24 @@ namespace nshaders
 
 		return true;
 	}
+	bool Shader::load_compute_shader(const std::string& compute_shader_file) {
+		std::ifstream is_cs(compute_shader_file);
+		const std::string f_cs((std::istreambuf_iterator<char>(is_cs)), std::istreambuf_iterator<char>());
+
+		mProgramId = glCreateProgram();
+
+		unsigned int cs = get_compiled_shader(GL_COMPUTE_SHADER, f_cs);
+
+		glAttachShader(mProgramId, cs);
+
+		glLinkProgram(mProgramId);
+		glValidateProgram(mProgramId);
+
+		glDeleteShader(cs);
+
+		return true;
+	}
+
 
 	void Shader::use()
 	{
@@ -88,10 +106,15 @@ namespace nshaders
 		GLint myLoc = glGetUniformLocation(get_program_id(), name.c_str());
 		glUniform3f(myLoc, a, b, c);
 	}
+	void Shader::set_vec2(const glm::vec2& vec2, const std::string& name)
+	{
+		GLint myLoc = glGetUniformLocation(get_program_id(), name.c_str());
+		glUniform2fv(myLoc, 1, glm::value_ptr(vec2));
+	}
 
 	void Shader::set_vec3(const glm::vec3& vec3, const std::string& name)
 	{
-		GLint myLoc = glGetUniformLocation(get_program_id(), name.c_str());
+ 		GLint myLoc = glGetUniformLocation(get_program_id(), name.c_str());
 		glProgramUniform3fv(get_program_id(), myLoc, 1, glm::value_ptr(vec3));
 	}
 	void Shader::set_material(const Material& mat, const std::string& name)
@@ -100,16 +123,13 @@ namespace nshaders
 		glUniform3fv(myLoc, 1, glm::value_ptr(mat.mColor));
 
 		myLoc = glGetUniformLocation(get_program_id(), (name + ".mMetallic").c_str());
-		glUniform1f(myLoc, mat.metallic);
+		glUniform1f(myLoc, mat.mMetallic);
 
 		myLoc = glGetUniformLocation(get_program_id(), (name + ".mRoughness").c_str());
-		glUniform1f(myLoc, mat.roughness);
+		glUniform1f(myLoc, mat.mRoughness);
 
 		myLoc = glGetUniformLocation(get_program_id(), (name + ".mAo").c_str());
-		glUniform1f(myLoc, mat.ao);
-
-		myLoc = glGetUniformLocation(get_program_id(), (name + ".mTransparency").c_str());
-		glUniform1f(myLoc, mat.mTransparency);
+		glUniform1f(myLoc, mat.mAo);
 	}
 
   void Shader::set_vec4(const glm::vec4& vec4, const std::string& name)

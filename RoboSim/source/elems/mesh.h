@@ -13,10 +13,11 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #pragma warning(pop)
-
+#include <Eigen/Dense>
 #include <chrono>
 #include "material.h"
 #include <mutex>
+#include <memory>
 
 namespace nelems {
 
@@ -26,50 +27,50 @@ namespace nelems {
     */
     struct oMesh {
         // materials with default values
-        Material oMaterial ;
+        Material oMaterial;
         // default object id
         long long ID{ 0 };
         char oname[256] = { 0 };
         bool selected{ false };
-        bool hide{false };
+        bool hide{ false };
+
         // VAO VBO buffer
         std::vector<VertexHolder> mVertices;
         std::vector<unsigned int> mVertexIndices;
-        // a struct with 3 lines, draw from the center of the object
 
         std::shared_ptr<nrender::VertexIndexBuffer> mRenderBufferMgr;
         //--------------------------------------------------------------------------------
-        void init()  { mRenderBufferMgr = std::make_shared<nrender::OpenGL_VertexIndexBuffer>();create_buffers();}
+        void init() { mRenderBufferMgr = std::make_shared<nrender::OpenGL_VertexIndexBuffer>(); create_buffers(); }
 
         // create buffers for object to render
         void create_buffers() { mRenderBufferMgr->create_buffers(mVertices, mVertexIndices); }
         // del object buffers
-        void delete_buffers() 
-        {  
-            if (mRenderBufferMgr != nullptr)   
-                {mRenderBufferMgr->delete_buffers();}
+        void delete_buffers()
+        {
+            if (mRenderBufferMgr != nullptr)
+            { mRenderBufferMgr->delete_buffers(); }
         }
         //-------------------------------------------------------------------------------- 
         // Transformation Matrix
-            void rotate(float angleX, float angleY, float angleZ);
-            void move(float offsetX, float offsetY, float offsetZ);
-
-
+        void rotate(float angleX, float angleY, float angleZ);
+        void rotate(float angleX, float angleY, float angleZ, const glm::vec3 pt_center);
+        void move(float offsetX, float offsetY, float offsetZ);
+        void applyTransformation(const glm::vec3& center, Eigen::Matrix4f transform);
         //--------------------------------------------------------------------------------
         // add vertex to object
         void add_vertex(const VertexHolder& vertex) { mVertices.push_back(vertex); }
         // add vertex index to object
         void add_vertex_index(unsigned int vertex_idx) { mVertexIndices.push_back(vertex_idx); }
         // get vertex indices size of the object
-        std::size_t get_vertex_indices_size() const {return mVertexIndices.size();}
+        std::size_t get_vertex_indices_size() const { return mVertexIndices.size(); }
         // get vertices size of the object
-        std::size_t get_vertices_size() const {return mVertices.size();}
+        std::size_t get_vertices_size() const { return mVertices.size(); }
         // get vertex indices
         std::vector<unsigned int> get_vertex_indices() { return mVertexIndices; }
-
+        void calculate_normals();
         //--------------------------------------------------------------------------------
-        void render() { if (hide) { return; } mRenderBufferMgr->draw(static_cast<int>(mVertexIndices.size()));}
-        void render_lines() { if (hide) { return; } mRenderBufferMgr->draw_lines(static_cast<int>(mVertexIndices.size()));}
+        void render() { if (hide) { return; } mRenderBufferMgr->draw(static_cast<int>(mVertexIndices.size())); }
+        void render_lines() { if (hide) { return; } mRenderBufferMgr->draw_lines(static_cast<int>(mVertexIndices.size())); }
         // bind object buffers to render
         void bind() { mRenderBufferMgr->bind(); }
         // unbind object buffers
@@ -77,10 +78,9 @@ namespace nelems {
 
         //--------------------------------------------------------------------------------
 
-        void changeName( std::string newvalue) {
+        void changeName(std::string newvalue) {
             strncpy_s(oname, sizeof(oname), newvalue.c_str(), _TRUNCATE);
         }
-
     };
 
     /*
@@ -92,59 +92,58 @@ namespace nelems {
     public:
         // ************** Load & structure mesh **************
         //load mesh from file
-        bool load(const std::string& filepath);
-        // random number generator based on current time
+        bool load_sync(const std::string& filepath);
+        bool load(const std::string& filepath, bool robot);
         long long getCurrentTimeMillis(int size);
-        // create mesh from aimesh
         void load_specific_mesh(const aiMesh* mesh, oMesh& outMesh);
-        // clear all meshes
         void clear_meshes();
-        // update for shader
-        void update(nshaders::Shader* shader, bool lightenable);
+        void update(nshaders::Shader* shader, int lightmode);
         void createGridSys(float size, float step);
 
         // ************** Check and get pointer **************
-        // get mesh pointer based on index
-        void get_mesh_ptr(int& j, oMesh*& mesh);
-        // get mesh pointer based on id
-        void get_mesh_ptr(long long ids, oMesh*& mesh);
-        // destructor
+        std::shared_ptr<nelems::oMesh> get_mesh_ptr(int j);
+        void get_mesh_ptr(int& j, std::shared_ptr<nelems::oMesh>& mesh);
+        void get_mesh_ptr(long long ids, std::shared_ptr<nelems::oMesh>& mesh);
+        bool get_mesh_byname(const std::string& name, std::shared_ptr<nelems::oMesh>& mesh);
         virtual ~mMesh() { clear_meshes(); }
-        // get size of mesh
         size_t size() { return mMeshes->size(); }
-        // add new mesh to vector
-        void pushback(oMesh mesh) { mMeshes->push_back(std::move(mesh));  }
-        // create instance
-        static mMesh& getInstance() 
-        { 
+        void pushback(oMesh mesh) { mMeshes->push_back(std::make_shared<oMesh>(std::move(mesh))); }
+        static mMesh& getInstance()
+        {
             std::lock_guard<std::mutex> lock(mMutex);
             static mMesh instance;
-            return instance; }
+            return instance;
+        }
         // get address
-        std::shared_ptr<std::vector<oMesh>> getMesh() const { return mMeshes; }
-        //check selected: 0 Not selected, 1 selected, 2 more than 1 selected
+        std::shared_ptr<std::vector<std::shared_ptr<oMesh>>> getMesh() const { return mMeshes; }
         int check_selected() {
             if (!mMeshes) {
-				return 0;
-			}
+                return 0;
+            }
             int count = 0;
-            for (int i = 0; i < mMeshes->size(); i++) {
-				if (mMeshes->at(i).selected) {
+            for (const auto& mesh : *mMeshes) {
+                if (mesh->selected) {
+                    if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
+                    if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
                     count++;
                     if (count > 1) {
-						return 2;
-					}
-				}
-			}
+                        return 2;
+                    }
+                }
+            }
             return count;
         }
+        void set_OBxyz(float length, oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz);
+        void delete_selected();
+        void delete_byname(const std::string& delmesh);
+        void add_mesh(std::shared_ptr<oMesh> addnewmesh);
+        // setter axis length
+        void set_axis_length(const int& length) { axis_length = length; }
     private:
         static std::mutex mMutex;
-        // add a var to draw 10x10 grid for coordinate system
-        //std::unique_ptr<oMesh> mCoorSystem, minigrid;
-        std::shared_ptr<std::vector<oMesh>> mCoorSystem;
-        std::shared_ptr<std::vector<oMesh>> mMeshes;
-        mMesh(){if (!mMeshes) {mMeshes = std::make_shared<std::vector<oMesh>>();}}
+        std::unique_ptr<oMesh> mCoorSystem;
+        std::shared_ptr<std::vector<std::shared_ptr<oMesh>>> mMeshes;
+        mMesh() { if (!mMeshes) { mMeshes = std::make_shared<std::vector<std::shared_ptr<oMesh>>>(); } }
+        int axis_length{ 1000 };
     };
 }
-

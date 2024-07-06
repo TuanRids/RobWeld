@@ -14,7 +14,7 @@ namespace nutils
     class RobsFileIO 
     {
     public:
-        static bool SaveToFile(nelems::mMesh& mesh)
+        static bool SaveToFile(nelems::mMesh& proMesh)
         {
             std::string filePath;
             //--------------------------------------------------------------------------------
@@ -59,13 +59,13 @@ namespace nutils
                 return false;
             }
 
-            uint32_t numMeshes = static_cast<uint32_t>(mesh.size());
+            uint32_t numMeshes = static_cast<uint32_t>(proMesh.size());
             file.write(reinterpret_cast<char*>(&numMeshes), sizeof(numMeshes));
 
-            for (int i = 0; i < mesh.size(); ++i)
+            for (int i = 0; i < proMesh.size(); ++i)
             {
-                nelems::oMesh* oMesh;
-                mesh.get_mesh_ptr(i, oMesh);
+                std::shared_ptr<nelems::oMesh> oMesh;
+                oMesh = proMesh.get_mesh_ptr(i);
 
                 file.write(reinterpret_cast<char*>(&oMesh->ID), sizeof(oMesh->ID));
 
@@ -79,9 +79,10 @@ namespace nutils
 
                 // Write material data
                 file.write(reinterpret_cast<const char*>(&oMesh->oMaterial.mColor), sizeof(oMesh->oMaterial.mColor));
-                file.write(reinterpret_cast<const char*>(&oMesh->oMaterial.metallic), sizeof(oMesh->oMaterial.metallic));
-                file.write(reinterpret_cast<const char*>(&oMesh->oMaterial.roughness), sizeof(oMesh->oMaterial.roughness));
-                file.write(reinterpret_cast<const char*>(&oMesh->oMaterial.ao), sizeof(oMesh->oMaterial.ao));
+                file.write(reinterpret_cast<const char*>(&oMesh->oMaterial.mMetallic), sizeof(oMesh->oMaterial.mMetallic));
+                file.write(reinterpret_cast<const char*>(&oMesh->oMaterial.mRoughness), sizeof(oMesh->oMaterial.mRoughness));
+                file.write(reinterpret_cast<const char*>(&oMesh->oMaterial.mAo), sizeof(oMesh->oMaterial.mAo));
+                
 
                 std::cout << oMesh->ID << std::endl;
             }
@@ -146,10 +147,11 @@ namespace nutils
 
                 // Read material
                 file.read(reinterpret_cast<char*>(&oMesh.oMaterial.mColor), sizeof(oMesh.oMaterial.mColor));
-                file.read(reinterpret_cast<char*>(&oMesh.oMaterial.metallic), sizeof(oMesh.oMaterial.metallic));
-                file.read(reinterpret_cast<char*>(&oMesh.oMaterial.roughness), sizeof(oMesh.oMaterial.roughness));
-                file.read(reinterpret_cast<char*>(&oMesh.oMaterial.ao), sizeof(oMesh.oMaterial.ao));
+                file.read(reinterpret_cast<char*>(&oMesh.oMaterial.mMetallic), sizeof(oMesh.oMaterial.mMetallic));
+                file.read(reinterpret_cast<char*>(&oMesh.oMaterial.mRoughness), sizeof(oMesh.oMaterial.mRoughness));
+                file.read(reinterpret_cast<char*>(&oMesh.oMaterial.mAo), sizeof(oMesh.oMaterial.mAo));
                 oMesh.init();
+
                 // Add the loaded mesh to the current mesh
                 mesh.pushback(oMesh);
             }

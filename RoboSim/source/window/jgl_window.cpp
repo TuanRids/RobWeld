@@ -2,7 +2,6 @@
 
 #include "jgl_window.h"
 
-
 #include "elems/input.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -42,11 +41,8 @@ namespace nwindow
     mPropertyPanel = std::make_unique<Property_Panel>();
 
     mSceneView->SetMeshLoadCallback(
-      [this](std::string filepath) { mSceneView->load_mesh(filepath); });
+      [this](std::string filepath) { mSceneView->load_mesh(filepath,0); });
 
-    // robotic arm
-    mRobot = &nymrobot::ymconnect::getInstance();
-    
 
     return mIsRunning;
   }
@@ -89,8 +85,6 @@ namespace nwindow
   //TODO CLOSE PROGRAM TODOCLOSE TODOEXIT
   void GLWindow::on_close()
   {
-
-    std::cout<<"Window close event\n"<<std::endl;
     nelems::mMesh::getInstance().~mMesh();
     mIsRunning = false;
   }
@@ -107,23 +101,30 @@ namespace nwindow
 
   void GLWindow::render()
   {
+    
     // Clear the view
     mRenderCtx->pre_render();
     
     // Initialize UI components
     mUICtx->pre_render();
 
+    
     //handle_input();
     // render scene to framebuffer and add it to scene view
+
     mSceneView->render();
     mPropertyPanel->render(mSceneView,mWindow);
-    mRobot->render();
 
     // Render the UI 
     mUICtx->post_render();
     // Render end, swap buffers
     mRenderCtx->post_render();
     
+    if (!mLoadRobot)
+    {
+        mLoadRobot = std::make_unique<LoadRobot>();
+        mLoadRobot->trigger_GP8();
+    }
   }
 
   

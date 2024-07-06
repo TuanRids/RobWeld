@@ -15,9 +15,8 @@ namespace nelems
 	{
 	public:
 
-		Camera(const glm::vec3& position, float fov, float aspect, float near, float far)
+		Camera( float fov, float aspect, float near, float far)
 		{
-			mPosition = position;
 			mAspect = aspect;
 			mNear = near;
 			mFar = far;
@@ -91,10 +90,10 @@ namespace nelems
 	void set_rotation_center(const glm::vec3& position)
 	{
 		// Update the focus to the new position
-		mFocus = {position.x,position.z,position.y};
+		mFocus = {position.x,position.z,-position.y};
 
 		// Set the distance to 1 to zoom in to the new position
-		mDistance = 10.0f;
+		mDistance = 300.0f;
 
 		// Calculate the direction vector from the current position to the new position
 		glm::vec3 direction = mFocus - mPosition;
@@ -213,18 +212,18 @@ namespace nelems
 		glm::mat4 mProjection = glm::mat4{ 1.0f };
 		glm::vec3 mPosition = { 0.0f, 0.0f, 0.0f };
 
-		glm::vec3 mFocus = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 mFocus = { 500.0f,400.0f, -100.0f };
 
-		float mDistance = 5.0f;
+		float mDistance = 655.0f;
 		float mAspect;
 		float mFOV;
 		float mNear;
 		float mFar;
 
-		float mPitch = 0.0f;
-		float mYaw = 0.0f;
+		float mPitch = 0.43f;
+		float mYaw = -3.0f;
 
-		glm::vec2 mCurrentPos2d = { 0.0f, 0.0f };
+		glm::vec2 mCurrentPos2d = { 0.0f,0.0f };
 
 		const glm::vec3 cRight = { 1.0f, 0.0f, 0.0f };
 		const glm::vec3 cUp = { 0.0f, 1.0f, 0.0f };

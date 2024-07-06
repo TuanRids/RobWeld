@@ -3,10 +3,7 @@
 #include "window/jgl_window.h"
 #include "elems/camera.h"
 
-/// <summary>
-///  EDIT SOMETHING HERE
-/// </summary>
-/// EDIT 2
+
 class Application
 {
 

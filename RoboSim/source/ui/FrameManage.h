@@ -2,7 +2,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-
 namespace nui {
     /*
     FrameManage is a singleton class that manages the active GUI frame
@@ -16,6 +15,19 @@ namespace nui {
 
         // Setter for crActiveGui variable
         static void setCrActiveGui(const std::string& frameName, bool isActive);
+        // getter 3D size
+        static void set3DSize(float& x, float& y) { vdsize_x = x; vdsize_y = y; }
+        // setter 3D size
+        static void get3DSize(float& x, float& y) { x =vdsize_x ; y = vdsize_y; }
+
+        //getter for viewport position
+        static void getViewportSize(float& x, float& y) {x = viewport_x;y = viewport_y;}
+        //setter for viewport position
+        static void setViewportSize(float& x, float& y) 
+        {
+            viewport_x = x;
+            viewport_y = y;
+        }
 
     private:
         // Private constructor to ensure no other FrameManage objects can be created outside the singleton
@@ -27,7 +39,10 @@ namespace nui {
         // crActiveGui variable stored in FrameManage and shared via singleton
         std::unordered_map<std::string, bool> crActiveGui;
 
-        static bool rb_connect;
+        // viewport position
+        static float viewport_x, viewport_y;
+        // viewport size
+        static float vdsize_x, vdsize_y;
     };
 
 }
