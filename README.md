@@ -1,157 +1,79 @@
-#include "python/Python.h"
-#include <iostream>
+# Robot Control Project with Vision and Lidar using OpenGL
 
-class robocn {
-private:
-    PyObject* pModule;
-    PyObject* pRobotInstance;
+## Overview
 
-public:
-    robocn() : pModule(nullptr), pRobotInstance(nullptr) {}
-    ~robocn() {
-        Py_XDECREF(pRobotInstance);
-        Py_XDECREF(pModule);
-        Py_Finalize();
-    }
+This project involves developing a robot control system using C++ and OpenGL. The system incorporates vision and lidar technologies to scan objects, visualize the results, and perform inspection tasks. The project includes functionalities for real-time object detection, lidar-based scanning, and interactive 3D visualization.
 
-    void initialize() {
-        PyStatus status;
-        PyConfig config;
-        PyConfig_InitIsolatedConfig(&config);
+## Features
 
-        // Set the Python home directory
-        status = PyConfig_SetString(&config, &config.home, L"C:\\Users\\ngdtu\\AppData\\Local\\Programs\\Python\\Python312");
-        if (PyStatus_Exception(status)) {
-            PyConfig_Clear(&config);
-            Py_ExitStatusException(status);
-        }
+- **Vision System**: Utilizes computer vision techniques for object detection and recognition.
+- **Lidar Integration**: Employs lidar sensors to scan the environment and generate 3D point clouds.
+- **3D Visualization**: Implements OpenGL for real-time rendering of the robot's environment and scanned objects.
+- **Robot Control**: Provides an interface for controlling the robot's movements and operations.
+- **Inspection**: Includes tools for inspecting and analyzing scanned objects.
 
-        // Initialize Python with the config
-        status = Py_InitializeFromConfig(&config);
-        if (PyStatus_Exception(status)) {
-            PyConfig_Clear(&config);
-            Py_ExitStatusException(status);
-        }
-        PyConfig_Clear(&config);
+## Getting Started
 
-        // Set up sys.path
-        PyRun_SimpleString("import sys");
-        PyRun_SimpleString("sys.path.append(\"./pysrc\")");
-    }
+### Prerequisites
 
-    void connect() {
-        initialize();
-        PyObject* pName = PyUnicode_DecodeFSDefault("fs100");
-        pModule = PyImport_Import(pName);
-        Py_DECREF(pName);
+- **C++ Compiler**: Ensure you have a C++ compiler installed (e.g., GCC, Clang, MSVC).
+- **OpenGL**: Make sure OpenGL and related libraries (GLFW, GLAD) are installed.
+- **OpenCV**: Required for the vision system.
+- **Lidar SDK**: Install the SDK provided by your lidar sensor manufacturer.
 
-        if (!pModule) {
-            PyErr_Print();
-            Py_Finalize();
-            return;
-        }
 
-        PyObject* pClass = PyObject_GetAttrString(pModule, "FS100");
-        if (!pClass || !PyCallable_Check(pClass)) {
-            if (PyErr_Occurred())
-                PyErr_Print();
-            std::cerr << "Cannot find class FS100" << std::endl;
-            Py_DECREF(pClass);
-            Py_DECREF(pModule);
-            return;
-        }
+## Usage
 
-        PyObject* pArgs = PyTuple_Pack(1, PyUnicode_FromString("192.168.10.2"));
-        pRobotInstance = PyObject_CallObject(pClass, pArgs);
-        Py_DECREF(pArgs);
-        Py_DECREF(pClass);
+### Robot Control
 
-        if (!pRobotInstance) {
-            PyErr_Print();
-        }
-    }
+- **Manual Control**: Use keyboard inputs to control the robot's movements.
+- **Autonomous Mode**: Enable autonomous mode for automatic scanning and inspection.
 
-    void get_pos() {
-        if (!pRobotInstance) {
-            std::cerr << "Robot is not connected" << std::endl;
-            return;
-        }
+### Vision System
 
-        PyObject* pFunc = PyObject_GetAttrString(pRobotInstance, "read_position");
-        if (!pFunc || !PyCallable_Check(pFunc)) {
-            if (PyErr_Occurred())
-                PyErr_Print();
-            std::cerr << "Cannot find method read_position" << std::endl;
-            Py_DECREF(pFunc);
-            return;
-        }
+- **Object Detection**: Uses OpenCV to detect and classify objects in real time.
+- **Camera Calibration**: Includes tools for calibrating the camera for accurate measurements.
 
-        PyObject* pResult = PyDict_New();
-        PyObject* pArgs = PyTuple_Pack(1, pResult);
-        PyObject* pValue = PyObject_CallObject(pFunc, pArgs);
-        Py_DECREF(pArgs);
-        Py_DECREF(pFunc);
+### Lidar Scanning
 
-        if (!pValue) {
-            PyErr_Print();
-            return;
-        }
+- **Real-time Scanning**: Continuously scans the environment to create a 3D map.
+- **Point Cloud Processing**: Processes the point cloud data for visualization and analysis.
 
-        PyObject* pPos = PyDict_GetItemString(pResult, "pos");
-        if (pPos) {
-            Py_ssize_t size = PyTuple_Size(pPos);
-            for (Py_ssize_t i = 0; i < size; i++) {
-                PyObject* pItem = PyTuple_GetItem(pPos, i);
-                std::cout << "Axis " << i + 1 << ": " << PyLong_AsLong(pItem) << std::endl;
-            }
-        }
-        else {
-            std::cerr << "Failed to get position data" << std::endl;
-        }
+### 3D Visualization
 
-        Py_DECREF(pValue);
-        Py_DECREF(pResult);
-    }
+- **Environment Rendering**: Renders the robot's environment using OpenGL.
+- **Interactive Interface**: Allows users to interact with the 3D visualization (e.g., zoom, rotate).
 
-    void get_tor() {
-        if (!pRobotInstance) {
-            std::cerr << "Robot is not connected" << std::endl;
-            return;
-        }
+## Contributing
 
-        PyObject* pFunc = PyObject_GetAttrString(pRobotInstance, "read_torque");
-        if (!pFunc || !PyCallable_Check(pFunc)) {
-            if (PyErr_Occurred())
-                PyErr_Print();
-            std::cerr << "Cannot find method read_torque" << std::endl;
-            Py_DECREF(pFunc);
-            return;
-        }
+We welcome contributions from the community! If you would like to contribute, please follow these steps:
 
-        PyObject* pResult = PyDict_New();
-        PyObject* pArgs = PyTuple_Pack(1, pResult);
-        PyObject* pValue = PyObject_CallObject(pFunc, pArgs);
-        Py_DECREF(pArgs);
-        Py_DECREF(pFunc);
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Commit your changes and push the branch to your fork.
+4. Open a pull request to the main repository.
 
-        if (!pValue) {
-            PyErr_Print();
-            return;
-        }
+## License
 
-        PyObject* pTorque = PyDict_GetItemString(pResult, "torque");
-        if (pTorque) {
-            Py_ssize_t size = PyTuple_Size(pTorque);
-            for (Py_ssize_t i = 0; i < size; i++) {
-                PyObject* pItem = PyTuple_GetItem(pTorque, i);
-                std::cout << "Torque " << i + 1 << ": " << PyLong_AsLong(pItem) << std::endl;
-            }
-        }
-        else {
-            std::cerr << "Failed to get torque data" << std::endl;
-        }
+This project is licensed under the MIT License.
 
-        Py_DECREF(pValue);
-        Py_DECREF(pResult);
-    }
-};
+## Acknowledgements
+
+- **OpenGL**: For providing the graphics rendering capabilities.
+- **ImGui**: For The framework.
+- **PCL**: For Pointcloud analyzing
+- **IPC**: Inter-Processing Communication for data transferring inside the system.
+- **OpenCV**: For the vision system and image processing.
+- **Lidar SDK**: For enabling lidar sensor integration.
+
+## Contact
+
+For any questions or inquiries, please contact [ngdtuan.dn@gmail.com).
+
+---
+
+We hope you find this project useful and look forward to your contributions and feedback!
+
+---
+
+Feel free to customize this README to better fit your specific project details and requirements.
