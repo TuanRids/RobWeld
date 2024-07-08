@@ -38,8 +38,8 @@ namespace ncommand
         ~RotateOb() { mesh = nullptr; proMesh = nullptr; }
         void execute( std::deque<std::string> &cmdIDs, int reverse, std::deque<std::string> &cmdIDs_redo) override;
         bool isValid() const override { return (rx != 0.0f || ry != 0.0f || rz != 0.0f); }
-        void undo(const std::string& lastlog, std::deque<std::string> cmdIDs) override;
-        void redo(const std::string& lastlog, std::deque<std::string> cmdIDs) override;
+        void undo(const std::string& lastlog, std::deque<std::string> cmdIDs) override {}
+        void redo(const std::string& lastlog, std::deque<std::string> cmdIDs) override {}
     };
 
     class delOb : public Command
@@ -52,12 +52,10 @@ namespace ncommand
         delOb(nelems::mMesh* obj) : proMesh(obj), sttlogs(nullptr),
             mesh(nullptr) { sttlogs = &nui::StatusLogs::getInstance(); }
         ~delOb() { mesh = nullptr; proMesh = nullptr; }
-        void execute( std::deque<std::string> &cmdIDs, int reverse, std::deque<std::string> &cmdIDs_redo) override;
-        
-        void recorded_cmdlogs(std::string& tempLog, const std::chrono::steady_clock::time_point startTime) ;
+        void execute(std::deque<std::string>& cmdIDs, int reverse, std::deque<std::string>& cmdIDs_redo) override;
 
-        void undo(const std::string& lastlog, std::deque<std::string> cmdIDs) override;
+        void undo(const std::string& lastlog, std::deque<std::string> cmdIDs) override {}
 
-        void redo(const std::string& lastlog, std::deque<std::string> cmdIDs) override;
+        void redo(const std::string& lastlog, std::deque<std::string> cmdIDs) override {}
     };
 }

@@ -188,14 +188,14 @@ namespace nui
     }
     void Property_Panel::coordinate_frame()
     {
-
+        static float posrot_obj[7]; static long long PreObId = 0;
+        static char aname[255];
         if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen)) //&&mesh
         {
             bool pressOk = ImGui::Button("UPDATE");
             if (proMesh->check_selected() == 1)
             {
-                static float posrot_obj[7]; static long long PreObId = 0;
-                static char aname[255];
+                
                 for (int i = 0; i < proMesh->size(); i++)
                 {
                     mesh = proMesh->get_mesh_ptr(i);
@@ -262,6 +262,7 @@ namespace nui
                     PreObId = 0;
                 }
             }
+            else if (proMesh->check_selected() == 0) { PreObId = 0; }
             else
             {
                 static float posrot[7];
@@ -309,7 +310,7 @@ namespace nui
                         uiaction.RotateOb_uiAction(posrot[3], posrot[4], posrot[5]);
                         // reset all posrot & aname;
                         std::fill_n(posrot, 6, 0.0f);
-                        std::fill_n(aname, sizeof(aname), '\0');
+                        std::fill_n(aname, sizeof(aname), '\0'); PreObId = 0;
                     }
                 }
             }

@@ -63,6 +63,7 @@ namespace nui {
 
         std::deque<std::string> statusQueue;
         std::string currentStatus;
+        unsigned int idex{0};
         const size_t maxSize = 50; // Maximum number of status messages to keep
     };
 

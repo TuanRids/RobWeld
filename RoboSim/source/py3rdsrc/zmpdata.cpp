@@ -1,11 +1,10 @@
 #include "pch.h"
 #include "zmpdata.h"
 
-zmpdata::zmpdata() : image_texture(0) {    sttlogs = &nui::StatusLogs::getInstance();}
+zmpdata::zmpdata() : image_texture(0), image_texture_below{ 0 } { sttlogs = &nui::StatusLogs::getInstance(); }
 
 std::vector<std::vector<float>> zmpdata::shared_get6pos (std::vector<std::vector<float>>(50, std::vector<float>(6, -99999.0f)));
 std::vector<std::vector<float>> zmpdata::shared_3Ddata (std::vector<std::vector<float>>(3072, std::vector<float>(1024, -99999.0f)));
-
 
 zmpdata::~zmpdata() {
     if (image_texture != 0) {
@@ -118,32 +117,28 @@ void zmpdata::trigger_3DCreator()
         std::unique_ptr<PclToMesh> pcl2m = std::make_unique<PclToMesh>();
         pcl2m->setter_data(shared_3Ddata);
         pcl2m->processPointCloud();
-
+        *sttlogs << "Creating 3D Object" ;
         // Reset start to now after processing
         start = std::chrono::high_resolution_clock::now();
     }
 }
 
-
 void zmpdata::getter_6pos(std::vector<std::vector<float>>& get6pos) {
     std::vector<std::vector<float>> temptemp;
-    const float epsilon = 1.1f; 
 
     for (const auto& pos : shared_get6pos) {
         float cc = std::fabs(pos[0] + 99999.0f);
-        if (cc > epsilon) {
+        if (cc > 5.0f) {
             temptemp.push_back(pos);
         }
         else {
             break;
         }
     }
-
     if (!temptemp.empty()) {
         get6pos = temptemp;
     }
 }
-
 
 void zmpdata::render() {
 
@@ -302,14 +297,15 @@ bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, f
                 shared_3Ddata[i][j] = dat_ptr[i * 1024 + j];
             }
         }
+        // zero out the memory to remove the data
+        memset(dat_ptr, -99999.0f, sizeof(float) * 3072 * 1024);
+
         UnmapViewOfFile(pBufCoord);
         CloseHandle(hMapFileCoord);
     }
     else { shared_3Ddata = std::vector<std::vector<float>>(1, std::vector<float>(1, 0.0f)); }
     return true;
 }
-
-
 
 GLuint zmpdata::matToTexture(const cv::Mat& mat, GLenum minFilter, GLenum magFilter, GLenum wrapFilter) {
     // Generate a number for our textureID's unique handle

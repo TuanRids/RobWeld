@@ -45,6 +45,9 @@ struct UIState {
     std::unique_ptr<BaseAxisPositionVariableData> b1PositionData = std::make_unique<BaseAxisPositionVariableData>();
     std::unique_ptr<PositionData> b1origi = std::make_unique<PositionData>();
     std::unique_ptr<PositionData> b1crpos = std::make_unique<PositionData>();
+
+    // other trigger
+    bool SharedMemoryFlag = true;
 };
 
 namespace nymrobot {

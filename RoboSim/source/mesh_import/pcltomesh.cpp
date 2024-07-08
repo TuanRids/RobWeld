@@ -27,27 +27,6 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
 
     nelems::oMesh oMeshObject;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
-
-    /*std::ifstream file(filePath);
-    if (file.is_open()) {
-        std::string line;
-        while (std::getline(file, line)) {
-            std::vector<float> row;
-            std::stringstream ss(line);
-            float value;
-            while (ss >> value) {
-                row.push_back(value);
-            }
-            data.push_back(row);
-        }
-        file.close();
-    }*/
-    
-    if (data.size() < 10) {
-        *sttlogs << "[ERROR] Could not open file!";
-        return;
-    }
-
     size_t num_rows = data.size();
     size_t num_cols = data[0].size();
     float x_size = 100.0f, y_size = 200.0f;
@@ -59,8 +38,6 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
     cloud->is_dense = false;
     cloud->points.resize(num_cols * num_rows);
 
-    logTime("Data loaded");
-
 #pragma omp parallel for
     for (size_t i = 0; i < num_rows; ++i) {
         for (size_t j = 0; j < num_cols; ++j) {
@@ -68,7 +45,7 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
         }
     }
 
-    logTime("Data converted");
+    logTime("Data loaded & converted");
 
     if (cloud->empty()) {
         logTime( "[ERROR] Input cloud is empty after loading data!");
@@ -86,8 +63,6 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
         return;
     }
 
-    logTime("Data downsampled");
-
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> normalEstimation;
     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>());
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
@@ -101,7 +76,7 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
         return;
     }
 
-    logTime("Normals estimated");
+    logTime("downsampled & Normals estimated");
 
     pcl::PointCloud<pcl::PointNormal>::Ptr cloudWithNormals(new pcl::PointCloud<pcl::PointNormal>());
     pcl::concatenateFields(*cloudFiltered, *normals, *cloudWithNormals);
@@ -111,7 +86,7 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
         return;
     }
 
-    logTime("Data concatenated");
+    logTime("Concatenated");
 
     pcl::search::KdTree<pcl::PointNormal>::Ptr treeWithNormals(new pcl::search::KdTree<pcl::PointNormal>());
     treeWithNormals->setInputCloud(cloudWithNormals);
@@ -158,13 +133,12 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
     oMeshObject.move(500-center.x, 0-center.y, -300-center.z);
     oMeshObject.create_buffers();
     proMesh->pushback(oMeshObject);
-
     logTime("Mesh conversion completed");
 }
 
 
 void PclToMesh::processPointCloud() {
-    Create3DPCL(0.5, 8); 
+    Create3DPCL(0.5, 10); 
     // Normal: 0.5, 12           6s
 	// Fastest: 0.5, 10        1.5s
 	// Detailest: 0.05, 12      20s

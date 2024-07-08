@@ -274,7 +274,6 @@
     <ClInclude Include="source\ymrobot\ymmotion.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cpp.hint" />
     <None Include="libs\assimp\LICENSE" />
     <None Include="shaders\fs.shader" />
     <None Include="shaders\fs_pbr.shader" />

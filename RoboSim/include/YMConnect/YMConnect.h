@@ -33,7 +33,7 @@
 #include <optional>
 #include <bitset>
 
-#define YMConnect_Header_Version "1.0.2"
+#define YMConnect_Header_Version "1.0.5"
 
 //============================================================================================================================================================================
 
@@ -1383,15 +1383,9 @@ public:
 	/// <summary>
 	/// Stop the motion immediately. Note that this will not clear the trajectory.
 	/// </summary>
+	/// <param name="clearTrajectory">IN true: Clear the trajectory, false: Keep the trajectory.</param>
 	/// <returns>0 if successful, otherwise a StatusInfo object with a description of error.</returns>
-	virtual StatusInfo MotionStop() = 0;
-
-	/// <summary>
-	/// Clear out the trajectory for a single group.
-	/// </summary>
-	/// <param name="grp">Control group to clear.</param>
-	/// <returns>0 if successful, otherwise a StatusInfo object with a description of error.</returns>
-	virtual StatusInfo ClearGroupTrajectory(ControlGroupId grp) = 0;
+	virtual StatusInfo MotionStop(bool clearTrajectory = false) = 0;
 
 	/// <summary>
 	/// Clear out the trajectory for all groups.

@@ -17,13 +17,10 @@ namespace ncommand
     }
     void ObHistory::undocmd() {
         if (!commandStack.empty()) {
-            // check if commandstack is empty
-            if (commandStack.empty()) {
-				return;
-			}
+            if (commandStack.empty()) {return;}
             auto lastCmd = std::move(commandStack.back());
             lastCmd->execute(cmdIDs,1, cmdIDs_redo);
-            //lastCmd->undo(cmdlogs.empty() ? "" : cmdlogs.back(), cmdIDs);
+
             redoStack.push_back(std::move(lastCmd));
             commandStack.pop_back();
         }

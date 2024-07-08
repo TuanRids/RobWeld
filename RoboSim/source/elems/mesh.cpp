@@ -482,6 +482,8 @@ namespace nelems {
     void mMesh::delete_selected() {
         for (auto& mesh : *mMeshes) {
             if (mesh->selected) {
+                if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
+                if (std::string(mesh->oname).find("__SKIP__") != std::string::npos) { continue; }
                 mesh->delete_buffers();
             }
         }

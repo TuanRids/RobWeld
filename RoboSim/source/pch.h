@@ -26,8 +26,7 @@
 /// 
 /// IMPROVE RENDER QUALITY!!!!
 /// 
-/// 1. Fix ratio Robot
-/// 2. Add move between 2 points by moving type
+/// 1. Get original position & direction 
 
 
 #include <gl/glew.h>

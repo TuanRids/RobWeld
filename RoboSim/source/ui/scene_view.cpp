@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "scene_view.h"
 #include <Windows.h>
-
+#include <opencv2/opencv.hpp>
 namespace nui
 {
     std::string SceneView::arg_render_mode = "Surface";
@@ -90,7 +90,40 @@ namespace nui
             std::cerr << e.what() << std::endl;
         }
     }
+    
+    cv::Mat framebufferToMat(uint64_t ogl_texture_id, int width, int height) {
+        glBindTexture(GL_TEXTURE_2D, ogl_texture_id);
+        GLint gl_texture_width, gl_texture_height;
 
+        // Retrieve texture dimensions
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &gl_texture_width);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &gl_texture_height);
+
+        // Allocate memory using std::vector for automatic management
+        std::unique_ptr<std::vector<unsigned char>> gl_texture_bytes = std::make_unique<std::vector<unsigned char>>(gl_texture_width * gl_texture_height * 3);
+
+        // Get the texture image
+        glGetTexImage(GL_TEXTURE_2D, 0 /* mipmap level */, GL_BGR, GL_UNSIGNED_BYTE, gl_texture_bytes->data());
+
+        // Create a cv::Mat object using the data
+        cv::Mat texture_image = cv::Mat(gl_texture_height, gl_texture_width, CV_8UC3, gl_texture_bytes->data()).clone();
+
+        // Returning a clone of the matrix to ensure that the data persists beyond the function scope
+        return texture_image;
+    }
+
+    uint64_t matToTexture(const cv::Mat& mat) {
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.cols, mat.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, mat.data);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return textureID;
+    }
 
     void SceneView::render()
     {
@@ -113,8 +146,13 @@ namespace nui
             ImVec2 viewportWindowPos = ImGui::GetWindowPos();
             nui::FrameManage::setViewportSize(viewportWindowPos.x, viewportWindowPos.y);
             nui::FrameManage::set3DSize(mSize.x, mSize.y);
+
             // Add rendered texture to ImGUI scene window
             uint64_t textureID = mFrameBuffer->get_texture();
+            //convert texture frambuffer to opencv mat
+            /*cv::Mat image = framebufferToMat(textureID, viewportPanelSize.x, viewportPanelSize.y);
+            cv::GaussianBlur(image, image, cv::Size(3, 3), 0);
+            uint64_t processedTextureID = matToTexture(image);*/
 
             ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
         }

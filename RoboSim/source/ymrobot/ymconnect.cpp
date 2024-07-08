@@ -149,35 +149,38 @@ namespace nymrobot {
             mesh->selected = true;
             if (newmesh_flag) { proMeshRb->add_mesh(mesh); newmesh_flag = false; }
         }
+
         if (status.StatusCode != 0) { return; }
         if (ui_state.START_Flag)
         {
-            std::string stent = "Start the Motion to " + std::to_string(ui_state.coumove) + " points: ";
+            *sttlogs << "Start Moving to " + std::to_string(ui_state.coumove) + " points.";
             for (int jn = 0; jn < ui_state.coumove; ++jn) {
-                // setting the position
+                // Setting the position
                 ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
                 for (int ic = 0; ic < 6; ++ic) {
                     ui_state.b1crpos->axisData[ic] = ui_state.rbpos[jn][ic];
                 }
-                // execute 1: Linear, 2: Circular, 3: Joint, 4: Mid-Cir
-                if (ui_state.movTypes[jn] == 1)
+                // Execute 0: Linear, 1: Circular, 2: Joint, 3: Mid-Cir
+                if (ui_state.movTypes[jn] == 0)
                 {
                     *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(LinearMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdlinear));
                 }
-                else if (ui_state.movTypes[jn] == 3)
+                else if (ui_state.movTypes[jn] == 2)
                 {
                     *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdjoint));
                 }
-                else if (ui_state.movTypes[jn] == 2) // circular
+                else if (ui_state.movTypes[jn] == 1) // Circular
                 {
                     CoordinateArray coorarr;
                     for (int im = 0; im < 6; ++im) {
-                        coorarr[im] = ui_state.rbpos[jn - 1][im]; // corrdinate of the previous point
+                        coorarr[im] = ui_state.rbpos[jn - 1][im]; // Corrdinate of the previous point
                     }
                     *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *ui_state.b1crpos, coorarr, ui_state.spdlinear));
                 }
-                else if (ui_state.movTypes[jn] == 4) { continue; } // skip as mid point
+                else if (ui_state.movTypes[jn] == 3) { continue; } // Skip as mid point
             }
+            *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+            *ui_state.tpstatus = controller->MotionManager->MotionStart();
         }
     }
   
@@ -189,17 +192,29 @@ namespace nymrobot {
         ImGui::SetNextItemWidth(80);
         ImGui::InputInt("##", &ui_state.coumove, 1, 2);
         if (ui_state.coumove < 1) { ui_state.coumove = 1; }; ImGui::SameLine();
-        ui_state.START_Flag = ImGui::Button("Start"); ImGui::SameLine();
-
-        if (ImGui::Button(ui_state.lineshpath ? "Path On" : "Path Off")) {
-            ui_state.lineshpath = !ui_state.lineshpath; // Toggle MovePath
-            if (ui_state.lineshpath) { *sttlogs << "Render the Move Path"; }
-            else { *sttlogs << "Stop the Move Path"; proMeshRb->delete_byname("movepath__SKIP__"); }
-        }
+        ui_state.START_Flag = ImGui::Button("Start (R)"); ImGui::SameLine();
         
-        ImGui::SameLine();
+        if (ImGui::BeginPopupContextItem("RightStart", ImGuiPopupFlags_MouseButtonRight)) 
+        { 
+            if (ImGui::MenuItem((ui_state.SharedMemoryFlag?"Stop SharedMemory" : "start SharedMemory")))
+            {
+                ui_state.SharedMemoryFlag = !ui_state.SharedMemoryFlag;
+                if (ui_state.SharedMemoryFlag) { *sttlogs << "Start Shared Memory"; }
+                else { *sttlogs << "Stop Shared Memory"; }
 
-        shmdata->getter_6pos(get6pos);
+            }
+            if (ImGui::MenuItem(ui_state.lineshpath? "Hide Path": "Show Path"))
+            {
+                ui_state.lineshpath = !ui_state.lineshpath;
+                if (ui_state.lineshpath) { *sttlogs << "Render the Move Path"; }
+                else { *sttlogs << "Stop the Move Path"; proMeshRb->delete_byname("movepath__SKIP__"); }
+            }
+            ImGui::EndPopup();
+        }
+
+        ImGui::SameLine();
+        if (ui_state.SharedMemoryFlag)
+        { shmdata->getter_6pos(get6pos); }
         if (ui_state.rbpos.size() < get6pos.size()) {
             ui_state.coumove = get6pos.size();
             ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
@@ -220,10 +235,9 @@ namespace nymrobot {
             if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
 
             *ui_state.tpstatus = controller->MotionManager->ClearAllTrajectory();
-            *ui_state.tpstatus = controller->MotionManager->ClearGroupTrajectory(ControlGroupId::R1);
             controller->ControlCommands->SetServos(SignalStatus::OFF);
             *ui_state.tpstatus = controller->MotionManager->MotionStart();
-            *sttlogs << "trying to clear trajectory";
+            *sttlogs << "Trying to clear trajectory";
         }
         ImGui::SameLine();
         if (ImGui::Button("Home") && status.StatusCode == 0)
@@ -328,9 +342,8 @@ namespace nymrobot {
             });
 
         if (isOutOfLimit && stateData.isRunning) {
-            controller->MotionManager->MotionStop();
+            controller->MotionManager->MotionStop(true);
             controller->MotionManager->ClearAllTrajectory();
-            controller->MotionManager->ClearGroupTrajectory(ControlGroupId::R1);
             controller->ControlCommands->SetServos(SignalStatus::OFF);
             *sttlogs << "Error: Joint angle is out of limit\n\t Let use Pendant to move the robot to the ";
         }
