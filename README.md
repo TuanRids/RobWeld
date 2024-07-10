@@ -1,4 +1,4 @@
-# Robot Control Project with Vision and Lidar using OpenGL
+# Robot Welding with Machine Vision and Lidar using OpenGL
 
 ## Overview
 
