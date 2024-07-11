@@ -4,7 +4,7 @@
 int main(void)
 {
 
-  FreeConsole();
+  //FreeConsole();
 
   auto app = std::make_unique<Application>("RoboSim");
   app->loop();

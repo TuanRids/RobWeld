@@ -101,9 +101,9 @@ namespace nelems {
         void createGridSys(float size, float step);
 
         // ************** Check and get pointer **************
-        std::shared_ptr<nelems::oMesh> get_mesh_ptr(int j);
-        void get_mesh_ptr(int& j, std::shared_ptr<nelems::oMesh>& mesh);
-        void get_mesh_ptr(long long ids, std::shared_ptr<nelems::oMesh>& mesh);
+        // std::shared_ptr<nelems::oMesh> get_mesh_ptr(int j);
+        //void get_mesh_ptr(int& j, std::shared_ptr<nelems::oMesh>& mesh);
+        //void get_mesh_ptr(long long ids, std::shared_ptr<nelems::oMesh>& mesh);
         bool get_mesh_byname(const std::string& name, std::shared_ptr<nelems::oMesh>& mesh);
         virtual ~mMesh() { clear_meshes(); }
         size_t size() { return mMeshes->size(); }

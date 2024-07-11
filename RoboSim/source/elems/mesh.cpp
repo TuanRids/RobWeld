@@ -441,14 +441,14 @@ namespace nelems {
             mCoorSystem->init();
         }
     }
-
+    /*
     std::shared_ptr<nelems::oMesh> mMesh::get_mesh_ptr(int j) {
         if (j < 0 || j >= mMeshes->size()) {
             return nullptr;
         }
         return (*mMeshes)[j];
     }
-
+    
     void mMesh::get_mesh_ptr(int& j, std::shared_ptr<nelems::oMesh>& mesh) {
         if (j < 0 || j >= mMeshes->size()) {
             mesh = nullptr;
@@ -466,7 +466,7 @@ namespace nelems {
         }
         mesh = nullptr;
     }
-
+    */
     bool mMesh::get_mesh_byname(const std::string& name, std::shared_ptr<nelems::oMesh>& mesh)
     {
 		for (const auto& m : *mMeshes) {

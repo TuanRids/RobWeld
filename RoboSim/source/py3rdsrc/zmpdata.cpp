@@ -102,6 +102,14 @@ void zmpdata::Display_info()
             image_size.y = winsize.x / scale_ratio;
         }
         ImGui::Image((void*)(intptr_t)image_texture_below, image_size);
+        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+            ImGui::OpenPopup("Image Double-clicked");
+        }
+        if (ImGui::BeginPopup("Image Double-clicked")) {
+            ImGui::Text("You have double-clicked the image!");
+            ImGui::EndPopup();
+        }
+
     }
     ImGui::End();
 }

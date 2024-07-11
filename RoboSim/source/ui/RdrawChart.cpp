@@ -7,23 +7,28 @@ namespace nui
 {
     void RdrawChart::render()
     {
-        if (dChartFlag)
-        {
-            static std::unique_ptr<nui::RdrawChart> drawChart = std::make_unique<nui::RdrawChart>();
-            static std::map<std::string, std::pair<float, std::string>> data = {
-                {"Weld A", {60.2f , " This section involves the initial welding process to join metal parts together."}},
-                {"Weld B", {75.5f , " This section includes the quality inspection and verification of the welded joints."}},
-                {"Weld C", {85.4f , " This section covers the secondary welding for reinforcing the initial joints."}},
-                {"Weld D", {93.0f , " This section focuses on cooling and setting the welded parts to ensure stability."}},
-                {"Weld E", {66.3f , " This section involves post-welding treatments such as grinding and smoothing the surfaces."}},
-                {"Weld F", {96.7f , " This section is dedicated to the final inspection and certification of the welded components."}}
-            };
-
-            drawChart->DrawBarChart(data);
-            drawChart->DrawLineChart(data);
-            drawChart->DrawPieChart(data);
-            drawChart->DrawBarLineChart(data);
-        }
+        
+        static std::unique_ptr<nui::RdrawChart> drawChart = std::make_unique<nui::RdrawChart>();
+        static std::map<std::string, std::pair<float, std::string>> data = {
+            {"Weld A", {60.2f , " This section involves the initial welding process to join metal parts together."}},
+            {"Weld B", {75.5f , " This section includes the quality inspection and verification of the welded joints."}},
+            {"Weld C", {85.4f , " This section covers the secondary welding for reinforcing the initial joints."}},
+            {"Weld D", {93.0f , " This section focuses on cooling and setting the welded parts to ensure stability."}},
+            {"Weld E", {66.3f , " This section involves post-welding treatments such as grinding and smoothing the surfaces."}},
+            {"Weld F", {96.7f , " This section is dedicated to the final inspection and certification of the welded components."}}
+        };
+        ImGui::Begin("Chart");
+        ImGui::BeginGroup();
+        ImVec2 windowSize = ImGui::GetWindowSize();
+        /*ImGui::BeginChild("BarChart", ImVec2(0, windowSize.y * 0.3f));
+        drawChart->DrawBarChart(data); ImGui::EndChild();*/
+        ImGui::BeginChild("LineChart", ImVec2(windowSize.x*0.7f, windowSize.y * 0.4f));
+        drawChart->DrawLineChart(data); ImGui::EndChild(); ImGui::SameLine();
+        ImGui::BeginChild("PieChart", ImVec2(windowSize.x * 0.5f, windowSize.y * 0.4f));
+        drawChart->DrawPieChart(data); ImGui::EndChild();
+        ImGui::BeginChild("BarLineChart", ImVec2(windowSize.x, windowSize.y * 0.4f)); 
+        drawChart->DrawBarLineChart(data); ImGui::EndChild(); ImGui::SameLine();
+        ImGui::EndGroup(); ImGui::End();
     }
 
     RdrawChart::RdrawChart() {}
@@ -47,8 +52,7 @@ namespace nui
 
     void RdrawChart::DrawBarChart(const std::map<std::string, std::pair<float, std::string>>& data)
     {
-        if (ImGui::Begin("Bar Chart"))
-        {
+        
             ImVec2 windowSize = ImGui::GetContentRegionAvail(); // Get the available content region size
 
             float maxBarHeight = windowSize.y - 40; // Leave some space for the x-axis
@@ -85,15 +89,13 @@ namespace nui
                 ++i;
             }
 
-            ImGui::End();
-        }
+        
     }
 
 
     void RdrawChart::DrawLineChart(const std::map<std::string, std::pair<float, std::string>>& data)
     {
-        if (ImGui::Begin("Line Chart"))
-        {
+       
             ImVec2 windowSize = ImGui::GetContentRegionAvail(); // Get the available content region size
 
             float maxChartHeight = windowSize.y - 40; // Leave some space for the x-axis
@@ -147,14 +149,11 @@ namespace nui
                 ++i;
             }
 
-            ImGui::End();
-        }
     }
 
     void RdrawChart::DrawBarLineChart(const std::map<std::string, std::pair<float, std::string>>& data)
     {
-        if (ImGui::Begin("Bar and Line Chart"))
-        {
+        
             ImVec2 windowSize = ImGui::GetContentRegionAvail(); // Get the available content region size
 
             float maxChartHeight = windowSize.y - 40; // Leave some space for the x-axis
@@ -224,15 +223,12 @@ namespace nui
                 ++i;
             }
 
-            ImGui::End();
-        }
     }
 
 
     void RdrawChart::DrawPieChart(const std::map<std::string, std::pair<float, std::string>>& data)
     {
-        if (ImGui::Begin("Pie Chart"))
-        {
+        
             ImVec2 windowSize = ImGui::GetContentRegionAvail(); // Get the available content region size
             float radius = (std::min(windowSize.x, windowSize.y) - 40) / 2; // Ensure the pie chart fits within the available space
             ImVec2 center(ImGui::GetCursorScreenPos().x + radius, ImGui::GetCursorScreenPos().y + radius);
@@ -277,8 +273,6 @@ namespace nui
                 ++i;
             }
 
-            ImGui::End();
-        }
     }
 
 }

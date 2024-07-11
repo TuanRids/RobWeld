@@ -33,7 +33,7 @@
 /// - b1crpos: (std::unique_ptr<PositionData>) A unique pointer to the current position data.
 ///            Initialized with a new PositionData object.
 struct UIState {
-    int coumove{ 3 };
+    unsigned int coumove{ 3 };
     bool START_Flag{ false };
     bool lineshpath{ true };
     // 1: Linear, 2: Circular, 3: Joint 4: Mid-Cir
@@ -54,6 +54,7 @@ namespace nymrobot {
 
     class ymconnect {
     private:
+        static UIState ui_state;
         StatusInfo status;
         MotomanController* controller;
         UINT32 restime = 10;
@@ -62,7 +63,7 @@ namespace nymrobot {
 
         static std::vector<std::vector<float>> get6pos; // Get 6 positions from shared memory
 
-        float angle[6];
+        std::array<float,6> angle;
         nelems::mMesh* proMeshRb = nullptr;
         std::stringstream resultmsg;
         nui::StatusLogs* sttlogs;

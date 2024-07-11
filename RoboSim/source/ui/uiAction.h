@@ -86,9 +86,9 @@ namespace nui
 			std::mt19937 gen(rd());
 			std::uniform_real_distribution<float> dis(0.3f, 0.7f); // Uniform distribution between 0 and 1
 
-			for (int i{ 0 }; i < proMesh->size(); i++)
+			for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
 			{
-				mesh = proMesh->get_mesh_ptr(i);
+				auto mesh = *it;
 				if (mesh->selected)
 				{
 					// Set oMaterial.mColor to a random color using the uniform distribution

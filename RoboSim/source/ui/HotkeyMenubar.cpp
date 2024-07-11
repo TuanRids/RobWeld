@@ -172,11 +172,6 @@ namespace nui {
             lastPressTime = currentTime; waitloop[0] = true;
             uiaction.MoveOb_uiAction(waitloop[0]);
         }
-        if (glfwGetKey(mWindow, GLFW_KEY_R) == GLFW_PRESS && (lCtr || rCtr) && tdelay || waitloop[1])
-        {
-            lastPressTime = currentTime; waitloop[1] = true;
-            uiaction.RotateOb_uiAction(waitloop[1]);
-        }
 
         if (glfwGetKey(mWindow, GLFW_KEY_Z) == GLFW_PRESS && (lCtr || rCtr) && tdelay)
         { lastPressTime = currentTime; uiaction.undocmd(); }

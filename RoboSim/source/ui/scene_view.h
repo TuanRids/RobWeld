@@ -46,7 +46,7 @@ namespace nui
             mFrameBuffer = std::make_unique<nrender::OpenGL_FrameBuffer>();
             mFrameBuffer->create_buffers(800, 600);
             mShader = std::make_unique<nshaders::Shader>();
-            mShader->load("shaders/vs.shader", "shaders/fs_pbr.shader");
+            mShader->load("shaders/vs.vert", "shaders/fs_pbr.frag");
             mLight = std::make_unique<nelems::Light>();
             mCamera = std::make_unique<nelems::Camera>(Fov, Aspect, Near, Far);
 

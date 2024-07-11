@@ -26,16 +26,16 @@ namespace nui
     void SceneView::set_rotation_center()
     {
         std::shared_ptr<nelems::oMesh> selMesh;
-        for (int i = 0; i < rdMesh->size(); i++)
+        for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
         {
-            selMesh = rdMesh->get_mesh_ptr(i);
+            auto mesh = *it;
             if (selMesh->selected)
             {
                 mCamera->set_rotation_center(selMesh->oMaterial.position);
                 return;
             }
         }
-        mCamera->set_rotation_center({ 0.0f,0.0f,0.0f });
+        mCamera->set_rotation_center({0,0,0 });
     }
 
     void SceneView::setFov(float newFov)

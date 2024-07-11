@@ -12,7 +12,7 @@
 #include "chrono"
 
 #include "thread"
-
+#include "mutex"
 using namespace Eigen;
 
 namespace nui
@@ -22,6 +22,7 @@ namespace nui
     {
         if (!proMesh) {proMesh = &nelems::mMesh::getInstance();}
 
+        mRobot->render();
 
         static nui::HotkeyMenubar hotkey_manage;
         hotkey_manage.mMenuBar(mWindow);
@@ -31,17 +32,16 @@ namespace nui
         
         ImGui::Begin("Properties");
         layer_frame(scene_view); // define selectedID
-        obInfo_frame(); // show object info such as vertices and vertex 
         coordinate_frame(); // show the position
         material_frame(scene_view); // show material properties
         camera_frame(scene_view); // show camera properties
         ImGui::End();
 
-
+        obInfo_frame(); // show object info such as vertices and vertex 
         ImGui::Begin("StatusLogs", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-        ImGui::TextWrapped(sttlogs->getStatus().c_str());        ImGui::End();
+        ImGui::TextWrapped(sttlogs->getStatus().c_str());
+        ImGui::End();
 
-        mRobot->render();
 
         // sh_performance();
 
@@ -97,10 +97,11 @@ namespace nui
                 ImGui::TableSetupColumn("Hide");
                 ImGui::TableHeadersRow();
 
-                for (int i = 0; i < proMesh->size(); i++)
+                int i = -1; int j = -1;
+                for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
                 {
-                    auto mesh = proMesh->get_mesh_ptr(i);
-                    if (check_skip(mesh->oname)) { continue; }
+                    auto mesh = *it; i++;
+                    if (check_skip(mesh)) { continue; }
 
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
@@ -113,11 +114,11 @@ namespace nui
                             int start = (lastSelectedIndex < i) ? lastSelectedIndex : i;
                             int end = (lastSelectedIndex > i) ? lastSelectedIndex : i;
                             bool selectRange = !selectionStates[start];
-
-                            for (int j = start; j <= end; j++)
+                            for (auto it1 = proMesh->getMesh()->begin(); it1 != proMesh->getMesh()->end(); it1++)
                             {
+                                j++;
                                 selectionStates[j] = selectRange;
-                                auto mesh = proMesh->get_mesh_ptr(j);
+                                auto mesh = *it;
                                 mesh->selected = selectRange;
                                 if (selectRange) {
                                     selectedMeshes.insert(mesh->ID);
@@ -176,11 +177,10 @@ namespace nui
             //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 0.6f, 1.0f)); // Set text color to white and 50% transparent
         //elsei
         
-        for (int i = 0; i < proMesh->size(); i++) {
-            mesh = proMesh->get_mesh_ptr(i);
-            if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
-            if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
-            
+        for (auto it = proMesh->getMesh()->begin(); it!= proMesh->getMesh()->end(); it++)
+        {
+            auto mesh = *it;
+            if (check_skip(mesh)) { continue; }            
             ImVec4 color = mesh->selected ? ImVec4(1.0f, 0.0f, 0.0f, 1.0f) : ImVec4(0.27f, 0.78f, 0.69f, 1.0f);
             ImGui::TextColored(color, "%s: %lld - %lld", mesh->oname, mesh->mVertices.size(), mesh->mVertexIndices.size());
         }
@@ -189,19 +189,18 @@ namespace nui
     void Property_Panel::coordinate_frame()
     {
         static float posrot_obj[7]; static long long PreObId = 0;
-        static char aname[255];
+        static char aname[255]; 
         if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen)) //&&mesh
         {
             bool pressOk = ImGui::Button("UPDATE");
             if (proMesh->check_selected() == 1)
             {
-                
-                for (int i = 0; i < proMesh->size(); i++)
+                for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
                 {
-                    mesh = proMesh->get_mesh_ptr(i);
+                    auto mesh = *it;
                     if (mesh->selected && PreObId != mesh->ID)
                     {
-                        if (check_skip(mesh->oname)) { continue; }
+                        if (check_skip(mesh)) { continue; }
                         PreObId = mesh->ID;
                         strcpy_s(aname, sizeof(aname), mesh->oname);
                         posrot_obj[0] = mesh->oMaterial.position.x;
@@ -236,35 +235,37 @@ namespace nui
 
                 if (pressOk)
                 {
-                    for (int i = 0; i < proMesh->size(); i++)
+                    for (auto it = proMesh->getMesh()->begin(); it!= proMesh->getMesh()->end(); it++)
                     {
-                        mesh = proMesh->get_mesh_ptr(i);
-                        if (check_skip(mesh->oname)) { continue; }
-                        if (mesh->selected) { break; }
-                    }
-                    float movex = posrot_obj[0] - mesh->oMaterial.position.x;
-                    float movey = posrot_obj[1] - mesh->oMaterial.position.y;
-                    float movez = posrot_obj[2] - mesh->oMaterial.position.z;
-                    float rotatex = posrot_obj[3] - mesh->oMaterial.rotation.x;
-                    float rotatey = posrot_obj[4] - mesh->oMaterial.rotation.y;
-                    float rotatez = posrot_obj[5] - mesh->oMaterial.rotation.z;
-                    if (std::abs(movex) > 0.01 || std::abs(movey) > 0.01 || std::abs(movez) > 0.01)
-                    {
-                        uiaction.MoveOb_uiAction(movex, movey, movez);
-                    }
-                    if (std::abs(rotatex) > 0.01 || std::abs(rotatey) > 0.01 || std::abs(rotatez) > 0.01)
-                    {
+                        auto mesh = *it; 
+                        if (!check_skip(mesh)) {
+                            if (mesh->selected == true) {  
+                                float movex = posrot_obj[0] - mesh->oMaterial.position.x;
+                                float movey = posrot_obj[1] - mesh->oMaterial.position.y;
+                                float movez = posrot_obj[2] - mesh->oMaterial.position.z;
+                                float rotatex = posrot_obj[3] - mesh->oMaterial.rotation.x;
+                                float rotatey = posrot_obj[4] - mesh->oMaterial.rotation.y;
+                                float rotatez = posrot_obj[5] - mesh->oMaterial.rotation.z;
+                                if (std::abs(movex) > 0.01 || std::abs(movey) > 0.01 || std::abs(movez) > 0.01)
+                                {
+                                    uiaction.MoveOb_uiAction(movex, movey, movez);
+                                }
+                                if (std::abs(rotatex) > 0.01 || std::abs(rotatey) > 0.01 || std::abs(rotatez) > 0.01)
+                                {
 
-                        uiaction.RotateOb_uiAction(rotatex, rotatey, rotatez);
-                    }
-                    // reset all posrot & aname;
-                    std::fill_n(posrot_obj, 6, 0.0f);
-                    PreObId = 0;
+                                    uiaction.RotateOb_uiAction(rotatex, rotatey, rotatez);
+                                }
+                                // reset all posrot & aname;
+                                std::fill_n(posrot_obj, 6, 0.0f);
+                                PreObId = 0;
+                            } 
+                        }
+                    }                    
                 }
             }
-            else if (proMesh->check_selected() == 0) { PreObId = 0; }
             else
             {
+                PreObId = 0;
                 static float posrot[7];
                 static char aname[50] = "";
                 ImGui::Text("Name"); ImGui::SameLine(); ImGui::SetNextItemWidth(150);
@@ -289,11 +290,10 @@ namespace nui
                 {
                     if (strlen(aname) != 0 && pressOk)
                     {
-                        // change name if aname is not empty
-                        for (int j = 0; j < proMesh->size(); j++)
+                        for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
                         {
-                            if (check_skip(mesh->oname)) { continue; }
-                            mesh = proMesh->get_mesh_ptr(j);
+                            auto mesh = *it;
+                            if (check_skip(mesh)) { continue; }
                             if (mesh->selected) {
                                 strncpy_s(mesh->oname, aname, sizeof(mesh->oname) - 1);
                                 mesh->oname[sizeof(mesh->oname) - 1] = '\0';
@@ -324,10 +324,10 @@ namespace nui
         if (ImGui::CollapsingHeader("Material", false))
         {
             ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
-            for (int i = 0; i < proMesh->size(); i++)
+            for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
             {
-                mesh = proMesh->get_mesh_ptr(i);
-                if (check_skip(mesh->oname)) { continue; }
+                auto mesh = *it;
+                if (check_skip(mesh)) { continue; }
                 if (mesh->selected == true)
                 {
                     clor = ImVec4(mesh->oMaterial.mColor.x, mesh->oMaterial.mColor.y, mesh->oMaterial.mColor.z, 1.0f);
@@ -340,9 +340,9 @@ namespace nui
             ImGui::ColorEdit3("Color", (float*)&clor); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Metallic", &mlic, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);
-            for (int i = 0; i < proMesh->size(); i++)
+            for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
             {
-                mesh = proMesh->get_mesh_ptr(i);
+                auto mesh = *it;
                 if (mesh->selected == true)
                 {
                     if ((preClor.x != clor.x || preClor.y != clor.y || preClor.z != clor.z || preClor.w != clor.w)) {
@@ -407,10 +407,10 @@ namespace nui
 
         ImGui::End();
     }
-    bool Property_Panel::check_skip(const char(&name)[256])
+    bool Property_Panel::check_skip(const std::shared_ptr<nelems::oMesh>& mesh)
     {
-        if (std::string(name).find("RBSIMBase_") != std::string::npos) { return true; }
-		if (std::string(name).find("__SKIP__") != std::string::npos) { return true; }
+        if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { return true; }
+		if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { return true; }
         return false;
     }
     void Property_Panel::sh_performance()
@@ -461,9 +461,9 @@ namespace nui
         // A - Get base objects if not already retrieved
         if (base[0] == nullptr)
         {
-            for (int i = 0; i < proMesh->size(); i++)
+            for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
             {
-                mesh = proMesh->get_mesh_ptr(i);
+                auto mesh = *it;
                 std::string name = std::string(mesh->oname);
                 if (name.find("RBSIMBase_1") != std::string::npos) { base[0] = std::move(mesh); }
                 else if (name.find("RBSIMBase_2") != std::string::npos) { base[1] = std::move(mesh); }

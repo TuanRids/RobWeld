@@ -270,14 +270,13 @@
     <ClInclude Include="source\pch.h" />
     <ClInclude Include="source\shader\shader_util.h" />
     <ClInclude Include="source\window\window.h" />
-    <ClInclude Include="source\ymrobot\RobotInterface.h" />
     <ClInclude Include="source\ymrobot\ymmotion.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\assimp\LICENSE" />
     <None Include="shaders\fs.shader" />
-    <None Include="shaders\fs_pbr.shader" />
-    <None Include="shaders\vs.shader" />
+    <None Include="shaders\fs_pbr.frag" />
+    <None Include="shaders\vs.vert" />
     <None Include="source\3rdparty\plugins\imgui\LICENSE" />
   </ItemGroup>
   <ItemGroup>

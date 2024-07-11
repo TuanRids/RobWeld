@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 namespace nymrobot {
 
     std::vector<std::vector<float>> ymconnect::get6pos(0, std::vector<float>(6, 0.0f));
-
+    UIState ymconnect::ui_state{};
     ymconnect::~ymconnect() {
         if (status.StatusCode == 0) {
             disconnect_robot(false);
@@ -70,32 +70,24 @@ namespace nymrobot {
         if (!proMeshRb) { proMeshRb = &nelems::mMesh::getInstance(); }
 
         connect_robot();
+        setup_MOVE_ui(ui_state);
+        move_robot();
+        read_robot();
 
         static int x{ 200 }, y{ 400 };
         static float pos_x, pos_y,sizex,sizey;
         nui::FrameManage::getViewportSize(pos_x, pos_y);
         nui::FrameManage::get3DSize(sizex, sizey);
-        ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ sizex*0.83, pos_y + sizey * 0.25)); // Set the position of the frame
-        ImGui::SetNextWindowSize(ImVec2(sizex*0.15, sizey*0.73)); // Set the size of the frame
-        ImGui::Begin("Robot Status", nullptr,
+        ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ sizex*0.83f, pos_y + sizey * 0.25f)); // Set the position of the frame
+        ImGui::SetNextWindowSize(ImVec2(sizex*0.15f, sizey*0.73f)); // Set the size of the frame
+        ImGui::Begin("Robot Status:", nullptr,
             ImGuiWindowFlags_NoDocking | // Cannot be docked
             ImGuiWindowFlags_NoBackground | // Do not display background
             ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
-
-        /*if (ImGui::Button("Clear Fault") && status.StatusCode == 0) {
-            resultmsg.str(" ");
-            std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
-            *temptstt = controller->Faults->ClearAllFaults();
-            if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
-            
-        }*/
-        move_robot();
-        read_robot();
         ImGui::Separator();
         if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }
         ImGui::End();
     }
-
 
     struct JointMotionFunctor {auto operator()(ControlGroupId groupId, PositionData& posData, float speed) const {
             return JointMotion(groupId, posData, speed);
@@ -105,8 +97,6 @@ namespace nymrobot {
         }};
 
     void ymconnect::move_robot() {
-        static UIState ui_state;
-        setup_MOVE_ui(ui_state);
         static auto LinepathStart = std::chrono::high_resolution_clock::now();
 
         double Linepathelapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>
@@ -115,13 +105,12 @@ namespace nymrobot {
         // RENDER LINE PATH
         if (ui_state.lineshpath && Linepathelapsed_seconds > 0.4f) {
             LinepathStart = std::chrono::high_resolution_clock::now();
-            std::shared_ptr<nelems::oMesh> mesh; static bool newmesh_flag = false;
-            for (int i = 0; i < proMeshRb->size(); i++)
+            std::shared_ptr<nelems::oMesh> mesh = nullptr; static bool newmesh_flag = false;
+            for (auto &it: *(proMeshRb->getMesh()))
             {
-                mesh = proMeshRb->get_mesh_ptr(i);
-                if (std::string(mesh->oname).find("movepath__SKIP") != std::string::npos) {
+                if (std::string(it->oname).find("movepath__SKIP") != std::string::npos) {
+                    mesh = it;
                     break; }
-                else { mesh = nullptr; }
             }
 
             if (mesh == nullptr) {
@@ -135,9 +124,10 @@ namespace nymrobot {
                 mesh->mVertexIndices.clear();
                 mesh->mVertices.clear();
             }
-            nelems::VertexHolder vertex{};
-            for (int i = 0; i < ui_state.coumove; ++i) {
-                vertex.mPos = glm::vec3(ui_state.rbpos[i][0], ui_state.rbpos[i][1], ui_state.rbpos[i][2] ); 
+            nelems::VertexHolder vertex{}; unsigned int i = 0;
+            for (auto it = ui_state.rbpos.begin(); it != ui_state.rbpos.end(); it++,i++) {
+            //for (unsigned int i = 0; i < ui_state.coumove; ++i) {
+                vertex.mPos = glm::vec3((*it)[0], (*it)[1], (*it)[2]);
                 vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
                 mesh->add_vertex(vertex);
                 if (i > 0) {
@@ -146,7 +136,7 @@ namespace nymrobot {
                 }
             }
             mesh->init();
-            mesh->selected = true;
+            // mesh->selected = true;
             if (newmesh_flag) { proMeshRb->add_mesh(mesh); newmesh_flag = false; }
         }
 
@@ -154,30 +144,26 @@ namespace nymrobot {
         if (ui_state.START_Flag)
         {
             *sttlogs << "Start Moving to " + std::to_string(ui_state.coumove) + " points.";
-            for (int jn = 0; jn < ui_state.coumove; ++jn) {
-                // Setting the position
+            for (auto it = ui_state.movTypes.begin(); it != ui_state.movTypes.end(); it++) {
                 ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
-                for (int ic = 0; ic < 6; ++ic) {
-                    ui_state.b1crpos->axisData[ic] = ui_state.rbpos[jn][ic];
-                }
-                // Execute 0: Linear, 1: Circular, 2: Joint, 3: Mid-Cir
-                if (ui_state.movTypes[jn] == 0)
+                int index = std::distance(ui_state.movTypes.begin(), it);
+                std::copy(ui_state.rbpos[index].begin(), ui_state.rbpos[index].end(), ui_state.b1crpos->axisData.begin());
+
+                if ((*it) == 0)
                 {
                     *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(LinearMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdlinear));
                 }
-                else if (ui_state.movTypes[jn] == 2)
+                else if ((*it) == 2)
                 {
                     *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdjoint));
                 }
-                else if (ui_state.movTypes[jn] == 1) // Circular
+                else if ((*it) == 1) // Circular
                 {
                     CoordinateArray coorarr;
-                    for (int im = 0; im < 6; ++im) {
-                        coorarr[im] = ui_state.rbpos[jn - 1][im]; // Corrdinate of the previous point
-                    }
+                    std::copy(ui_state.rbpos[index-1].begin(), ui_state.rbpos[index - 1].end(), coorarr.begin());                    
                     *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *ui_state.b1crpos, coorarr, ui_state.spdlinear));
                 }
-                else if (ui_state.movTypes[jn] == 3) { continue; } // Skip as mid point
+                else if ((*it) == 3) { continue; } // Skip as mid point
             }
             *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *ui_state.tpstatus = controller->MotionManager->MotionStart();
@@ -190,7 +176,7 @@ namespace nymrobot {
         ImGui::Begin("Attributes: ");
         static auto LinepathStart = std::chrono::high_resolution_clock::now();
         ImGui::SetNextItemWidth(80);
-        ImGui::InputInt("##", &ui_state.coumove, 1, 2);
+        ImGui::InputScalar("##", ImGuiDataType_U32, &ui_state.coumove, NULL, NULL, NULL, ImGuiInputTextFlags_None);
         if (ui_state.coumove < 1) { ui_state.coumove = 1; }; ImGui::SameLine();
         ui_state.START_Flag = ImGui::Button("Start (R)"); ImGui::SameLine();
         
@@ -221,10 +207,8 @@ namespace nymrobot {
             ui_state.movTypes.resize(get6pos.size(), 1);
         }
         if (get6pos.size() > 0) {
-            for (size_t i = 0; i < get6pos.size(); ++i) {
-                for (size_t j = 0; j < 6; ++j) {
-                    ui_state.rbpos[i][j] = get6pos[i][j];
-                }
+            for (auto it = get6pos.begin(); it != get6pos.end(); ++it) {
+                ui_state.rbpos[std::distance(get6pos.begin(), it)] = *it;
             }
         }
         ImGui::SameLine(); // Check the trajectory
@@ -260,41 +244,47 @@ namespace nymrobot {
 
         std::vector<const char*> selection = { "Linear", "Circular", "Joint","Mid-Cur"};
 
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 100.0f);
+        ImGui::Text(" X:"); ImGui::SameLine(0.0f, 40.0f);
+        ImGui::Text(" Y:"); ImGui::SameLine(0.0f, 40.0f);
+        ImGui::Text(" Z:"); ImGui::SameLine(0.0f, 40.0f);
+        ImGui::Text("Rx:"); ImGui::SameLine(0.0f, 40.0f);
+        ImGui::Text("Ry:"); ImGui::SameLine(0.0f, 40.0f);
+        ImGui::Text("Rz:"); ImGui::SameLine(0.0f, 40.0f);
+        ImGui::Text("Type:");
+
         for (int j = 0; j < ui_state.coumove; ++j) {
             if (ui_state.rbpos.size() < static_cast<size_t>(ui_state.coumove)) {
                 ui_state.rbpos.resize(ui_state.coumove, std::vector<float>(6, 0.0f));
                 ui_state.movTypes.resize(ui_state.coumove, 0);
             }
             if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
-                for (int i = 0; i < 6; ++i) {
-                    *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
-                    *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
-                    ui_state.rbpos[j][i] = ui_state.b1origi->axisData[i];
-                }
+                *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
+                *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
+                std::copy(ui_state.b1origi->axisData.begin(), ui_state.b1origi->axisData.end(), ui_state.rbpos[j].begin());
+                //ui_state.rbpos[j] = ui_state.b1origi->axisData;
                 *sttlogs << "Update the Original Position for " << std::to_string(j);
             }
             ImGui::SameLine();
-            if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
-                for (int i = 0; i < 6; ++i) {
-                    *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1crpos);
-                    ui_state.rbpos[j][i] = ui_state.b1crpos->axisData[i];
-                }
+            if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && status.StatusCode == 0) {                
+                *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1crpos);
+                std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.end(), ui_state.rbpos[j].begin());
+                //ui_state.rbpos[j][i] = ui_state.b1crpos->axisData[i];           
                 *sttlogs << "Update the Current Position for " + std::to_string(j);
             }
-            ImGui::SameLine();
-            ImGui::Text(" X:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##X" + std::to_string(j)).c_str(), &ui_state.rbpos[j][0], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-            ImGui::Text(" Y:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##Y" + std::to_string(j)).c_str(), &ui_state.rbpos[j][1], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-            ImGui::Text(" Z:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##Z" + std::to_string(j)).c_str(), &ui_state.rbpos[j][2], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-            ImGui::Text("Rx:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RX" + std::to_string(j)).c_str(), &ui_state.rbpos[j][3], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-            ImGui::Text("Ry:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &ui_state.rbpos[j][4], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-            ImGui::Text("Rz:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &ui_state.rbpos[j][5], 0.0f, 0.0f, "%.2f"); ImGui::SameLine();
-            ImGui::Text("Type:"); ImGui::SameLine(); ImGui::SetNextItemWidth(70);
+            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##X" + std::to_string(j)).c_str(), &ui_state.rbpos[j][0], 0.0f, 0.0f, "%.2f");
+            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##Y" + std::to_string(j)).c_str(), &ui_state.rbpos[j][1], 0.0f, 0.0f, "%.2f");
+            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##Z" + std::to_string(j)).c_str(), &ui_state.rbpos[j][2], 0.0f, 0.0f, "%.2f"); 
+            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##RX" + std::to_string(j)).c_str(), &ui_state.rbpos[j][3], 0.0f, 0.0f, "%.2f"); 
+            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &ui_state.rbpos[j][4], 0.0f, 0.0f, "%.2f"); 
+            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &ui_state.rbpos[j][5], 0.0f, 0.0f, "%.2f"); 
+            ImGui::SameLine(); ImGui::SetNextItemWidth(70);
             std::string label = "##movtyp" + std::to_string(j);
             ImGui::Combo(label.c_str(), &ui_state.movTypes[j], selection.data(), selection.size());
         }
@@ -332,10 +322,7 @@ namespace nymrobot {
 
         tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, raxisData);
         tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, raxisData, KinematicConversions::PulseToJointAngle, rjointangle);
-
-        for (int i = 0; i < 6; ++i) {
-            angle[i] = rjointangle.axisData[i];
-        }
+        std::copy(rjointangle.axisData.begin(), rjointangle.axisData.end(), angle.begin());
 
         bool isOutOfLimit = std::any_of(std::begin(angle), std::end(angle), [this, i = 0](float a) mutable {
             return a < limitangle[i][0] || a > limitangle[i++][1];

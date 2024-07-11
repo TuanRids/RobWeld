@@ -46,9 +46,9 @@ public:
     {
         if (proMesh)
         {
-            for (int i{ 0 }; i < proMesh->size(); i++)
+            for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
             {
-                target = proMesh->get_mesh_ptr(i);
+                auto target = *it;
                 if (target->selected)
                 {
                     return;

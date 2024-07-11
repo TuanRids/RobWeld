@@ -10,9 +10,9 @@ namespace ncommand
         std::string tempLog, list_ids, lastIDs;
         if (reverse == 1) { lastIDs = cmdIDs.back(); }
         else if (reverse == 2){ lastIDs = cmdIDs_redo.back(); }
-        for (int i = 0; i < proMesh->size(); i++)
+        for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
         {
-            mesh = proMesh->get_mesh_ptr(i);
+            auto mesh = *it;
             if (reverse == 0)
             {
                 if (!(mesh->selected)) { continue; }
@@ -61,9 +61,9 @@ namespace ncommand
         std::string tempLog, list_ids, lastIDs;
         if (reverse == 1) { lastIDs = cmdIDs.back(); }
         else if (reverse == 2) { lastIDs = cmdIDs_redo.back(); }
-        for (int i = 0; i < proMesh->size(); i++)
+        for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
         {
-            mesh = proMesh->get_mesh_ptr(i);
+            auto mesh = *it;
             if (reverse == 0)
             {
                 if (!(mesh->selected)) { continue; }

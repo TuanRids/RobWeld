@@ -62,10 +62,9 @@ namespace nutils
             uint32_t numMeshes = static_cast<uint32_t>(proMesh.size());
             file.write(reinterpret_cast<char*>(&numMeshes), sizeof(numMeshes));
 
-            for (int i = 0; i < proMesh.size(); ++i)
+            for (auto it = proMesh.getMesh()->begin(); it != proMesh.getMesh()->end(); it++)
             {
-                std::shared_ptr<nelems::oMesh> oMesh;
-                oMesh = proMesh.get_mesh_ptr(i);
+                auto oMesh= *it;
 
                 file.write(reinterpret_cast<char*>(&oMesh->ID), sizeof(oMesh->ID));
 
