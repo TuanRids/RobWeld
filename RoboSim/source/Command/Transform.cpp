@@ -16,8 +16,6 @@ namespace ncommand
             if (reverse == 0)
             {
                 if (!(mesh->selected)) { continue; }
-                if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
-                if (std::string(mesh->oname).find("__SKIP__") != std::string::npos) { continue; }
                 mesh->move(mx, my, mz);
                 cmdIDs.push_back(std::to_string(mesh->ID));
                 cmdIDs_redo.clear();
@@ -67,8 +65,6 @@ namespace ncommand
             if (reverse == 0)
             {
                 if (!(mesh->selected)) { continue; }
-                if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
-                if (std::string(mesh->oname).find("__SKIP__") != std::string::npos) { continue; }
                 mesh->rotate(rx, ry, rz);
                 cmdIDs.push_back(std::to_string(mesh->ID));
                 cmdIDs_redo.clear();
@@ -113,7 +109,16 @@ namespace ncommand
 
         if (proMesh->check_selected() > 0)
         {
-            proMesh->delete_selected();
+            auto mMeshes = proMesh->getMesh();
+
+            for (auto& mesh : *mMeshes) {
+                if (mesh->selected) {
+                    mesh->delete_buffers();
+                }
+            }
+            mMeshes->erase(std::remove_if(mMeshes->begin(), mMeshes->end(),
+                [](const std::shared_ptr<nelems::oMesh>& mesh) { return mesh->selected; }), mMeshes->end());
+
             *sttlogs << "Delete Object.";
         }
     }

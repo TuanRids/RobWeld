@@ -5,6 +5,8 @@
 #include <string>
 
 namespace Config {
+
+
     // == path to data ===
     // robot model
 	constexpr const char* PATH_TO_ROBOTEMPLATE =  "RobotStandard//Yaskawa-gp8-113k.fbx";

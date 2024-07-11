@@ -39,23 +39,22 @@ namespace nelems {
         std::vector<unsigned int> mVertexIndices;
 
         std::shared_ptr<nrender::VertexIndexBuffer> mRenderBufferMgr;
+
         //--------------------------------------------------------------------------------
         void init() { mRenderBufferMgr = std::make_shared<nrender::OpenGL_VertexIndexBuffer>(); create_buffers(); }
 
         // create buffers for object to render
         void create_buffers() { mRenderBufferMgr->create_buffers(mVertices, mVertexIndices); }
         // del object buffers
-        void delete_buffers()
-        {
-            if (mRenderBufferMgr != nullptr)
-            { mRenderBufferMgr->delete_buffers(); }
-        }
+        void delete_buffers(){if (mRenderBufferMgr != nullptr){ mRenderBufferMgr->delete_buffers(); }}
+
         //-------------------------------------------------------------------------------- 
         // Transformation Matrix
         void rotate(float angleX, float angleY, float angleZ);
         void rotate(float angleX, float angleY, float angleZ, const glm::vec3 pt_center);
         void move(float offsetX, float offsetY, float offsetZ);
         void applyTransformation(const glm::vec3& center, Eigen::Matrix4f transform);
+
         //--------------------------------------------------------------------------------
         // add vertex to object
         void add_vertex(const VertexHolder& vertex) { mVertices.push_back(vertex); }
@@ -68,6 +67,7 @@ namespace nelems {
         // get vertex indices
         std::vector<unsigned int> get_vertex_indices() { return mVertexIndices; }
         void calculate_normals();
+
         //--------------------------------------------------------------------------------
         void render() { if (hide) { return; } mRenderBufferMgr->draw(static_cast<int>(mVertexIndices.size())); }
         void render_lines() { if (hide) { return; } mRenderBufferMgr->draw_lines(static_cast<int>(mVertexIndices.size())); }
@@ -83,16 +83,11 @@ namespace nelems {
         }
     };
 
-    /*
-    This class is using singleton pattern for creating only 1 instance of mMesh
-    We also use observer pattern to notify the changes to the other classes
-
-    */
+    
     class mMesh {
     public:
         // ************** Load & structure mesh **************
         //load mesh from file
-        bool load_sync(const std::string& filepath);
         bool load(const std::string& filepath, bool robot);
         long long getCurrentTimeMillis(int size);
         void load_specific_mesh(const aiMesh* mesh, oMesh& outMesh);
@@ -101,49 +96,31 @@ namespace nelems {
         void createGridSys(float size, float step);
 
         // ************** Check and get pointer **************
-        // std::shared_ptr<nelems::oMesh> get_mesh_ptr(int j);
-        //void get_mesh_ptr(int& j, std::shared_ptr<nelems::oMesh>& mesh);
-        //void get_mesh_ptr(long long ids, std::shared_ptr<nelems::oMesh>& mesh);
-        bool get_mesh_byname(const std::string& name, std::shared_ptr<nelems::oMesh>& mesh);
-        virtual ~mMesh() { clear_meshes(); }
-        size_t size() { return mMeshes->size(); }
-        void pushback(oMesh mesh) { mMeshes->push_back(std::make_shared<oMesh>(std::move(mesh))); }
         static mMesh& getInstance()
         {
             std::lock_guard<std::mutex> lock(mMutex);
             static mMesh instance;
             return instance;
         }
-        // get address
+        virtual ~mMesh() { clear_meshes(); }
         std::shared_ptr<std::vector<std::shared_ptr<oMesh>>> getMesh() const { return mMeshes; }
+
         int check_selected() {
-            if (!mMeshes) {
-                return 0;
-            }
-            int count = 0;
-            for (const auto& mesh : *mMeshes) {
-                if (mesh->selected) {
-                    if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
-                    if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
-                    count++;
-                    if (count > 1) {
-                        return 2;
-                    }
-                }
-            }
-            return count;
+            if (!mMeshes || mMeshes->empty()) { return 0; }
+            return std::count_if(mMeshes->begin(), mMeshes->end(), [](const std::shared_ptr<oMesh> &mesh)
+                {return mesh->selected; });
         }
-        void set_OBxyz(float length, oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz);
-        void delete_selected();
         void delete_byname(const std::string& delmesh);
         void add_mesh(std::shared_ptr<oMesh> addnewmesh);
-        // setter axis length
         void set_axis_length(const int& length) { axis_length = length; }
+
     private:
         static std::mutex mMutex;
         std::unique_ptr<oMesh> mCoorSystem;
         std::shared_ptr<std::vector<std::shared_ptr<oMesh>>> mMeshes;
-        mMesh() { if (!mMeshes) { mMeshes = std::make_shared<std::vector<std::shared_ptr<oMesh>>>(); } }
         int axis_length{ 1000 };
+
+        mMesh() { if (!mMeshes) { mMeshes = std::make_shared<std::vector<std::shared_ptr<oMesh>>>(); } }
+        void set_OBxyz(float length, oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz);
     };
 }

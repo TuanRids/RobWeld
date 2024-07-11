@@ -23,7 +23,7 @@
     <ProjectGuid>{397C3892-0B5E-4F40-B7D3-728D97AA39A0}</ProjectGuid>
     <RootNamespace>JGL_MeshLoader</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>RoboSim</ProjectName>
+    <ProjectName>RobWeld</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

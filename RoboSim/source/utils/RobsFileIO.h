@@ -59,7 +59,7 @@ namespace nutils
                 return false;
             }
 
-            uint32_t numMeshes = static_cast<uint32_t>(proMesh.size());
+            uint32_t numMeshes = static_cast<uint32_t>(proMesh.getMesh()->size());
             file.write(reinterpret_cast<char*>(&numMeshes), sizeof(numMeshes));
 
             for (auto it = proMesh.getMesh()->begin(); it != proMesh.getMesh()->end(); it++)
@@ -152,7 +152,8 @@ namespace nutils
                 oMesh.init();
 
                 // Add the loaded mesh to the current mesh
-                mesh.pushback(oMesh);
+                mesh.getMesh()->push_back(std::make_shared<nelems::oMesh>(std::move(oMesh)));
+                //mesh.pushback(oMesh); std::make_shared<oMesh>(std::move(mesh)));
             }
             return true;
         }

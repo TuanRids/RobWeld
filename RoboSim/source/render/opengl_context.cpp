@@ -45,11 +45,10 @@ namespace nrender
     // MSAA
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4); // 4x MSAA
+    glfwWindowHint(GLFW_SAMPLES, 8); // 4x MSAA
     glEnable(GL_MULTISAMPLE);
 
     window->set_native_window(glWindow);
-
     if (!glWindow)
     {
       fprintf(stderr, "Error: GLFW Window couldn't be created\n");
@@ -72,17 +71,18 @@ namespace nrender
     }
 
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     return true;
   }
-  //TODO: SET VIEWPORT COLOR    #TODO VIEWPORT COLOR TODO COLOR TODOCOLOR
+  //TODO: SET VIEWPORT COLOR    #TODO VIEWPORT COLOR ZxTODO COLOR TODOCOLOR
   void OpenGL_Context::pre_render()
   {
     glViewport(0, 0, mWindow->Width, mWindow->Height);
 
     std::string theme;     nrender::UIContext::get_theme(theme); //glClearColor(0.14f, 0.15f, 0.18f, 1.0f);
     if (theme == "dark"){glClearColor(0.14f, 0.15f, 0.18f, 1.0f);}
-    else if (theme == "light"){glClearColor(0.3f, 0.3f, 0.3f, 1.0f);}
+    else if (theme == "light"){glClearColor(0.1f, 0.1f, 0.1f, 1.0f);}
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }

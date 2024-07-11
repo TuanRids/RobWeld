@@ -184,38 +184,13 @@ namespace nelems {
 namespace nelems {
     std::mutex nelems::mMesh::mMutex;
 
-    bool mMesh::load_sync(const std::string& filepath) {
-        static std::ifstream file;
-        static std::streampos last_pos = 0;
-
-        if (!file.is_open()) {
-            file.open(filepath, std::ios::binary);
-            if (!file.is_open()) {
-                return false;
-            }
-        }
-
-        file.seekg(last_pos);
-
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-
-        last_pos = file.tellg();
-
-        if (file.eof()) {
-            file.close();
-            last_pos = 0;
-        }
-
-        return true;
-    }
-
     bool mMesh::load(const std::string& filepath, bool robot) {
-        static glm::vec3 color[9] = {
+        /*static glm::vec3 color[9] = {
             glm::vec3(0.1, 0.4, 0.7),
             glm::vec3(0.0, 0.5, 0.0), glm::vec3(1.0, 0.8, 0.2), glm::vec3(0.0, 0.6, 0.4),
             glm::vec3(0.2, 0.1, 0.1), glm::vec3(0.04, 0.04, 0.4), glm::vec3(0.4, 0.1, 0.7)
-        };
+        };*/
+        glm::vec3 color =  glm::vec3(0.04, 0.04, 0.21) ;
         const uint32_t cMeshImportFlags =
             aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices|
             aiProcess_ValidateDataStructure;
@@ -261,7 +236,10 @@ namespace nelems {
                     else
                     {
                         newMesh.changeName(name);
-                        newMesh.oMaterial.mColor = color[color_idx++];
+                        if (name.find("RBSIMBase_6") != std::string::npos){ newMesh.oMaterial.mColor = glm::vec3(0.95f, 0.3f, 0.0f); }
+                        else if (name.find("RBSIMBase_7") != std::string::npos) { newMesh.oMaterial.mColor = glm::vec3(0.0f, 0.7f, 0.0f); }
+
+                        else { newMesh.oMaterial.mColor = color; }
                         name = "RBSIMCenter_" + name.substr(name.find_last_of("_") + 1);
                         newMesh.oMaterial.position = ctMap[name];
                     }
@@ -441,55 +419,7 @@ namespace nelems {
             mCoorSystem->init();
         }
     }
-    /*
-    std::shared_ptr<nelems::oMesh> mMesh::get_mesh_ptr(int j) {
-        if (j < 0 || j >= mMeshes->size()) {
-            return nullptr;
-        }
-        return (*mMeshes)[j];
-    }
-    
-    void mMesh::get_mesh_ptr(int& j, std::shared_ptr<nelems::oMesh>& mesh) {
-        if (j < 0 || j >= mMeshes->size()) {
-            mesh = nullptr;
-            return;
-        }
-        mesh = (*mMeshes)[j];
-    }
 
-    void mMesh::get_mesh_ptr(long long ids, std::shared_ptr<nelems::oMesh>& mesh) {
-        for (const auto& m : *mMeshes) {
-            if (m->ID == ids) {
-                mesh = m;
-                return;
-            }
-        }
-        mesh = nullptr;
-    }
-    */
-    bool mMesh::get_mesh_byname(const std::string& name, std::shared_ptr<nelems::oMesh>& mesh)
-    {
-		for (const auto& m : *mMeshes) {
-			if (std::string(m->oname).find(name) != std::string::npos) {
-				mesh = m;
-				return true;
-			}
-		}
-		mesh = nullptr;
-        return false;
-    }
-
-    void mMesh::delete_selected() {
-        for (auto& mesh : *mMeshes) {
-            if (mesh->selected) {
-                if (std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) { continue; }
-                if (std::string(mesh->oname).find("__SKIP__") != std::string::npos) { continue; }
-                mesh->delete_buffers();
-            }
-        }
-        mMeshes->erase(std::remove_if(mMeshes->begin(), mMeshes->end(),
-            [](const std::shared_ptr<oMesh>& mesh) { return mesh->selected; }), mMeshes->end());
-    }
 
     void mMesh::delete_byname(const std::string& delmesh)
     {
@@ -505,8 +435,6 @@ namespace nelems {
 
         mMeshes->erase(new_end, mMeshes->end());
     }
-
-
 
     void mMesh::add_mesh(std::shared_ptr<oMesh> addnewmesh)
     {

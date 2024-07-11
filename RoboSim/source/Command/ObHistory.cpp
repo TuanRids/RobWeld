@@ -20,16 +20,13 @@ namespace ncommand
             if (commandStack.empty()) {return;}
             auto lastCmd = std::move(commandStack.back());
             lastCmd->execute(cmdIDs,1, cmdIDs_redo);
-
             redoStack.push_back(std::move(lastCmd));
             commandStack.pop_back();
         }
     }
     void ObHistory::redocmd() {
-        // ERROR: REDO MULTIPLE OBJECFTS IS FAILING
         if (!redoStack.empty()) {
             auto lastRedoCmd = std::move(redoStack.back());
-            // Call execute 
             lastRedoCmd->execute( cmdIDs,2, cmdIDs_redo);
             commandStack.push_back(std::move(lastRedoCmd));
             redoStack.pop_back();

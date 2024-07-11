@@ -115,7 +115,7 @@ namespace nui
 			obAction->redocmd();
 		}
 		void SaveToFile() {
-			if (proMesh->size() == 0) {std::cout << "Error: Mesh not loaded" << std::endl;}
+			if (proMesh->getMesh()->size() == 0) { std::cout << "Error: Mesh not loaded" << std::endl; }
 			else { robFileIO.SaveToFile(*proMesh);}}
 		void LoadFromFile() { robFileIO.LoadFromFile(*proMesh);}
 

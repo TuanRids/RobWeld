@@ -126,7 +126,7 @@ namespace nymrobot {
             }
             nelems::VertexHolder vertex{}; unsigned int i = 0;
             for (auto it = ui_state.rbpos.begin(); it != ui_state.rbpos.end(); it++,i++) {
-            //for (unsigned int i = 0; i < ui_state.coumove; ++i) {
+                if (std::distance(ui_state.rbpos.begin(), it) >= ui_state.coumove) { break; }
                 vertex.mPos = glm::vec3((*it)[0], (*it)[1], (*it)[2]);
                 vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
                 mesh->add_vertex(vertex);
@@ -145,6 +145,7 @@ namespace nymrobot {
         {
             *sttlogs << "Start Moving to " + std::to_string(ui_state.coumove) + " points.";
             for (auto it = ui_state.movTypes.begin(); it != ui_state.movTypes.end(); it++) {
+                if (std::distance(ui_state.movTypes.begin(), it) >= ui_state.coumove) { break; }
                 ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
                 int index = std::distance(ui_state.movTypes.begin(), it);
                 std::copy(ui_state.rbpos[index].begin(), ui_state.rbpos[index].end(), ui_state.b1crpos->axisData.begin());
@@ -175,8 +176,8 @@ namespace nymrobot {
         ImGui::Separator();
         ImGui::Begin("Attributes: ");
         static auto LinepathStart = std::chrono::high_resolution_clock::now();
-        ImGui::SetNextItemWidth(80);
-        ImGui::InputScalar("##", ImGuiDataType_U32, &ui_state.coumove, NULL, NULL, NULL, ImGuiInputTextFlags_None);
+        ImGui::SetNextItemWidth(80); int step = 1, faststep = 2;
+        ImGui::InputScalar("##", ImGuiDataType_U32, &ui_state.coumove,  &step, &faststep, NULL, ImGuiInputTextFlags_None);
         if (ui_state.coumove < 1) { ui_state.coumove = 1; }; ImGui::SameLine();
         ui_state.START_Flag = ImGui::Button("Start (R)"); ImGui::SameLine();
         
@@ -202,7 +203,6 @@ namespace nymrobot {
         if (ui_state.SharedMemoryFlag)
         { shmdata->getter_6pos(get6pos); }
         if (ui_state.rbpos.size() < get6pos.size()) {
-            ui_state.coumove = get6pos.size();
             ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
             ui_state.movTypes.resize(get6pos.size(), 1);
         }
@@ -262,14 +262,12 @@ namespace nymrobot {
                 *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
                 *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
                 std::copy(ui_state.b1origi->axisData.begin(), ui_state.b1origi->axisData.end(), ui_state.rbpos[j].begin());
-                //ui_state.rbpos[j] = ui_state.b1origi->axisData;
                 *sttlogs << "Update the Original Position for " << std::to_string(j);
             }
             ImGui::SameLine();
             if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && status.StatusCode == 0) {                
                 *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1crpos);
                 std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.end(), ui_state.rbpos[j].begin());
-                //ui_state.rbpos[j][i] = ui_state.b1crpos->axisData[i];           
                 *sttlogs << "Update the Current Position for " + std::to_string(j);
             }
             ImGui::SameLine(); ImGui::SetNextItemWidth(50);

@@ -9,29 +9,7 @@
 #include <sstream>
 #include "ui/statuslogs.h"
 #include "py3rdsrc/zmpdata.h"
-/// Struct used for interfacing between the UI and the Move Robot functionality. 
-/// The Move Robot is a critical function of this software, facilitating various types of robot movements.
-///
-/// Members:
-/// ========
-/// - coumove: (int) The count of moves. Default is 3.
-/// - joinflag: (bool) Indicates if the move is a joint move. Default is false.
-/// - circuflag: (bool) Indicates if the move is a circular move. Default is false.
-/// - linMFlag: (bool) Indicates if the move is a linear move. Default is false.
-/// - lineshpath: (bool) Flag to show the move path. Default is false.
-/// - rbpos: (std::vector<std::vector<float>>) The robot positions, represented as a 2D vector of floats.
-///          Each inner vector represents a position with six float values. Default is a 3x6 vector of zeros.
-/// - spdlinear: (float) The linear speed for movements.
-/// - spdjoint: (float) The joint speed for movements.
-/// - limitangle: (float) The angle limit for movements.
-/// - tpstatus: (std::unique_ptr<StatusInfo>) A unique pointer to temporary status information. 
-///             Initialized with a new StatusInfo object.
-/// - b1PositionData: (std::unique_ptr<BaseAxisPositionVariableData>) A unique pointer to temporary position data from the robot. 
-///                   Initialized with a new BaseAxisPositionVariableData object.
-/// - b1origi: (std::unique_ptr<PositionData>) A unique pointer to the original position data.
-///            Initialized with a new PositionData object.
-/// - b1crpos: (std::unique_ptr<PositionData>) A unique pointer to the current position data.
-///            Initialized with a new PositionData object.
+
 struct UIState {
     unsigned int coumove{ 3 };
     bool START_Flag{ false };

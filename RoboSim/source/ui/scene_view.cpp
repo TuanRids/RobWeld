@@ -99,34 +99,34 @@ namespace nui
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &gl_texture_width);
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &gl_texture_height);
 
-        // Allocate memory using std::vector for automatic management
-        std::unique_ptr<std::vector<unsigned char>> gl_texture_bytes = std::make_unique<std::vector<unsigned char>>(gl_texture_width * gl_texture_height * 3);
+        // Allocate memory for texture data
+        std::vector<unsigned char> gl_texture_bytes(gl_texture_width * gl_texture_height * 3);
 
         // Get the texture image
-        glGetTexImage(GL_TEXTURE_2D, 0 /* mipmap level */, GL_BGR, GL_UNSIGNED_BYTE, gl_texture_bytes->data());
+        glGetTexImage(GL_TEXTURE_2D, 0 /* mipmap level */, GL_BGR, GL_UNSIGNED_BYTE, gl_texture_bytes.data());
 
         // Create a cv::Mat object using the data
-        cv::Mat texture_image = cv::Mat(gl_texture_height, gl_texture_width, CV_8UC3, gl_texture_bytes->data()).clone();
+        cv::Mat texture_image = cv::Mat(gl_texture_height, gl_texture_width, CV_8UC3, gl_texture_bytes.data()).clone();
 
         // Returning a clone of the matrix to ensure that the data persists beyond the function scope
         return texture_image;
     }
 
-    uint64_t matToTexture(const cv::Mat& mat) {
-        GLuint textureID;
-        glGenTextures(1, &textureID);
+
+    void matToTexture(const cv::Mat& mat, GLuint & textureID) {
+        //glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.cols, mat.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, mat.data);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        return textureID;
+        glBindTexture(GL_TEXTURE_2D, 0);        
     }
 
     void SceneView::render()
     {
+        GLuint processedTextureID;
         mShader->use();
         mLight->update(mShader.get());
 
@@ -134,7 +134,6 @@ namespace nui
         if (!rdMesh) { rdMesh = &nelems::mMesh::getInstance(); }
         else { render_mode(); }
         mFrameBuffer->unbind();
-
 
         ImGui::Begin("ViewPort");
         {
@@ -150,14 +149,16 @@ namespace nui
             // Add rendered texture to ImGUI scene window
             uint64_t textureID = mFrameBuffer->get_texture();
             //convert texture frambuffer to opencv mat
-            /*cv::Mat image = framebufferToMat(textureID, viewportPanelSize.x, viewportPanelSize.y);
+            cv::Mat image = framebufferToMat(textureID, viewportPanelSize.x, viewportPanelSize.y);
             cv::GaussianBlur(image, image, cv::Size(3, 3), 0);
-            uint64_t processedTextureID = matToTexture(image);*/
+            matToTexture(image, processedTextureID);
+            ImGui::Image(reinterpret_cast<void*>(processedTextureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
-            ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
         }
         ImGui::End();
+        //glDeleteTextures(1, &processedTextureID);
     }
+
 
     void SceneView::render_mode()
     {

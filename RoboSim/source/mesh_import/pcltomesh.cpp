@@ -132,7 +132,7 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
     oMeshObject.init();
     oMeshObject.move(500-center.x, 0-center.y, -300-center.z);
     oMeshObject.create_buffers();
-    proMesh->pushback(oMeshObject);
+    proMesh->getMesh()->push_back(std::make_shared<nelems::oMesh>(std::move(oMeshObject)));
     logTime("Mesh conversion completed");
 }
 

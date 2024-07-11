@@ -83,11 +83,11 @@ namespace nui
             static int lastSelectedIndex = -1; // To remember the last selected index for range selection
             static std::vector<bool> selectionStates; // To track selection states
 
-            if (proMesh->size() > 0)
+            if (proMesh->getMesh()->size() > 0)
             {
                 // Resize selectionStates if necessary
-                if (selectionStates.size() != proMesh->size()) {
-                    selectionStates.resize(proMesh->size(), false);
+                if (selectionStates.size() != proMesh->getMesh()->size()) {
+                    selectionStates.resize(proMesh->getMesh()->size(), false);
                 }
 
                 ImGui::BeginChild("TableChild", ImVec2(0, 180), true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysVerticalScrollbar);
@@ -572,21 +572,6 @@ namespace nui
         //*****************************************************
         // D - Caclculate for simulate the movement
 
-        // D - 1: RB Hand simulation, and get joints angles
-        //bool exceeds_rbhand = false;
-        //for (int i = 0; i < 3; ++i) {
-        //    if (std::abs(prehand[i] - base[5]->oMaterial.position[i]) > tolerance) {
-        //        std::cout << "time rbhand " << prehand[i] << " - " << base[5]->oMaterial.position[i] << std::endl;
-        //        exceeds_rbhand = true;
-        //        break;
-        //    }
-        //}
-        //if (exceeds_rbhand)
-        //{
-        //    // Move hand 5
-        //    base[5]->move(base[5]->oMaterial.position.x- prehand[0], base[5]->oMaterial.position.y- prehand[1], base[5]->oMaterial.position.z- prehand[2]);
-        //}
-
         // D - 2 Joints Siumulation
         bool exceeds_tolerance = false;
         for (int i = 0; i < 6; ++i) {
@@ -613,8 +598,6 @@ namespace nui
             rotateJoint(2, ang[2], pre[2], tolerance, base, 0, -(ang[2] - pre[2]), 0);
             rotateJoint(1, ang[1], pre[1], tolerance, base, 0, (ang[1] - pre[1]), 0);
             rotateJoint(0, ang[0], pre[0], tolerance, base, 0, 0, (ang[0] - pre[0]));
-
-
         }
 
 
