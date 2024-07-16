@@ -70,7 +70,7 @@ namespace nelems {
 
         //--------------------------------------------------------------------------------
         void render() { if (hide) { return; } mRenderBufferMgr->draw(static_cast<int>(mVertexIndices.size())); }
-        void render_lines() { if (hide) { return; } mRenderBufferMgr->draw_lines(static_cast<int>(mVertexIndices.size())); }
+        void render_lines(float width = 0.5f) { if (hide) { return; } mRenderBufferMgr->draw_lines(static_cast<int>(mVertexIndices.size()), width); }
         // bind object buffers to render
         void bind() { mRenderBufferMgr->bind(); }
         // unbind object buffers

@@ -230,7 +230,7 @@ namespace nelems {
                     {
                         newMesh.oMaterial.mMetallic = 0; newMesh.oMaterial.mRoughness = 0;
 						newMesh.changeName(name);
-						newMesh.oMaterial.mColor = glm::vec3(0.2f, 0.2f, 0.2f);
+						newMesh.oMaterial.mColor = glm::vec3(0.008f, 0.008f, 0.003f);
                     }
                     // Base
                     else
@@ -340,7 +340,7 @@ namespace nelems {
             if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos)
             {
                 shader->set_material(mesh->oMaterial, "materialData");
-                mesh->render_lines();
+                mesh->render_lines(5);
                 mesh->unbind();
                 continue;
             }

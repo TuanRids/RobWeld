@@ -10,7 +10,7 @@
 #include "imgui.h"
 #include "functional"
 #include "YMConnect/YMConnect.h"
-
+#include "Filemgr/RobInitFile.h"
 
 namespace nui
 {
@@ -27,8 +27,7 @@ namespace nui
         std::shared_ptr<nshaders::Shader> mShader;
         std::unique_ptr<nelems::Light> mLight;
         std::shared_ptr<nui::SceneView> mSceneView;
-
-
+        RobInitFile* robinit;
         glm::vec2 mSize;
         float Fov = 45.0f;
         float Aspect = 1.3f;
@@ -41,10 +40,15 @@ namespace nui
 
         SceneView() :
             rdMesh(nullptr), mCamera(nullptr), mFrameBuffer(nullptr), mShader(nullptr),
-            mLight(nullptr), mSize(800*3, 600*3), mSceneView(nullptr)
+            mLight(nullptr), mSize(800, 600), mSceneView(nullptr)
         {
+            robinit = &RobInitFile::getinstance();
             mFrameBuffer = std::make_unique<nrender::OpenGL_FrameBuffer>();
-            mFrameBuffer->create_buffers(800 * 3, 600 * 3);
+
+            float SXAA = 3; std::string temptsxaa;
+            robinit->get_settings("SSXA_Ratio", temptsxaa); if (temptsxaa != "") { SXAA = std::stof(temptsxaa); }
+            
+            mFrameBuffer->create_buffers(800 * SXAA, 600 * SXAA);
             mShader = std::make_unique<nshaders::Shader>();
             mShader->load("shaders/vs.vert", "shaders/fs_pbr.frag");
             mLight = std::make_unique<nelems::Light>();

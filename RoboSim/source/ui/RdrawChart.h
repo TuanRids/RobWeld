@@ -28,6 +28,8 @@ namespace nui
 
         // draw bar&line
         void DrawBarLineChart(const std::map<std::string, std::pair<float, std::string>>& data);
+        void DrawBarLineQc(const std::map<std::string, std::pair<float, std::string>>& data);
+
 
         // Function to draw pie chart
         void DrawPieChart(const std::map<std::string, std::pair<float, std::string>>& data);

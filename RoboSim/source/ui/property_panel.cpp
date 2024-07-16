@@ -53,7 +53,7 @@ namespace nui
         ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
         static int axisLength{ 1000 };
         static float newnear{ 1.0f }, newfar{ 10000.0f }; // Far =0 => Render error
-        static int newzoom(50); static int gridNum(15); static int gridStep(40);
+        static int newzoom(50); static int gridNum(110); static int gridStep(5);
 
         if (ImGui::CollapsingHeader("CameraSetting", false))        {
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
@@ -181,7 +181,7 @@ namespace nui
         {
             auto mesh = *it;
             if (check_skip(mesh)) { continue; }            
-            ImVec4 color = mesh->selected ? ImVec4(1.0f, 0.0f, 0.0f, 1.0f) : ImVec4(0.27f, 0.78f, 0.69f, 1.0f);
+            ImVec4 color = mesh->selected ? ImVec4(1.0f, 0.0f, 0.0f, 1.0f) : ImVec4(0.27f, 0.48f, 0.39f, 1.0f);
             ImGui::TextColored(color, "%s: %lld - %lld", mesh->oname, mesh->mVertices.size(), mesh->mVertexIndices.size());
         }
         ImGui::End();
@@ -365,7 +365,7 @@ namespace nui
             nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
             static const char* items[] = { "Single Point Light", "WorldBox 8 Lights","WorldBox 32 Lights" ,"NoLights" };
             ImGui::Combo("SetLight", &scene_view->get_light()->lightmode, items, IM_ARRAYSIZE(items)); ImGui::SetNextItemWidth(150);
-            ImGui::SliderFloat("Light Intensity", &scene_view->get_light()->mStrength, 0.00f, 1000.0f);
+            ImGui::SliderFloat("Light Intensity", &scene_view->get_light()->mStrength, 0.00f, 200.0f);
 
             if (scene_view->get_light()->mStrength == 0)
             {
@@ -522,8 +522,8 @@ namespace nui
                 ImGui::BeginGroup();
 
                 // Display joint angle
-                ImGui::TextColored(vecred, "Joint %d: %.2f", i + 1, ang[i]);
-
+                //ImGui::TextColored(vecred, "Joint %d: %.2f", i + 1, ang[i]);
+                ImGui::Text("Joint %d: %.2f");
                 // Display limits
                 ImGui::Text("Min: "); ImGui::SameLine();
                 ImGui::SetNextItemWidth(50);

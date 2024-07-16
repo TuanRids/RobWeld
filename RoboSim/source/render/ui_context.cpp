@@ -32,10 +32,11 @@ namespace nrender
 
     auto& colors = ImGui::GetStyle().Colors;
 
+
+    if (!robinit) { robinit = &RobInitFile::getinstance(); }
     // TODO: ADJUST ALL COLOR           #TODOCOLOR TODO COLOR
-    theme = ReadThemeFromFile();
-    if (theme.empty()) {theme = "light";}
-    if (theme == "dark")
+    robinit->get_settings("theme", theme);
+    if (theme == "Dark")
     {
         colors[ImGuiCol_WindowBg] = ImVec4{ 0.13f, 0.14f, 0.26f, 1.0f };
 
@@ -65,7 +66,7 @@ namespace nrender
         colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
         colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
     }
-    else if (theme == "light")
+    else if (theme == "Light")
     {
         colors[ImGuiCol_Text] = ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f };
         colors[ImGuiCol_WindowBg] = ImVec4{ 0.95f, 0.95f, 0.95f, 1.0f };
@@ -115,24 +116,6 @@ namespace nrender
     return true;
   }
 
-  std::string UIContext::ReadThemeFromFile() {
-      std::ifstream file("robosim_ini.dat");
-      if (!file.is_open()) {
-          std::cerr << "Failed to open file for reading: robosim_ini.dat" << std::endl;
-          return ""; 
-      }
-
-      json j;
-      file >> j;
-
-      if (j.find("theme") != j.end()) {
-          return j["theme"].get<std::string>();
-      }
-      else {
-          std::cerr << "Key 'theme' not found in robosim_ini.dat" << std::endl;
-          return ""; 
-      }
-  }
 
   void UIContext::pre_render()
   {

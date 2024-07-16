@@ -138,7 +138,15 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
 
 
 void PclToMesh::processPointCloud() {
-    Create3DPCL(0.5, 10); 
+    if (!robinit) { robinit = &RobInitFile::getinstance(); }
+    try {
+        std::string temptvalue;
+        robinit->get_settings("creating_speed", temptvalue);
+        creating_speed = std::stoi(temptvalue);
+    }catch(...){}
+    if (creating_speed == 0) { Create3DPCL(0.5, 10); }
+    else if (creating_speed == 1) { Create3DPCL(0.5, 12); }
+	else if (creating_speed == 2) { Create3DPCL(0.05, 12); }
     // Normal: 0.5, 12           6s
 	// Fastest: 0.5, 10        1.5s
 	// Detailest: 0.05, 12      20s

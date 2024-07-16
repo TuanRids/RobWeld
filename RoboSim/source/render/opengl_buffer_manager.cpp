@@ -63,11 +63,12 @@ namespace nrender
     unbind();
   }
 
-  void OpenGL_VertexIndexBuffer::draw_lines(int index_count)
+  void OpenGL_VertexIndexBuffer::draw_lines(int index_count, float width )
   {
     bind();
 
 	// the vertices as line loop
+    glLineWidth(width);
 	glDrawElements(GL_LINES, index_count, GL_UNSIGNED_INT, nullptr);
 
 	unbind();

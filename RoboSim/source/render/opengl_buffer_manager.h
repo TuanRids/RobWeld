@@ -21,7 +21,7 @@ namespace nrender
     void unbind() override;
 
     void draw(int index_count) override;
-    void draw_lines(int index_count) override;
+    void draw_lines(int index_count, float width) override;
 
   };
 

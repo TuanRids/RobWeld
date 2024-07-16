@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "HotkeyMenubar.h"
 #include "ui/RdrawChart.h"
+#include <windows.h>
+#include <commdlg.h>
+#include <shlwapi.h> // Required for PathRemoveFileSpec
+#pragma comment(lib, "shlwapi.lib")
 
 namespace nui {
 	bool HotkeyMenubar::waitloop[6] = { false,false,false,false,false,false };
@@ -35,6 +39,10 @@ namespace nui {
                 {
                     //SaveSceneAs();
                 }
+                if (ImGui::MenuItem("Settings"))
+                {
+                    OptionSetting_Flag = true;
+                }
                 if (ImGui::MenuItem("Exit"))
                 {
                     //Exit();
@@ -64,49 +72,12 @@ namespace nui {
             }
             if (ImGui::BeginMenu("View"))
             {
-                if (ImGui::BeginMenu("Theme"))
-                {
-                    if (ImGui::MenuItem("Dark"))
-                    {
-                        SaveIniFile("theme", "dark");
-                    }
-                    if (ImGui::MenuItem("Light"))
-                    {
-                        SaveIniFile("theme", "light");
-                    }
-                    ImGui::EndMenu();
-                }
                 if (ImGui::BeginMenu("RenderMode"))
                 {
                     const char* menuItems[7] = { "Points", "WireFrame", "Surface" };
                     for (int i = 0; i < 3; ++i) {
                         if (ImGui::MenuItem(menuItems[i])) {
                             scene_view->set_render_mode(menuItems[i]);
-                        }
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Font"))
-                {
-                    static std::vector<std::string> menuFont;
-                    if (menuFont.empty()) {
-                        const std::filesystem::path fontFolderPath = "C:/Windows/Fonts";
-
-                        for (const auto& entry : std::filesystem::directory_iterator(fontFolderPath)) {
-                            if (entry.path().extension() == ".ttf") {
-                                menuFont.push_back(entry.path().filename().stem().string());
-                            }
-                        }
-                    }
-                    // TODO UPDATE FONT
-                    for (int i = 0; i < 40; ++i) {
-                        if (ImGui::MenuItem(menuFont[i].c_str())) {
-                            if (std::filesystem::exists("C:/Windows/Fonts/" + std::string(menuFont[i]) + ".ttf")) {
-                                SaveIniFile("font", menuFont[i]);
-                            }
-                            else {
-                                MessageBox(NULL, "Font not found in C:/Windows/Fonts/", "Font not found", MB_OK);
-                            }
                         }
                     }
                     ImGui::EndMenu();
@@ -154,6 +125,7 @@ namespace nui {
     void HotkeyMenubar::mHotkey(GLFWwindow* mWindow)
 
     {
+        if (OptionSetting_Flag) { OptionSettings(); }
 
         drchart->render();
         static double lastPressTime{ 0 };
@@ -237,28 +209,75 @@ namespace nui {
             }
         }
     }
-
-    void HotkeyMenubar::SaveIniFile(const std::string& key, const std::string& value)
+    void HotkeyMenubar::OptionSettings()
     {
-        std::ifstream inputFile("robosim_ini.dat");
-        json j;
-        if (inputFile.is_open()) {
-            inputFile >> j;
-            inputFile.close();
+        static int theme_idx = 0;
+        static const char* theme_items[] = { "Dark", "Light" };
+        static float SSXA_Ratio = 3.0f;
+        static char robot_tcp[64] = "192.168.10.102";
+        static int creating_speed = 0;
+        static const char* creat_item[] = { "Fast", "Medium", "Slow" };
+
+        // Update for MeshImporterOption
+        
+        // Load settings
+        static bool loading_flag = true;
+        if (loading_flag)
+        {
+            try
+            {
+                std::string temp_theme;
+                robinit->get_settings("theme", temp_theme);
+                theme_idx = (temp_theme == "Dark") ? 0 : 1;
+
+                std::string temp_font;
+                robinit->get_settings("rob_font", temp_font);
+                rob_font = temp_font;
+
+                std::string temp_ratio;
+                robinit->get_settings("SSXA_Ratio", temp_ratio);
+                SSXA_Ratio = std::stof(temp_ratio);  // Convert string to float
+
+                std::string temp_tcp;
+                robinit->get_settings("robot_tcp", temp_tcp);
+                strncpy_s(robot_tcp, temp_tcp.c_str(), sizeof(robot_tcp));
+
+                std::string temptvalue;
+                robinit->get_settings("creating_speed", temptvalue);
+                creating_speed = std::stoi(temptvalue);
+            }
+            catch (const std::exception& e) {};
+            loading_flag = false;
         }
 
-        j[key] = value;
+        // UI
+        ImGui::Begin("Settings",nullptr, ImGuiWindowFlags_NoDocking);
+        ImGui::Combo("Theme", &theme_idx, theme_items, IM_ARRAYSIZE(theme_items));
+        if (ImGui::Button("Choose Font")){OpenFontDialog(NULL);}
+        ImGui::SameLine();
+        ImGui::Text("Font: %s", rob_font.c_str());
 
-        std::ofstream outputFile("robosim_ini.dat");
-        if (!outputFile.is_open()) {
-            std::cerr << "Failed to open file for writing: robosim_ini.dat" << std::endl;
-            return;
+        ImGui::Separator(); ImGui::Separator();
+        ImGui::InputFloat("SSXA Ratio", &SSXA_Ratio, 1.0f, 6.0f);
+        ImGui::InputText("Robot TCP Input", robot_tcp, sizeof(robot_tcp));
+        ImGui::Combo("ReBuild Mesh Level", &creating_speed, creat_item, IM_ARRAYSIZE(creat_item));
+        if (ImGui::Button("Save")) {
+            robinit->update_settings("theme", theme_items[theme_idx]);
+            robinit->update_settings("rob_font",rob_font);
+            robinit->update_settings("SSXA_Ratio", std::to_string(SSXA_Ratio));
+            robinit->update_settings("robot_tcp", robot_tcp);
+            robinit->update_settings("creating_speed", std::to_string(creating_speed));
+            robinit->SaveInit_encode();  
+            OptionSetting_Flag = false;
+            loading_flag = true;
         }
-        outputFile << j.dump(4);
-        outputFile.close();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel")) {
+            OptionSetting_Flag = false;
+            loading_flag = true;
+        }
 
-        std::cout << "Theme saved to robosim_ini.dat" << std::endl;
-        MessageBox(NULL, "Please restart the software to apply the new theme.", "Restart required", MB_OK);
+        ImGui::End();
     }
 
     void HotkeyMenubar::OpenFileDialog()
@@ -294,7 +313,7 @@ namespace nui {
     void HotkeyMenubar::hint(bool show)
     {
         std::lock_guard<std::mutex> lock(mtx);
-        nrender::UIContext::get_theme(theme);
+        robinit->get_settings("theme",theme);
         static float pos_x, pos_y;
         nui::FrameManage::getViewportSize(pos_x, pos_y); 
         ImGui::SetNextWindowPos(ImVec2(pos_x + 5, pos_y + 250 + 25));
@@ -316,6 +335,47 @@ namespace nui {
         ImGui::Text("*R: Focus to Selected Object");
         ImGui::PopStyleColor();
         ImGui::End();
+    }
+
+    void HotkeyMenubar::OpenFontDialog(HWND owner) {
+        OPENFILENAME ofn;       // Common dialog box structure
+        char szFile[260] = { 0 }; // Buffer for file name
+
+        // Initialize OPENFILENAME structure
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = owner;
+        ofn.lpstrFile = szFile;
+        ofn.nMaxFile = sizeof(szFile);
+        ofn.lpstrFilter = "Fonts\0*.TTF;*.OTF\0All\0*.*\0";
+        ofn.nFilterIndex = 1;
+        ofn.lpstrFileTitle = NULL;
+        ofn.nMaxFileTitle = 0;
+        ofn.lpstrInitialDir = "RobFonts"; // Set initial directory to the RobFonts folder
+        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+        std::string extFileName;
+
+        // Display the Open dialog box 
+        if (GetOpenFileName(&ofn) == TRUE) {
+            std::filesystem::path selectedPath(szFile);
+            std::string directoryPath = selectedPath.parent_path().string();
+            const std::string fileNameStem = selectedPath.stem().string(); // Extract the stem from the selected file
+
+            // Search in the directory of the selected file
+            bool found = false;
+            for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
+                if (entry.is_regular_file() && entry.path().filename().stem() == fileNameStem) {
+                    rob_font = entry.path().filename().stem().string();
+                    found = true;
+                    break; // Stop the loop once the file is found
+                }
+            }
+
+            if (!found) {
+                rob_font = ""; // Clear the filename if no match is found
+            }
+        }
     }
 
 }

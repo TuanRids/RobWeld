@@ -225,6 +225,12 @@ namespace nui
 
     }
 
+    void RdrawChart::DrawBarLineQc(const std::map<std::string, std::pair<float, std::string>>& data)
+    {
+
+
+    }
+
 
     void RdrawChart::DrawPieChart(const std::map<std::string, std::pair<float, std::string>>& data)
     {

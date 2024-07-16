@@ -9,7 +9,7 @@
 #include <sstream>
 #include "ui/statuslogs.h"
 #include "py3rdsrc/zmpdata.h"
-
+#include "Filemgr/RobInitFile.h"
 struct UIState {
     unsigned int coumove{ 3 };
     bool START_Flag{ false };
@@ -21,8 +21,8 @@ struct UIState {
     std::vector<std::vector<float>> rbpos{ std::vector<std::vector<float>>(3, std::vector<float>(6, 0.0f)) };
     std::unique_ptr<StatusInfo> tpstatus = std::make_unique<StatusInfo>();
     std::unique_ptr<BaseAxisPositionVariableData> b1PositionData = std::make_unique<BaseAxisPositionVariableData>();
-    std::unique_ptr<PositionData> b1origi = std::make_unique<PositionData>();
     std::unique_ptr<PositionData> b1crpos = std::make_unique<PositionData>();
+    std::unique_ptr<PositionData> b1workpos = std::make_unique<PositionData>();
 
     // other trigger
     bool SharedMemoryFlag = true;
@@ -46,10 +46,11 @@ namespace nymrobot {
         std::stringstream resultmsg;
         nui::StatusLogs* sttlogs;
         std::unique_ptr<zmpdata> shmdata;
-
+        RobInitFile* robinit;
     public:
         ymconnect() : controller(nullptr), angle{}, sttlogs(nullptr), shmdata(nullptr) {
-            YMConnect::OpenConnection("192.168.0.0", status, restime);
+            robinit = &RobInitFile::getinstance(); 
+            YMConnect::OpenConnection("192.168.10.102", status, restime);
             sttlogs = &nui::StatusLogs::getInstance();
             shmdata = std::make_unique<zmpdata>();
         }

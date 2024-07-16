@@ -13,9 +13,9 @@ namespace nelems
     Light()
     {
       mColor = glm::vec3(1.0f, 1.0f, 1.0f);
-      mPosition = { 1.5f, 3.5f, 3.0f };
-      mStrength = 100.0;
-      lightmode = 1;
+      mPosition = { 2.2f, 3.6f, 7.3f };
+      mStrength = 40.0f;
+      lightmode = 2;
     }
 
     ~Light() {}

@@ -9,6 +9,7 @@
 #include <ImFileBrowser.h>
 #include <Windows.h>
 #include <Commdlg.h>
+#include <filesystem> // For std::filesystem
 #include "utils/RobsFileIO.h"
 #include "ui/FrameManage.h"
 
@@ -22,7 +23,7 @@
 #include "Eigen/Dense"
 
 #include "py3rdsrc/zmpdata.h"
-
+#include "Filemgr/RobInitFile.h"
 
 #include <Windows.h>
 #include "render/ui_context.h"
@@ -48,11 +49,12 @@ namespace nui
         nui::uiAction uiaction;
         std::unordered_set<long long> selectedMeshes;
         std::shared_ptr<nshaders::Shader> mctshader;
-        float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
         std::unique_ptr<nymrobot::ymconnect> mRobot;
         nui::StatusLogs* sttlogs;
         std::unique_ptr<zmpdata> IPreceiver;
+        RobInitFile* robinit;
 
+        float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
         bool CtrFlag = false; // Livesync & visualize
     public:
         Property_Panel():
@@ -60,11 +62,13 @@ namespace nui
         {
 
             for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
-            std::string content = "Arial"; std::ifstream file("robosim_ini.dat");
-            if (file.is_open()) { json j; file >> j; if (j.find("font") != j.end()) { content = j["font"].get<std::string>(); } }
+            robinit = &RobInitFile::getinstance();
             ImGuiIO& io = ImGui::GetIO();
-            std::string fontPath = "C:/Windows/Fonts/" + std::string(content) + ".ttf";
-            io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
+            std::string fontPath; robinit->get_settings("rob_font", fontPath);
+            fontPath = "RobFonts\\" + fontPath + ".ttf";
+            // Check if fontPath existed
+            if (std::filesystem::exists(fontPath) && fontPath.size() > 10 ) 
+            {io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f); }
 
             IPreceiver = std::make_unique<zmpdata>();
             mRobot = std::make_unique<nymrobot::ymconnect>();

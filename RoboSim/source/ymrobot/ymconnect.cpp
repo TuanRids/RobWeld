@@ -19,7 +19,11 @@ namespace nymrobot {
     }
 
     void ymconnect::connect_robot() {
-        static char ip_address[20] = "192.168.10.102";
+        static char ip_address[64] = "192.168.10.102";
+        std::string temp_tcp;
+        robinit->get_settings("robot_tcp", temp_tcp);
+        strncpy_s(ip_address, temp_tcp.c_str(), sizeof(ip_address));
+
         static char connect_content[100] = "Welcome";
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.3f, 0.2f, 1.0f));
         ImGui::Begin("GetIP", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
@@ -68,7 +72,6 @@ namespace nymrobot {
     void ymconnect::render() {
         // get proMeshRb and Statuslogs
         if (!proMeshRb) { proMeshRb = &nelems::mMesh::getInstance(); }
-
         connect_robot();
         setup_MOVE_ui(ui_state);
         move_robot();
@@ -85,7 +88,7 @@ namespace nymrobot {
             ImGuiWindowFlags_NoBackground | // Do not display background
             ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
         ImGui::Separator();
-        if (resultmsg) { ImGui::Text(resultmsg.str().c_str()); }
+        if (resultmsg) {ImGui::TextColored(ImVec4(0.85f, 0.6f, 0.0f, 1.0f), resultmsg.str().c_str());        }
         ImGui::End();
     }
 
@@ -96,8 +99,17 @@ namespace nymrobot {
             return LinearMotion(groupId, posData, speed);
         }};
 
+    // Check the current pos to the 1st pos
+    // check the pos it with pos it-1
+    // If the distance is too small (XYZ): Alert.
+    //
     void ymconnect::move_robot() {
         static auto LinepathStart = std::chrono::high_resolution_clock::now();
+
+        auto nearest_pos = [&](const PositionData& pos1, const PositionData& pos2) {
+            size_t id = 0;
+            return std::all_of(pos1.axisData.begin(), pos1.axisData.begin() + 3, [&](float a)
+                {return fabs(a - pos2.axisData[id++]) < 0.01f; }); };
 
         double Linepathelapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>
             (std::chrono::high_resolution_clock::now() - LinepathStart).count();
@@ -117,7 +129,7 @@ namespace nymrobot {
                 mesh = std::make_shared<nelems::oMesh>();
                 mesh->changeName("movepath__SKIP__");
                 mesh->ID = proMeshRb->getCurrentTimeMillis(0);
-                mesh->oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f); newmesh_flag = true;
+                mesh->oMaterial.mColor = glm::vec3(1.0f, 0.00f, 0.03f); newmesh_flag = true;
             }
             else {
                 mesh->delete_buffers();
@@ -126,7 +138,7 @@ namespace nymrobot {
             }
             nelems::VertexHolder vertex{}; unsigned int i = 0;
             for (auto it = ui_state.rbpos.begin(); it != ui_state.rbpos.end(); it++,i++) {
-                if (std::distance(ui_state.rbpos.begin(), it) >= ui_state.coumove) { break; }
+                if (std::distance(ui_state.rbpos.begin(), it) >= ui_state.coumove) { break; }                
                 vertex.mPos = glm::vec3((*it)[0], (*it)[1], (*it)[2]);
                 vertex.mNormal = glm::vec3(0.0f, 0.0f, 1.0f);
                 mesh->add_vertex(vertex);
@@ -139,30 +151,37 @@ namespace nymrobot {
             // mesh->selected = true;
             if (newmesh_flag) { proMeshRb->add_mesh(mesh); newmesh_flag = false; }
         }
-
         if (status.StatusCode != 0) { return; }
+
         if (ui_state.START_Flag)
         {
             *sttlogs << "Start Moving to " + std::to_string(ui_state.coumove) + " points.";
             for (auto it = ui_state.movTypes.begin(); it != ui_state.movTypes.end(); it++) {
                 if (std::distance(ui_state.movTypes.begin(), it) >= ui_state.coumove) { break; }
-                ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+                ui_state.b1workpos->coordinateType = CoordinateType::RobotCoordinate;
                 int index = std::distance(ui_state.movTypes.begin(), it);
-                std::copy(ui_state.rbpos[index].begin(), ui_state.rbpos[index].end(), ui_state.b1crpos->axisData.begin());
+                std::copy(ui_state.rbpos[index].begin(), ui_state.rbpos[index].end(), ui_state.b1workpos->axisData.begin());
+
+                //check index 0;
+				if (index == 0) {
+                    // check current pos with 1st pos
+                    *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1crpos);
+                    if (nearest_pos(*ui_state.b1workpos, *ui_state.b1crpos)) { *sttlogs << "The first point is too close to the robot."; return; }
+				}
 
                 if ((*it) == 0)
                 {
-                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(LinearMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdlinear));
+                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(LinearMotion(ControlGroupId::R1, *ui_state.b1workpos, ui_state.spdlinear));
                 }
                 else if ((*it) == 2)
                 {
-                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *ui_state.b1crpos, ui_state.spdjoint));
+                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *ui_state.b1workpos, ui_state.spdjoint));
                 }
                 else if ((*it) == 1) // Circular
                 {
                     CoordinateArray coorarr;
                     std::copy(ui_state.rbpos[index-1].begin(), ui_state.rbpos[index - 1].end(), coorarr.begin());                    
-                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *ui_state.b1crpos, coorarr, ui_state.spdlinear));
+                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *ui_state.b1workpos, coorarr, ui_state.spdlinear));
                 }
                 else if ((*it) == 3) { continue; } // Skip as mid point
             }
@@ -227,9 +246,9 @@ namespace nymrobot {
         if (ImGui::Button("Home") && status.StatusCode == 0)
         {
             *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
-            *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
-            ui_state.b1origi->coordinateType = CoordinateType::RobotCoordinate;
-            JointMotion r1home(ControlGroupId::R1, *ui_state.b1origi, 3);
+            *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
+            ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+            JointMotion r1home(ControlGroupId::R1, *ui_state.b1crpos, 3);
             *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(r1home);
             *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *ui_state.tpstatus = controller->MotionManager->MotionStart();
@@ -260,14 +279,14 @@ namespace nymrobot {
             }
             if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
                 *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
-                *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1origi);
-                std::copy(ui_state.b1origi->axisData.begin(), ui_state.b1origi->axisData.end(), ui_state.rbpos[j].begin());
+                *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
+                std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.end(), ui_state.rbpos[j].begin());
                 *sttlogs << "Update the Original Position for " << std::to_string(j);
             }
             ImGui::SameLine();
             if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && status.StatusCode == 0) {                
-                *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1crpos);
-                std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.end(), ui_state.rbpos[j].begin());
+                *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1workpos);
+                std::copy(ui_state.b1workpos->axisData.begin(), ui_state.b1workpos->axisData.end(), ui_state.rbpos[j].begin());
                 *sttlogs << "Update the Current Position for " + std::to_string(j);
             }
             ImGui::SameLine(); ImGui::SetNextItemWidth(50);
