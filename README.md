@@ -10,7 +10,7 @@ https://github.com/TuanRids/RoboSim-Ohlab/assets/63535662/7580334e-3030-425b-a4d
 
 - **Vision System**: Utilizes computer vision techniques for object detection and recognition.
 - **Lidar Integration**: Employs lidar sensors to scan the environment and generate 3D point clouds.
-- **3D Visualization**: Implements OpenGL for real-time rendering of the robot's environment and scanned objects.
+- **3D Visualization**: Implements OpenGL for real-time rendering of the robot's environment and scanned objects, [SSAA]
 - **Robot Control**: Provides an interface for controlling the robot's movements and operations.
 - **Inspection**: Includes tools for inspecting and analyzing scanned objects.
 
