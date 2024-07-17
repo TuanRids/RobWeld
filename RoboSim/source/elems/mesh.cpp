@@ -237,7 +237,7 @@ namespace nelems {
                     {
                         newMesh.changeName(name);
                         if (name.find("RBSIMBase_6") != std::string::npos){ newMesh.oMaterial.mColor = glm::vec3(0.95f, 0.3f, 0.0f); }
-                        else if (name.find("RBSIMBase_7") != std::string::npos) { newMesh.oMaterial.mColor = glm::vec3(0.0f, 0.7f, 0.0f); }
+                        else if (name.find("RBSIMBase_7") != std::string::npos) { newMesh.oMaterial.mColor = glm::vec3(0.0f, 0.03f, 0.3f); }
 
                         else { newMesh.oMaterial.mColor = color; }
                         name = "RBSIMCenter_" + name.substr(name.find_last_of("_") + 1);
@@ -354,10 +354,13 @@ namespace nelems {
             OBoz.render_lines();
             OBox.unbind(); OBoy.unbind(); OBoz.unbind();
         }
-        shader->set_i1(2, "LightModes");
-        shader->set_material(mCoorSystem->oMaterial, "materialData");
-        mCoorSystem->render_lines();
-		mCoorSystem->unbind();
+        if (mCoorSystem)
+        {
+            shader->set_i1(2, "LightModes");
+            shader->set_material(mCoorSystem->oMaterial, "materialData");
+            mCoorSystem->render_lines();
+            mCoorSystem->unbind();
+        }
     }
 
     void mMesh::createGridSys(float gridNo, float step) {

@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "ui/scene_view.h"
+#include "scene_view.h"
 #include "ui/uiAction.h"
 #include "render/ui_context.h"
 #include "mesh_import/pcltomesh.h"

@@ -19,8 +19,8 @@ namespace nrender
   {
     __super::init(window);
 
-    // GL 3.0 + GLSL 130
-    const char* glsl_version = "#version 410";
+    // GL 4.5 + GLSL 450
+    const char* glsl_version = "#version 450";
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -38,6 +38,7 @@ namespace nrender
     robinit->get_settings("theme", theme);
     if (theme == "Dark")
     {
+        ImGui::StyleColorsDark();
         colors[ImGuiCol_WindowBg] = ImVec4{ 0.13f, 0.14f, 0.26f, 1.0f };
 
         colors[ImGuiCol_MenuBarBg] = ImVec4{ 0.08f, 0.15f, 0.21f, 1.0f };
@@ -68,6 +69,7 @@ namespace nrender
     }
     else if (theme == "Light")
     {
+        ImGui::StyleColorsLight();
         colors[ImGuiCol_Text] = ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f };
         colors[ImGuiCol_WindowBg] = ImVec4{ 0.95f, 0.95f, 0.95f, 1.0f };
 
@@ -111,6 +113,7 @@ namespace nrender
     }
 
     // Setup Platform/Renderer backends
+
     ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)mWindow->get_native_window(), true);
     ImGui_ImplOpenGL3_Init(glsl_version);
     return true;

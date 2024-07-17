@@ -37,9 +37,7 @@ namespace nwindow
       // UI components
       std::unique_ptr<nui::Property_Panel> mPropertyPanel;
 
-
       nui::SceneView* mSceneView;
-      // Command pattern for all looping
       nui::uiAction uiaction;
       bool mIsRunning;
   public:

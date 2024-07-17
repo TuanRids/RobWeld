@@ -78,9 +78,6 @@ namespace nwindow
 
   void GLWindow::on_key(int key, int scancode, int action, int mods)
   {
-    if (action == GLFW_PRESS)
-    {
-    }
   }
   //TODO CLOSE PROGRAM TODOCLOSE TODOEXIT
   void GLWindow::on_close()
@@ -113,7 +110,7 @@ namespace nwindow
     // render scene to framebuffer and add it to scene view
 
     mSceneView->render();
-    mPropertyPanel->render(mSceneView,mWindow);
+    mPropertyPanel->render(mWindow);
 
     // Render the UI 
     mUICtx->post_render();

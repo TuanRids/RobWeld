@@ -4,12 +4,15 @@
 #include <chrono>
 #include "elems/vertex_holder.h"
 #include <filesystem>
+#include <future>
+#include <chrono>
 
 namespace fs = std::filesystem;
 
 namespace nymrobot {
 
     std::vector<std::vector<float>> ymconnect::get6pos(0, std::vector<float>(6, 0.0f));
+    char ymconnect::connect_content[100] = "Welcome";
     UIState ymconnect::ui_state{};
     ymconnect::~ymconnect() {
         if (status.StatusCode == 0) {
@@ -24,7 +27,6 @@ namespace nymrobot {
         robinit->get_settings("robot_tcp", temp_tcp);
         strncpy_s(ip_address, temp_tcp.c_str(), sizeof(ip_address));
 
-        static char connect_content[100] = "Welcome";
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.3f, 0.2f, 1.0f));
         ImGui::Begin("GetIP", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
         //ImGui::SetWindowSize(ImVec2(400, 100));
@@ -33,28 +35,24 @@ namespace nymrobot {
         if (status.StatusCode == 0) { strcpy_s(connect_content, "Connected."); }
         ImGui::SetNextItemWidth(120);
         ImGui::InputText("Msg", connect_content, sizeof(connect_content));
+
         if (ImGui::Button("Connect") && status.StatusCode != 0) {
             std::string getip{ ip_address };
-            strcpy_s(connect_content, "Welcome to OhLabs.");
             controller = YMConnect::OpenConnection(getip, status);
-            if (status.StatusCode != 0) {
-                std::stringstream ss; ss << status;
-                *sttlogs << "Error: " + ss.str();
-            }
+            if (status.StatusCode != 0) {std::stringstream ss; ss << status; *sttlogs << "Error: " + ss.str();}
             else {
                 status = controller->ControlCommands->DisplayStringToPendant(connect_content);
+                strcpy_s(connect_content, "Welcome to OhLabs.");
                 *sttlogs << "Connected";
             }
         }
         ImGui::SameLine();
         if (ImGui::Button("Disconnect")) {
-            *sttlogs << "Disconnect" ;
             if (status.StatusCode == 0)
             {
                 status = controller->ControlCommands->DisplayStringToPendant("Disconnect!");
                 disconnect_robot(false);
             }
-            strcpy_s(connect_content, "Disconnect!");
         }
         ImGui::Separator();
         ImGui::End();
@@ -62,11 +60,14 @@ namespace nymrobot {
     }
 
     void ymconnect::disconnect_robot(bool showmsg) {
+        *sttlogs << "Disconnect" ;
+        strcpy_s(connect_content, "Disconnect!");
         if (status.StatusCode == 0) {
             YMConnect::OpenConnection("192.168.0.0", status,restime);
             controller = nullptr;
         }
-        if (showmsg) { ImGui::OpenPopup("Disconnected"); }
+        if (showmsg)
+        { ImGui::OpenPopup("Disconnected"); }
     }
 
     void ymconnect::render() {
@@ -75,8 +76,8 @@ namespace nymrobot {
         connect_robot();
         setup_MOVE_ui(ui_state);
         move_robot();
-        read_robot();
 
+        
         static int x{ 200 }, y{ 400 };
         static float pos_x, pos_y,sizex,sizey;
         nui::FrameManage::getViewportSize(pos_x, pos_y);
@@ -89,6 +90,11 @@ namespace nymrobot {
             ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
         ImGui::Separator();
         if (resultmsg) {ImGui::TextColored(ImVec4(0.85f, 0.6f, 0.0f, 1.0f), resultmsg.str().c_str());        }
+        ImGui::Separator();
+
+        auto future_read = std::async(std::launch::async, [this]() {read_robot(); });
+        if (future_read.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) { disconnect_robot(true); return; }
+
         ImGui::End();
     }
 
@@ -151,10 +157,10 @@ namespace nymrobot {
             // mesh->selected = true;
             if (newmesh_flag) { proMeshRb->add_mesh(mesh); newmesh_flag = false; }
         }
-        if (status.StatusCode != 0) { return; }
-
+        // Start Moving
         if (ui_state.START_Flag)
         {
+            if (status.StatusCode != 0) { return; }
             *sttlogs << "Start Moving to " + std::to_string(ui_state.coumove) + " points.";
             for (auto it = ui_state.movTypes.begin(); it != ui_state.movTypes.end(); it++) {
                 if (std::distance(ui_state.movTypes.begin(), it) >= ui_state.coumove) { break; }
@@ -280,13 +286,13 @@ namespace nymrobot {
             if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
                 *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
                 *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
-                std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.end(), ui_state.rbpos[j].begin());
+                std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.begin() + 6, ui_state.rbpos[j].begin());
                 *sttlogs << "Update the Original Position for " << std::to_string(j);
             }
             ImGui::SameLine();
             if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && status.StatusCode == 0) {                
                 *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1workpos);
-                std::copy(ui_state.b1workpos->axisData.begin(), ui_state.b1workpos->axisData.end(), ui_state.rbpos[j].begin());
+                std::copy(ui_state.b1workpos->axisData.begin(), ui_state.b1workpos->axisData.begin()+6, ui_state.rbpos[j].begin());
                 *sttlogs << "Update the Current Position for " + std::to_string(j);
             }
             ImGui::SameLine(); ImGui::SetNextItemWidth(50);
@@ -314,41 +320,42 @@ namespace nymrobot {
         PositionData raxisData{}, rposData{}, rjointangle{};
         static auto start = std::chrono::high_resolution_clock::now();
         ControllerStateData stateData{};
-        if (status.StatusCode != 0) {            return;        }
+        if (status.StatusCode != 0) {return;}
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(elapsed).count();
 
-        if (elapsed_seconds > 0.1f) {
-            controller->Status->ReadState(stateData);
-            resultmsg.str(" ");
-            resultmsg << stateData;
+        if (controller) { controller->Status->ReadState(stateData); }
+        resultmsg.str(" ");
+        resultmsg << stateData;
 
-            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, rposData);
-            resultmsg << rposData;
 
-            if (stateData.isAlarming) {
-                AlarmHistory alarmHistoryData;
-                controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData);
-                resultmsg << alarmHistoryData << std::endl;
-            }
-
-            auto getper = controller->MotionManager->GetMotionTargetProgress(ControlGroupId::R1, tpstatus);
-            resultmsg << "\n RUN % : " << getper << std::endl;
-            start = std::chrono::high_resolution_clock::now();
+        // set button for higher fps
+        if (ImGui::Button("Get Cr Pos")) 
+        {
+            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, raxisData);
+            std::stringstream ss; ss << raxisData; *sttlogs << "Position: " + ss.str();
         }
 
-        tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, raxisData);
-        tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, raxisData, KinematicConversions::PulseToJointAngle, rjointangle);
-        std::copy(rjointangle.axisData.begin(), rjointangle.axisData.end(), angle.begin());
+        if (stateData.isAlarming) {
+            AlarmHistory alarmHistoryData;
+            if (controller) { controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData); }
+            resultmsg << alarmHistoryData << std::endl;
+        }
+
+
+        if (controller) { tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse , 0, 0, rposData); }
+        resultmsg << rposData;
+        if (controller) { tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, rposData, KinematicConversions::PulseToJointAngle, rjointangle);}
+        std::copy(rjointangle.axisData.begin(), rjointangle.axisData.begin()+6, angle.begin());
 
         bool isOutOfLimit = std::any_of(std::begin(angle), std::end(angle), [this, i = 0](float a) mutable {
             return a < limitangle[i][0] || a > limitangle[i++][1];
             });
 
         if (isOutOfLimit && stateData.isRunning) {
-            controller->MotionManager->MotionStop(true);
-            controller->MotionManager->ClearAllTrajectory();
-            controller->ControlCommands->SetServos(SignalStatus::OFF);
+            if (controller) { controller->MotionManager->MotionStop(true); }
+            if (controller) { controller->MotionManager->ClearAllTrajectory(); }
+            if (controller) { controller->ControlCommands->SetServos(SignalStatus::OFF); }
             *sttlogs << "Error: Joint angle is out of limit\n\t Let use Pendant to move the robot to the ";
         }
     }

@@ -3,8 +3,8 @@
 
 zmpdata::zmpdata() : image_texture(0), image_texture_below{ 0 } { sttlogs = &nui::StatusLogs::getInstance(); }
 
-std::vector<std::vector<float>> zmpdata::shared_get6pos (std::vector<std::vector<float>>(50, std::vector<float>(6, -99999.0f)));
-std::vector<std::vector<float>> zmpdata::shared_3Ddata (std::vector<std::vector<float>>(3072, std::vector<float>(1024, -99999.0f)));
+std::vector<std::vector<float>> zmpdata::shared_get6pos (std::vector<std::vector<float>>(50, std::vector<float>(6, -999.0f)));
+std::vector<std::vector<float>> zmpdata::shared_3Ddata (std::vector<std::vector<float>>(3072, std::vector<float>(1024, -999.0f)));
 
 zmpdata::~zmpdata() {
     if (image_texture != 0) {
@@ -41,6 +41,33 @@ void zmpdata::send_datatoIPC() {
     CloseHandle(hMapFile);
 }
 
+
+void applyGammaCorrection(const cv::Mat& src, cv::Mat& dst, float gamma) {
+    CV_Assert(gamma >= 0);
+    cv::Mat lut(1, 256, CV_8UC1);
+    uchar* p = lut.ptr();
+    for (int i = 0; i < 256; i++) {
+        p[i] = cv::saturate_cast<uchar>(pow(i / 255.0, gamma) * 255.0);
+    }
+    cv::LUT(src, lut, dst);
+}
+void applySaturation(const cv::Mat& src, cv::Mat& dst, float saturationScale) {
+    cv::Mat hsv;
+    cv::cvtColor(src, hsv, cv::COLOR_BGR2HSV);
+    std::vector<cv::Mat> channels;
+    cv::split(hsv, channels);
+    channels[1] *= saturationScale; // Adjust saturation channel
+    cv::merge(channels, hsv);
+    cv::cvtColor(hsv, dst, cv::COLOR_HSV2BGR);
+}
+void applySharpness(const cv::Mat& src, cv::Mat& dst, float alpha) {
+    cv::Mat blurred;
+    cv::GaussianBlur(src, blurred, cv::Size(0, 0), 5);
+    cv::addWeighted(src, 1.0 + alpha, blurred, -alpha, 0, dst);
+}
+
+
+
 void zmpdata::Display_info()
 {
     static float pos_x, pos_y, size_x, size_y;
@@ -64,21 +91,27 @@ void zmpdata::Display_info()
         if (ImGui::MenuItem("Stop All")) { TriggerToPy["Send6"] = 1; }
         ImGui::EndPopup();
     }
-    
+
     if (ImGui::Button("R Insp")) { TriggerToPy["Send1"] = 1; }   ImGui::SameLine();
     if (ImGui::Button("R Left")) { TriggerToPy["Send2"] = 1; }  ImGui::SameLine();
     if (ImGui::Button("R Right")) { TriggerToPy["Send3"] = 1; } ImGui::SameLine();
     if (ImGui::Button("Stop")) { TriggerToPy["Send4"] = 1; }
 
+    // Process and display main image
+    if (!img.empty()) {
+        if (image_texture != 0) {
+            glDeleteTextures(1, &image_texture);
+        }
+        image_texture = matToTexture(img);
+    }
     if (image_texture != 0) {
         ImVec2 winsize = ImGui::GetWindowSize();  // get the size of the window
         float scale_ratio = (float)img.cols / (float)img.rows;
 
         ImVec2 image_size;
-        float half_winsize_y = winsize.y / 2.0f;
-        if (winsize.x / scale_ratio > half_winsize_y) {
-            image_size.x = half_winsize_y * scale_ratio;
-            image_size.y = half_winsize_y;
+        if (winsize.x / scale_ratio > winsize.y) {
+            image_size.x = winsize.y * scale_ratio;
+            image_size.y = winsize.y;
         }
         else {
             image_size.x = winsize.x;
@@ -86,33 +119,84 @@ void zmpdata::Display_info()
         }
         ImGui::Image((void*)(intptr_t)image_texture, image_size);
     }
-    
+
+    // Process and display secondary image with adjustments
+    if (!img_below.empty()) {
+        if (image_texture_below != 0) {
+            glDeleteTextures(1, &image_texture_below);
+        }
+        image_texture_below = matToTexture(img_below);
+    }
     if (image_texture_below != 0) {
         ImVec2 winsize = ImGui::GetWindowSize();  // get the size of the window
         float scale_ratio = (float)img_below.cols / (float)img_below.rows;
 
         ImVec2 image_size;
-        float half_winsize_y = winsize.y / 2.0f;
-        if (winsize.x / scale_ratio > half_winsize_y) {
-            image_size.x = half_winsize_y * scale_ratio;
-            image_size.y = half_winsize_y;
+        if (winsize.x / scale_ratio > winsize.y) {
+            image_size.x = winsize.y * scale_ratio;
+            image_size.y = winsize.y;
         }
         else {
             image_size.x = winsize.x;
             image_size.y = winsize.x / scale_ratio;
         }
         ImGui::Image((void*)(intptr_t)image_texture_below, image_size);
-        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-            ImGui::OpenPopup("Image Double-clicked");
-        }
-        if (ImGui::BeginPopup("Image Double-clicked")) {
-            ImGui::Text("You have double-clicked the image!");
-            ImGui::EndPopup();
-        }
 
+        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+            UnImgFrameTrigger = true;
+        }
+        if (UnImgFrameTrigger)
+        {
+            ImGui::SetWindowPos(ImVec2(20, 20));
+            ImGui::Begin("Laser View", &UnImgFrameTrigger, ImGuiWindowFlags_NoDocking  | ImGuiWindowFlags_NoMove);
+            ImGui::BeginGroup();
+            // Image adjustment sliders
+            static int Brightness = 0, Contrast = 0, Sharpness = 0;
+            static float Gamma = 0.0f, Saturation = 0.0f;            ImGui::SetNextItemWidth(80);
+            ImGui::SliderInt("Brightness", &Brightness, -100, 100); ImGui::SetNextItemWidth(80);
+            ImGui::SliderInt("Contrast", &Contrast, -100, 100);     ImGui::SetNextItemWidth(80);
+            ImGui::SliderInt("Sharpness", &Sharpness, 0, 100);      ImGui::SetNextItemWidth(80);
+            ImGui::SliderFloat("Gamma", &Gamma, 0.0f, 3.0f);        ImGui::SetNextItemWidth(80);
+            ImGui::SliderFloat("Saturation", &Saturation, 0.0f, 3.0f);
+            
+            
+            ImGui::EndGroup(); ImGui::SameLine();
+            ImGui::BeginGroup();
+            
+            ImVec2 win_size = ImGui::GetWindowSize();
+            float scale_ratio = (float)img_below.cols / (float)img_below.rows;
+            ImVec2 img_size;
+            if (win_size.x / scale_ratio > win_size.y) {
+                img_size.x = win_size.y * scale_ratio;
+                img_size.y = win_size.y * 0.95;
+            }
+            else {
+                img_size.x = win_size.x;
+                img_size.y = 0.95* win_size.x / scale_ratio;
+            }
+            
+            // Apply image adjustments using OpenCV
+            cv::Mat adjusted_img;
+            img_below.convertTo(adjusted_img, -1, 1 + Contrast / 100.0, Brightness);
+            if (Gamma > 0) { applyGammaCorrection(adjusted_img, adjusted_img, Gamma); }
+            if (Saturation > 0) { applySaturation(adjusted_img, adjusted_img, Saturation); }
+            if (Sharpness) { applySharpness(adjusted_img, adjusted_img, Sharpness / 100.0); }
+            
+            static GLuint adjusted_texture = 0;
+            if (adjusted_texture != 0) {
+                glDeleteTextures(1, &adjusted_texture);
+            }
+            adjusted_texture = matToTexture(adjusted_img);
+            
+            ImGui::Image((void*)(intptr_t)adjusted_texture, img_size);
+            ImGui::EndGroup();
+            
+            ImGui::End();
+        }
     }
     ImGui::End();
 }
+
 
 void zmpdata::trigger_3DCreator()
 {
@@ -135,7 +219,7 @@ void zmpdata::getter_6pos(std::vector<std::vector<float>>& get6pos) {
     std::vector<std::vector<float>> temptemp;
 
     for (const auto& pos : shared_get6pos) {
-        float cc = std::fabs(pos[0] + 99999.0f);
+        float cc = std::fabs(pos[0] + 999.0f);
         if (cc > 5.0f) {
             temptemp.push_back(pos);
         }
@@ -153,32 +237,10 @@ void zmpdata::render() {
     int frame_count;
     float rotation_speed;
 
-    if (receive_data(img, img_below, frame_count, rotation_speed)) {
-        if (!img.empty()) {
-            // Delete old texture
-            if (image_texture != 0) {
-                glDeleteTextures(1, &image_texture);
-                image_texture = 0; 
-            }
-            if (image_texture != 0) { glDeleteTextures(1, &image_texture); }
-            // Convert image to texture for ImGui
-            image_texture = matToTexture(img, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE);
-        }
-        if (!img_below.empty()) {
-            // delete old texture
-            if (image_texture_below != 0) {
-                glDeleteTextures(1, &image_texture_below);
-                image_texture_below = 0;
-            }
-            if (image_texture_below != 0) { glDeleteTextures(1, &image_texture_below); }
-
-            // Convert image to texture for ImGui
-            image_texture_below = matToTexture(img_below, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE);
-        }
-    }
+    receive_data();
+    
     
     trigger_3DCreator();
-
     Display_info();
     send_datatoIPC();
     reset_TriggerToPy();
@@ -203,7 +265,7 @@ void zmpdata::reset_TriggerToPy() {
     }
 }
 
-bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, float& rotation_speed) {
+bool zmpdata::receive_data() {
     const char* img_shm_name = Config::IPC_GET_IMG;             // Get Image
     const char* img_shm_name_below = Config::IPC_GET_IMG_BELOW; // Get Image Below
     const char* data_shm_name = Config::IPC_GET_DATA;           // Get Data
@@ -250,28 +312,23 @@ bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, f
     // Read frame count and rotation speed from shared memory
     if (pBufData != NULL) {
         void* data_ptr = const_cast<void*>(reinterpret_cast<const void*>(pBufData));
-        std::memcpy(&frame_count, data_ptr, sizeof(int));
-        std::memcpy(&rotation_speed, static_cast<char*>(data_ptr) + sizeof(int), sizeof(float));
+        // std::memcpy(&frame_count, data_ptr, sizeof(int));
+        // std::memcpy(&rotation_speed, static_cast<char*>(data_ptr) + sizeof(int), sizeof(float));
         UnmapViewOfFile(pBufData);
         CloseHandle(hMapFileData);
     }
-    else {
-        frame_count = 0;
-        rotation_speed = 0.0f;
-    }
+    else {    }
 
-    // Read robot position from shared memory, if not return -99999
+    // Read robot position from shared memory, if not return -999, then zero out
     if (pBufPos != NULL) {
         float* pos_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufPos));
         for (size_t i = 0; i < 50; ++i) {
-            if (pos_ptr[i * 6] == -99999.0f) { break; } // end of shared memory
-
             for (size_t j = 0; j < 6; ++j) { shared_get6pos[i][j] = pos_ptr[i * 6 + j]; }
         }
         UnmapViewOfFile(pBufPos);
         CloseHandle(hMapFileRosPos);
     }
-    else {shared_get6pos[0][0] = -99999.0f;}
+    else {shared_get6pos[0][0] = -999.0f;}
 
     // Read status from shared memory
     if (pBufStatus != NULL) {
@@ -294,40 +351,39 @@ bool zmpdata::receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, f
         CloseHandle(hMapFileStatus);
     }
         
-    // Read 3D coordinator from python
+    // Read 3D coordinates from python, then close
     if (pBufCoord != NULL) {
         float* dat_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufCoord));
-        shared_3Ddata = std::vector<std::vector<float>>(3072, std::vector<float>(1024, -99999.0f));
-        for (size_t i = 0; i < 3072; ++i) {
-            if (dat_ptr[i] + 99999.0f < 5 ) { shared_get6pos[0][0] = -99999.0f; break; }
-            for (size_t j = 0; j < 1024; ++j) 
-            {
+        shared_3Ddata = std::vector<std::vector<float>>(3072, std::vector<float>(1024, -999.0f));
+        for (size_t i = 0; i < 3072; ++i) {            
+            for (size_t j = 0; j < 1024; ++j) {
                 shared_3Ddata[i][j] = dat_ptr[i * 1024 + j];
             }
         }
-        // zero out the memory to remove the data
-        memset(dat_ptr, -99999.0f, sizeof(float) * 3072 * 1024);
-
+        *sttlogs << "[3D] Readed 3D coordinates from Shared memory";
         UnmapViewOfFile(pBufCoord);
         CloseHandle(hMapFileCoord);
     }
-    else { shared_3Ddata = std::vector<std::vector<float>>(1, std::vector<float>(1, 0.0f)); }
+    else {
+        shared_3Ddata = std::vector<std::vector<float>>(1, std::vector<float>(1, 0.0f));
+    }
     return true;
+
 }
 
-GLuint zmpdata::matToTexture(const cv::Mat& mat, GLenum minFilter, GLenum magFilter, GLenum wrapFilter) {
+GLuint zmpdata::matToTexture(const cv::Mat& mat) {
     // Generate a number for our textureID's unique handle
     GLuint textureID;
     glGenTextures(1, &textureID);
 
-    // Bind to our texture handle
-    glBindTexture(GL_TEXTURE_2D, textureID);
+    // Bind to our texture handle 
+    glBindTexture(GL_TEXTURE_2D, textureID); 
 
     // Catch silly-mistake texture interpolation method for magnification
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     // Copy image data into the texture
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.cols, mat.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, mat.ptr());

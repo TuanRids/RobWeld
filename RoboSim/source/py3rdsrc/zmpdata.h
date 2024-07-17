@@ -21,6 +21,9 @@ public:
 
     void getter_6pos(std::vector<std::vector<float>>& get6pos);
 private:
+    bool UnImgFrameTrigger = false;
+
+
     GLuint image_texture;
     GLuint image_texture_below;
     cv::Mat img;
@@ -36,6 +39,6 @@ private:
 
     void clean_image();
     void reset_TriggerToPy();
-    bool receive_data(cv::Mat& img, cv::Mat& img_below, int& frame_count, float& rotation_speed);
-    GLuint matToTexture(const cv::Mat& mat, GLenum minFilter, GLenum magFilter, GLenum wrapFilter);
+    bool receive_data();
+    GLuint matToTexture(const cv::Mat& mat);
 };

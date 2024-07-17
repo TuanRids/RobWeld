@@ -17,10 +17,33 @@ using namespace Eigen;
 
 namespace nui
 {
-    // long long nui::Property_Panel::selectedID = 0;
-    void Property_Panel::render(nui::SceneView* scene_view, GLFWwindow* mWindow)
+    nui::Property_Panel::Property_Panel():
+        mRobot(nullptr), sttlogs(nullptr), IPreceiver(nullptr)
     {
-        if (!proMesh) {proMesh = &nelems::mMesh::getInstance();}
+        SceneView* sceneView = &nui::SceneView::getInstance();
+        mCamera = sceneView->mCamera;
+        mFrameBuffer = sceneView->mFrameBuffer;
+        mShader = sceneView->mShader;
+        mLight = sceneView->mLight;
+        rdMesh = sceneView->rdMesh;
+
+
+        for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
+        robinit = &RobInitFile::getinstance();
+        ImGuiIO& io = ImGui::GetIO();
+        std::string fontPath; robinit->get_settings("rob_font", fontPath);
+        fontPath = "RobFonts\\" + fontPath + ".ttf";
+        // Check if fontPath existed
+        if (std::filesystem::exists(fontPath) && fontPath.size() > 10)
+        { io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f); }
+
+        IPreceiver = std::make_unique<zmpdata>();
+        mRobot = std::make_unique<nymrobot::ymconnect>();
+        sttlogs = &nui::StatusLogs::getInstance();
+    }
+    // long long nui::Property_Panel::selectedID = 0;
+    void Property_Panel::render(GLFWwindow* mWindow)
+    {
 
         mRobot->render();
 
@@ -31,10 +54,10 @@ namespace nui
         IPreceiver->render();
         
         ImGui::Begin("Properties");
-        layer_frame(scene_view); // define selectedID
+        layer_frame(); // define selectedID
         coordinate_frame(); // show the position
-        material_frame(scene_view); // show material properties
-        camera_frame(scene_view); // show camera properties
+        material_frame(); // show material properties
+        camera_frame(); // show camera properties
         ImGui::End();
 
         obInfo_frame(); // show object info such as vertices and vertex 
@@ -48,7 +71,7 @@ namespace nui
         Robot_Controls_table();
     }
     
-    void Property_Panel::camera_frame(nui::SceneView* scene_view)
+    void Property_Panel::camera_frame()
     {
         ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x * 0.15f, ImGui::GetIO().DisplaySize.y * 0.15f));
         static int axisLength{ 1000 };
@@ -68,26 +91,33 @@ namespace nui
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
             ImGui::SliderInt("AxisLength", &axisLength, 0, 5000);
         }
-        SceneView::getInstance().setNear(newnear);
-        SceneView::getInstance().setFar(newfar);
+        mCamera->set_near(newnear);
+        mCamera->update_view_matrix();
+        mCamera->update(mShader.get());
+
+        mCamera->set_far(newfar);
+        mCamera->update_view_matrix();
+        mCamera->update(mShader.get());
+
         SceneView::getInstance().setZoom(newzoom);
         // grid
-        proMesh->createGridSys(gridNum, gridStep);
-        proMesh->set_axis_length(axisLength);
+        rdMesh->createGridSys(gridNum, gridStep);
+        rdMesh->set_axis_length(axisLength);
     }
-    void Property_Panel::layer_frame(nui::SceneView* scene_view)
+    void Property_Panel::layer_frame()
     {
         if (ImGui::CollapsingHeader("Layer", ImGuiTreeNodeFlags_DefaultOpen)) {
             nui::FrameManage::setCrActiveGui("Layer", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
 
+            static std::unordered_set<long long> selectedMeshes;
             static int lastSelectedIndex = -1; // To remember the last selected index for range selection
             static std::vector<bool> selectionStates; // To track selection states
 
-            if (proMesh->getMesh()->size() > 0)
+            if (rdMesh->getMesh()->size() > 0)
             {
                 // Resize selectionStates if necessary
-                if (selectionStates.size() != proMesh->getMesh()->size()) {
-                    selectionStates.resize(proMesh->getMesh()->size(), false);
+                if (selectionStates.size() != rdMesh->getMesh()->size()) {
+                    selectionStates.resize(rdMesh->getMesh()->size(), false);
                 }
 
                 ImGui::BeginChild("TableChild", ImVec2(0, 180), true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysVerticalScrollbar);
@@ -98,7 +128,7 @@ namespace nui
                 ImGui::TableHeadersRow();
 
                 int i = -1; int j = -1;
-                for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
+                for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
                 {
                     auto mesh = *it; i++;
                     if (check_skip(mesh)) { continue; }
@@ -114,7 +144,7 @@ namespace nui
                             int start = (lastSelectedIndex < i) ? lastSelectedIndex : i;
                             int end = (lastSelectedIndex > i) ? lastSelectedIndex : i;
                             bool selectRange = !selectionStates[start];
-                            for (auto it1 = proMesh->getMesh()->begin(); it1 != proMesh->getMesh()->end(); it1++)
+                            for (auto it1 = rdMesh->getMesh()->begin(); it1 != rdMesh->getMesh()->end(); it1++)
                             {
                                 j++;
                                 selectionStates[j] = selectRange;
@@ -177,7 +207,7 @@ namespace nui
             //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 0.6f, 1.0f)); // Set text color to white and 50% transparent
         //elsei
         
-        for (auto it = proMesh->getMesh()->begin(); it!= proMesh->getMesh()->end(); it++)
+        for (auto it = rdMesh->getMesh()->begin(); it!= rdMesh->getMesh()->end(); it++)
         {
             auto mesh = *it;
             if (check_skip(mesh)) { continue; }            
@@ -193,9 +223,9 @@ namespace nui
         if (ImGui::CollapsingHeader("Coordinates", ImGuiTreeNodeFlags_DefaultOpen)) //&&mesh
         {
             bool pressOk = ImGui::Button("UPDATE");
-            if (proMesh->check_selected() == 1)
+            if (rdMesh->check_selected() == 1)
             {
-                for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
+                for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
                 {
                     auto mesh = *it;
                     if (mesh->selected && PreObId != mesh->ID)
@@ -235,7 +265,7 @@ namespace nui
 
                 if (pressOk)
                 {
-                    for (auto it = proMesh->getMesh()->begin(); it!= proMesh->getMesh()->end(); it++)
+                    for (auto it = rdMesh->getMesh()->begin(); it!= rdMesh->getMesh()->end(); it++)
                     {
                         auto mesh = *it; 
                         if (!check_skip(mesh)) {
@@ -286,11 +316,11 @@ namespace nui
                 ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f");
 
-                if (proMesh->check_selected() != 0)
+                if (rdMesh->check_selected() != 0)
                 {
                     if (strlen(aname) != 0 && pressOk)
                     {
-                        for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
+                        for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
                         {
                             auto mesh = *it;
                             if (check_skip(mesh)) { continue; }
@@ -317,14 +347,14 @@ namespace nui
 
         }
     }
-    void Property_Panel::material_frame(nui::SceneView* scene_view) {
+    void Property_Panel::material_frame() {
 
         static ImVec4 clor = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
         static float rness = 0.5f; static float mlic = 0.5f;
         if (ImGui::CollapsingHeader("Material", false))
         {
             ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
-            for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
+            for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
             {
                 auto mesh = *it;
                 if (check_skip(mesh)) { continue; }
@@ -340,7 +370,7 @@ namespace nui
             ImGui::ColorEdit3("Color", (float*)&clor); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Roughness", &rness, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Metallic", &mlic, 0.0f, 1.0f); ImGui::SetNextItemWidth(150);
-            for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
+            for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
             {
                 auto mesh = *it;
                 if (mesh->selected == true)
@@ -362,12 +392,12 @@ namespace nui
         if (ImGui::CollapsingHeader("Light", false))
         {
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
-            nimgui::draw_vec3_widget("Position", scene_view->get_light()->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
+            nimgui::draw_vec3_widget("Position", mLight->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
             static const char* items[] = { "Single Point Light", "WorldBox 8 Lights","WorldBox 32 Lights" ,"NoLights" };
-            ImGui::Combo("SetLight", &scene_view->get_light()->lightmode, items, IM_ARRAYSIZE(items)); ImGui::SetNextItemWidth(150);
-            ImGui::SliderFloat("Light Intensity", &scene_view->get_light()->mStrength, 0.00f, 200.0f);
+            ImGui::Combo("SetLight", &mLight->lightmode, items, IM_ARRAYSIZE(items)); ImGui::SetNextItemWidth(150);
+            ImGui::SliderFloat("Light Intensity", &mLight->mStrength, 0.00f, 200.0f);
 
-            if (scene_view->get_light()->mStrength == 0)
+            if (mLight->mStrength == 0)
             {
                 ImGui::TextWrapped("Light is off. Render by Shaded mode.");
             }
@@ -378,27 +408,6 @@ namespace nui
         }
 
 
-    }
-    void SaveIniFile(const std::string& key, const std::string& value) {
-        std::ifstream inputFile("robosim_ini.dat");
-        json j;
-        if (inputFile.is_open()) {
-            inputFile >> j;
-            inputFile.close();
-        }
-
-        j[key] = value;
-
-        std::ofstream outputFile("robosim_ini.dat");
-        if (!outputFile.is_open()) {
-            std::cerr << "Failed to open file for writing: robosim_ini.dat" << std::endl;
-            return;
-        }
-        outputFile << j.dump(4);
-        outputFile.close();
-
-        std::cout << "Theme saved to robosim_ini.dat" << std::endl;
-        MessageBox(NULL, "Please restart the software to apply the new theme.", "Restart required", MB_OK);
     }
     void Property_Panel::draft_chart()
     {
@@ -461,7 +470,7 @@ namespace nui
         // A - Get base objects if not already retrieved
         if (base[0] == nullptr)
         {
-            for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
+            for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
             {
                 auto mesh = *it;
                 std::string name = std::string(mesh->oname);
@@ -479,11 +488,9 @@ namespace nui
 
         // *****************************************************
         // B - Initialize static variables for joint angles & RB Hand pos
-        static float tolerance = 0.1f;
-        static float ang[6]{ 0 };
-        static float pre[6]{ 0 };
-        static float prehand[3]{ 0 };
+        static float tolerance = 0.1f, ang[6]{ 0 }, pre[6]{ 0 }, prehand[3]{ 0 };
         static std::vector<std::vector <float>> limangle{ 6, {-180,180} };
+        static bool CtrFlag = false;
         static std::vector<std::shared_ptr<nelems::oMesh>> OrgBase = {
             std::make_shared<nelems::oMesh>(*base[0]),
             std::make_shared<nelems::oMesh>(*base[1]),
@@ -496,11 +503,8 @@ namespace nui
 
         ImGui::Begin("Robot Controls", nullptr);
 
-        static bool CtrFlag = false;
         if (ImGui::BeginPopupContextItem("Robot Controls Popup", ImGuiPopupFlags_MouseButtonRight)) {
-            if (ImGui::MenuItem("Toggle Control Flag")) {
-                CtrFlag = !CtrFlag;                mRobot->setSwitchVisualize();
-            }
+            if (ImGui::MenuItem("Toggle Control Flag")) {CtrFlag = !CtrFlag; mRobot->setSwitchVisualize();}
             ImGui::EndPopup();
         }
 
@@ -511,13 +515,9 @@ namespace nui
         // C - Livesync & Control mode 
         // LiveSync Mode: 
         if (CtrFlag == false) {
-            // Get joint angles
             mRobot->get_angle(ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]);
-            // Show Joints Data
             ImVec4 vecred(0.0f, 0.0f, 1.0f, 1.0f); 
-
             for (int i = 0; i < 6; ++i) {
-                // Start a new child for each joint group
                 ImGui::BeginChild((std::string("JointGroup") + std::to_string(i)).c_str(), ImVec2(110, 85), true);
                 ImGui::BeginGroup();
 
@@ -537,16 +537,8 @@ namespace nui
                 ImGui::EndGroup();
                 ImGui::EndChild();
 
-                // Add some spacing between groups
-                if (i % 3 == 2) {
-                    //ImGui::Dummy(ImVec2(5.0f, 5.0f));  // Add a larger space after each row of three joints
-                }
-                else {
-                    ImGui::SameLine();  // Adjust spacing as needed
-                }
+                if (i % 3 != 2) { ImGui::SameLine(); }
             }
-
-
             mRobot->set_limitangle(limangle);
         }
         // Control Mode:
@@ -599,8 +591,6 @@ namespace nui
             rotateJoint(1, ang[1], pre[1], tolerance, base, 0, (ang[1] - pre[1]), 0);
             rotateJoint(0, ang[0], pre[0], tolerance, base, 0, 0, (ang[0] - pre[0]));
         }
-
-
         // Create buffers for each base
         for (auto& bs : base) 
         { 
@@ -647,34 +637,24 @@ namespace nui
         ang = std::round(ang * 100.0f) / 100.0f;
 
 
-        if (std::abs(ang - pre) > tolerance) {
+        if (std::abs(ang - pre) > tolerance) 
+        {
+            float diff = ang - pre;
+            glm::vec3 center = base[jointIndex]->oMaterial.position;
 
-            //GPU GLSL
-            if (mctshader)
-            {
-                /// Future if necessary
-            }
-            //CPU
-            else
-            {                
-                float diff = ang - pre;
-                glm::vec3 center = base[jointIndex]->oMaterial.position;
-
-                // Parallelize the loop using OpenMP
-                #pragma omp parallel for
-                for (size_t i = jointIndex; i < base.size(); ++i) {
-                    for (auto& vertex : base[i]->mVertices) {
-                        Eigen::Vector4f newPos = transform * Eigen::Vector4f(vertex.mPos.x - center.x, vertex.mPos.y - center.y, vertex.mPos.z - center.z, 1.0f);
-                        vertex.mPos = glm::vec3(newPos.x() + center.x, newPos.y() + center.y, newPos.z() + center.z);
-                    }
-
-                    // Update oMaterial position
-                    Eigen::Vector4f centerPos(base[i]->oMaterial.position.x - center.x, base[i]->oMaterial.position.y - center.y, base[i]->oMaterial.position.z - center.z, 1.0f);
-                    Eigen::Vector4f newCenterPos = transform * centerPos;
-                    base[i]->oMaterial.position = glm::vec3(newCenterPos.x() + center.x, newCenterPos.y() + center.y, newCenterPos.z() + center.z);
+            // Parallelize the loop using OpenMP
+            #pragma omp parallel for
+            for (size_t i = jointIndex; i < base.size(); ++i) {
+                for (auto& vertex : base[i]->mVertices) {
+                    Eigen::Vector4f newPos = transform * Eigen::Vector4f(vertex.mPos.x - center.x, vertex.mPos.y - center.y, vertex.mPos.z - center.z, 1.0f);
+                    vertex.mPos = glm::vec3(newPos.x() + center.x, newPos.y() + center.y, newPos.z() + center.z);
                 }
-            }
 
+                // Update oMaterial position
+                Eigen::Vector4f centerPos(base[i]->oMaterial.position.x - center.x, base[i]->oMaterial.position.y - center.y, base[i]->oMaterial.position.z - center.z, 1.0f);
+                Eigen::Vector4f newCenterPos = transform * centerPos;
+                base[i]->oMaterial.position = glm::vec3(newCenterPos.x() + center.x, newCenterPos.y() + center.y, newCenterPos.z() + center.z);
+            }
             pre = std::round(ang * 100.0f) / 100.0f;
         }
     }

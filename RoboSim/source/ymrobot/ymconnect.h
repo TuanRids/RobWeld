@@ -47,10 +47,12 @@ namespace nymrobot {
         nui::StatusLogs* sttlogs;
         std::unique_ptr<zmpdata> shmdata;
         RobInitFile* robinit;
+        static char connect_content[100];
+
     public:
         ymconnect() : controller(nullptr), angle{}, sttlogs(nullptr), shmdata(nullptr) {
             robinit = &RobInitFile::getinstance(); 
-            YMConnect::OpenConnection("192.168.10.102", status, restime);
+            YMConnect::OpenConnection("192.168.1.102", status, restime);
             sttlogs = &nui::StatusLogs::getInstance();
             shmdata = std::make_unique<zmpdata>();
         }

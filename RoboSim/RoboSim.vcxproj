@@ -244,6 +244,7 @@
     <ClInclude Include="source\rigging\rigging.h" />
     <ClInclude Include="source\ui\FrameManage.h" />
     <ClInclude Include="source\ui\HotkeyMenubar.h" />
+    <ClInclude Include="source\ui\IUIComponent.h" />
     <ClInclude Include="source\ui\RdrawChart.h" />
     <ClInclude Include="source\ui\statuslogs.h" />
     <ClInclude Include="source\ui\uiAction.h" />

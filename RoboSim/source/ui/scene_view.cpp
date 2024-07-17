@@ -5,6 +5,25 @@
 namespace nui
 {
     std::string SceneView::arg_render_mode = "Surface";
+    SceneView::SceneView():zoom(1), mSize(800, 600)
+    {
+        rdMesh = &nelems::mMesh::getInstance();
+        robinit = &RobInitFile::getinstance();
+        mFrameBuffer = std::make_unique<nrender::OpenGL_FrameBuffer>();
+
+        float SXAA = 3;
+        std::string temptsxaa;
+        robinit->get_settings("SSXA_Ratio", temptsxaa);
+        if (!temptsxaa.empty()) {
+            SXAA = std::stof(temptsxaa);
+        }
+
+        mFrameBuffer->create_buffers(800 * SXAA, 600 * SXAA);
+        mShader = std::make_unique<nshaders::Shader>();
+        mShader->load("shaders/vs.vert", "shaders/fs_pbr.frag");
+        mLight = std::make_unique<nelems::Light>();
+        mCamera = std::make_unique<nelems::Camera>(45.0f, 1.3f, 0.1f, 100.0f);
+    }
 
     void SceneView::resize(int32_t width, int32_t height)
     {
@@ -37,44 +56,11 @@ namespace nui
         }
         mCamera->set_rotation_center({0,0,0 });
     }
-
-    void SceneView::setFov(float newFov)
-    {
-        Fov = newFov;
-        mCamera->set_fov(newFov);
-        mCamera->update_view_matrix();
-        mCamera->update(mShader.get());
-    }
-
-    void SceneView::setFar(float newFar)
-    {
-        Far = newFar;
-        mCamera->set_far(newFar);
-        mCamera->update_view_matrix();
-        mCamera->update(mShader.get());
-    }
-
-    void SceneView::setNear(float newNear)
-    {
-        Near = newNear;
-        mCamera->set_near(newNear);
-        mCamera->update_view_matrix();
-        mCamera->update(mShader.get());
-    }
-
     void SceneView::setZoom(int newZoom)
     {
         zoom = newZoom;
     }
-
-    void SceneView::setAspect(float newAspect)
-    {
-        Aspect = newAspect;
-        mCamera->set_aspect(newAspect);
-        mCamera->update_view_matrix();
-        mCamera->update(mShader.get());
-    }
-
+    
     void SceneView::load_mesh(const std::string& filepath, bool robot)
     {
         if (!rdMesh)
@@ -158,7 +144,6 @@ namespace nui
         ImGui::End();
         //glDeleteTextures(1, &processedTextureID);
     }
-
 
     void SceneView::render_mode()
     {

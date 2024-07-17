@@ -38,13 +38,13 @@ namespace nrender
       return false;
     }
 
-    // Create the window and store this window as window pointer
-    // so that we can use it in callback functions
+    // CoreProfile
+    /*glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);*/
+
     auto glWindow = glfwCreateWindow(window->Width, window->Height, window->Title.c_str(), nullptr, NULL);//    glfwSetWindowPos(glWindow, 0, 30);
 
-    // MSAA
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     window->set_native_window(glWindow);
     if (!glWindow)
@@ -52,13 +52,20 @@ namespace nrender
       fprintf(stderr, "Error: GLFW Window couldn't be created\n");
       return false;
     }
-
+    window->set_native_window(glWindow);
     glfwSetWindowUserPointer(glWindow, window);
     glfwSetKeyCallback(glWindow, on_key_callback);
     glfwSetScrollCallback(glWindow, on_scroll_callback);
     glfwSetWindowSizeCallback(glWindow, on_window_size_callback);
     glfwSetWindowCloseCallback(glWindow, on_window_close_callback);
     glfwMakeContextCurrent(glWindow);
+
+    //glfwSetWindowUserPointer(glWindow, window);
+    //glfwSetKeyCallback(glWindow, on_key_callback);
+    //glfwSetScrollCallback(glWindow, on_scroll_callback);
+    //glfwSetWindowSizeCallback(glWindow, on_window_size_callback);
+    //glfwSetWindowCloseCallback(glWindow, on_window_close_callback);
+    //glfwMakeContextCurrent(glWindow);
 
     GLenum err = glewInit();
     if (GLEW_OK != err)
@@ -67,7 +74,11 @@ namespace nrender
       fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
       return false;
     }
-
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        fprintf(stderr, "OpenGL Error: %s\n", gluErrorString(error));
+        return false;
+    }
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
