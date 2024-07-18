@@ -11,7 +11,7 @@ namespace nui
         robinit = &RobInitFile::getinstance();
         mFrameBuffer = std::make_unique<nrender::OpenGL_FrameBuffer>();
 
-        float SXAA = 3;
+        float SXAA = 2.5;
         std::string temptsxaa;
         robinit->get_settings("SSXA_Ratio", temptsxaa);
         if (!temptsxaa.empty()) {
@@ -137,6 +137,13 @@ namespace nui
             //convert texture frambuffer to opencv mat
             cv::Mat image = framebufferToMat(textureID, viewportPanelSize.x, viewportPanelSize.y);
             cv::GaussianBlur(image, image, cv::Size(3, 3), 0);
+            cv::Mat sharpImage;
+            cv::Mat kernel = (cv::Mat_<float>(3, 3) <<
+                0, -1, 0,
+                -1, 5, -1,
+                0, -1, 0);
+            cv::filter2D(image, sharpImage, image.depth(), kernel);
+
             matToTexture(image, processedTextureID);
             ImGui::Image(reinterpret_cast<void*>(processedTextureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 

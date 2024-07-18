@@ -26,6 +26,15 @@ public:
         *sttlogs << "Key not found: " << key;
         return false;
     }
+    std::string get_settings(const std::string& key) {
+        std::string value;
+        auto it = Init_settings.find(key);
+        if (it != Init_settings.end()) {
+            value = it->second;
+            return value;
+        }
+        *sttlogs << "Key not found: " << key;
+    }
     void update_settings(const std::string& key, const std::string& value) { Init_settings[key] = value;}
     void SaveInit_encode() {
         std::ofstream outputFile("robosim_settings.txt");

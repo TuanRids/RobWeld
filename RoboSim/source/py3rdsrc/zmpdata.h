@@ -22,8 +22,7 @@ public:
     void getter_6pos(std::vector<std::vector<float>>& get6pos);
 private:
     bool UnImgFrameTrigger = false;
-
-
+    
     GLuint image_texture;
     GLuint image_texture_below;
     cv::Mat img;
@@ -34,7 +33,7 @@ private:
     static std::vector<std::vector<float>> shared_get6pos;
     static std::vector<std::vector<float>> shared_3Ddata;
 
-    unsigned int stt_id = 999;
+    unsigned int stt_id = 999, coord_id = 999;
     nui::StatusLogs* sttlogs;
 
     void clean_image();

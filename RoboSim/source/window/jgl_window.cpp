@@ -8,6 +8,7 @@
 #include "elems/stb_image.h"
 namespace nwindow
 {
+    std::unique_ptr<zmpdata> GLWindow::IPreceiver = std::make_unique<zmpdata>();
   bool GLWindow::init( const std::string& title)
   {
     int offsize = 0;
@@ -111,6 +112,7 @@ namespace nwindow
 
     mSceneView->render();
     mPropertyPanel->render(mWindow);
+    IPreceiver->render();
 
     // Render the UI 
     mUICtx->post_render();

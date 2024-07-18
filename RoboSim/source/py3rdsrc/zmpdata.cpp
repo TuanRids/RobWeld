@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "zmpdata.h"
 
-zmpdata::zmpdata() : image_texture(0), image_texture_below{ 0 } { sttlogs = &nui::StatusLogs::getInstance(); }
+zmpdata::zmpdata() : image_texture(0), image_texture_below{0} 
+{ sttlogs = &nui::StatusLogs::getInstance(); }
 
 std::vector<std::vector<float>> zmpdata::shared_get6pos (std::vector<std::vector<float>>(50, std::vector<float>(6, -999.0f)));
 std::vector<std::vector<float>> zmpdata::shared_3Ddata (std::vector<std::vector<float>>(3072, std::vector<float>(1024, -999.0f)));
@@ -14,7 +15,7 @@ zmpdata::~zmpdata() {
 
 void zmpdata::send_datatoIPC() {
 
-    const char* ipc_send_mapping = Config::IPC_SEND_MAPPING;
+    const char* ipc_send_mapping = Config::IPC_SEND_TRIGGER;
 
     HANDLE hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, TEXT(ipc_send_mapping));
     if (hMapFile == NULL) {
@@ -111,11 +112,11 @@ void zmpdata::Display_info()
         ImVec2 image_size;
         if (winsize.x / scale_ratio > winsize.y) {
             image_size.x = winsize.y * scale_ratio;
-            image_size.y = winsize.y;
+            image_size.y = winsize.y*0.95;
         }
         else {
             image_size.x = winsize.x;
-            image_size.y = winsize.x / scale_ratio;
+            image_size.y = winsize.x / scale_ratio * 0.95;
         }
         ImGui::Image((void*)(intptr_t)image_texture, image_size);
     }
@@ -134,11 +135,11 @@ void zmpdata::Display_info()
         ImVec2 image_size;
         if (winsize.x / scale_ratio > winsize.y) {
             image_size.x = winsize.y * scale_ratio;
-            image_size.y = winsize.y;
+            image_size.y = winsize.y * 0.95;
         }
         else {
             image_size.x = winsize.x;
-            image_size.y = winsize.x / scale_ratio;
+            image_size.y = winsize.x / scale_ratio * 0.95;
         }
         ImGui::Image((void*)(intptr_t)image_texture_below, image_size);
 
@@ -233,13 +234,7 @@ void zmpdata::getter_6pos(std::vector<std::vector<float>>& get6pos) {
 }
 
 void zmpdata::render() {
-
-    int frame_count;
-    float rotation_speed;
-
     receive_data();
-    
-    
     trigger_3DCreator();
     Display_info();
     send_datatoIPC();
@@ -268,7 +263,6 @@ void zmpdata::reset_TriggerToPy() {
 bool zmpdata::receive_data() {
     const char* img_shm_name = Config::IPC_GET_IMG;             // Get Image
     const char* img_shm_name_below = Config::IPC_GET_IMG_BELOW; // Get Image Below
-    const char* data_shm_name = Config::IPC_GET_DATA;           // Get Data
     const char* data_shm_rospos = Config::IPC_GET_POS;          // Get ROS Position
     const char* dat_shm_status = Config::IPC_GET_STATUS;        // Get Status  
     const char* dat_shm_coord = Config::IPC_GET_COOR3DMESH;     // Get Coordinators
@@ -276,7 +270,6 @@ bool zmpdata::receive_data() {
     // Open the shared memory objects
     HANDLE hMapFileImg = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(img_shm_name));
     HANDLE hMapFileImgBelow = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(img_shm_name_below));
-    HANDLE hMapFileData = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(data_shm_name));
     HANDLE hMapFileRosPos = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(data_shm_rospos));
     HANDLE hMapFileStatus = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(dat_shm_status));
     HANDLE hMapFileCoord = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(dat_shm_coord));
@@ -285,7 +278,6 @@ bool zmpdata::receive_data() {
     // Map the shared memory objects
     LPCTSTR pBufImg = (hMapFileImg != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileImg, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
     LPCTSTR pBufImgBelow = (hMapFileImgBelow != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileImgBelow, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
-    LPCTSTR pBufData = (hMapFileData != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileData, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
     LPCTSTR pBufPos = (hMapFileRosPos != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileRosPos, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
     LPCTSTR pBufStatus = (hMapFileStatus != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileStatus, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
     LPCTSTR pBufCoord = (hMapFileCoord != NULL) ? (LPCTSTR)MapViewOfFile(hMapFileCoord, FILE_MAP_ALL_ACCESS, 0, 0, 0) : NULL;
@@ -309,15 +301,6 @@ bool zmpdata::receive_data() {
     }
     else { img_below.release(); }
 
-    // Read frame count and rotation speed from shared memory
-    if (pBufData != NULL) {
-        void* data_ptr = const_cast<void*>(reinterpret_cast<const void*>(pBufData));
-        // std::memcpy(&frame_count, data_ptr, sizeof(int));
-        // std::memcpy(&rotation_speed, static_cast<char*>(data_ptr) + sizeof(int), sizeof(float));
-        UnmapViewOfFile(pBufData);
-        CloseHandle(hMapFileData);
-    }
-    else {    }
 
     // Read robot position from shared memory, if not return -999, then zero out
     if (pBufPos != NULL) {
@@ -328,7 +311,7 @@ bool zmpdata::receive_data() {
         UnmapViewOfFile(pBufPos);
         CloseHandle(hMapFileRosPos);
     }
-    else {shared_get6pos[0][0] = -999.0f;}
+    else {}
 
     // Read status from shared memory
     if (pBufStatus != NULL) {
@@ -336,7 +319,7 @@ bool zmpdata::receive_data() {
         char value[252]; // assuming value length is 252 bytes
 
         // Copy key
-        if (memcpy_s(&key, sizeof(unsigned int), pBufStatus, sizeof(unsigned int)) != 0) { *sttlogs << "Error copying key from shared memory."; }
+        if (memcpy_s(&key, sizeof(unsigned int), pBufStatus, sizeof(unsigned int)) != 0) { *sttlogs << "Error copying Status key from shared memory."; }
 
         // Copy value
         if (memcpy_s(value, sizeof(value), const_cast<char*>(reinterpret_cast<const char*>(pBufStatus)) + sizeof(unsigned int), 252) != 0) { *sttlogs << "Error copying value from shared memory."; }
@@ -353,22 +336,35 @@ bool zmpdata::receive_data() {
         
     // Read 3D coordinates from python, then close
     if (pBufCoord != NULL) {
-        float* dat_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufCoord));
-        shared_3Ddata = std::vector<std::vector<float>>(3072, std::vector<float>(1024, -999.0f));
-        for (size_t i = 0; i < 3072; ++i) {            
-            for (size_t j = 0; j < 1024; ++j) {
-                shared_3Ddata[i][j] = dat_ptr[i * 1024 + j];
+        unsigned int key;
+        unsigned int row_number;
+        float* data_ptr;
+
+        if (memcpy_s(&key, sizeof(unsigned int), pBufCoord, sizeof(unsigned int)) != 0){ *sttlogs << "Error copying 3D Coord  key from shared memory."; }
+
+        if (memcpy_s(&row_number, sizeof(unsigned int), const_cast<char*>(reinterpret_cast<const char*>(pBufCoord)) + sizeof(unsigned int), sizeof(unsigned int)) != 0) {
+            *sttlogs << "Error copying row_number from shared memory.";}
+
+        if (key != coord_id) {
+            coord_id = key;
+            data_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufCoord) + 2); // +2 to skip key and row_number
+
+            // Adjust the size of shared_3Ddata based on row_number
+            shared_3Ddata = std::vector<std::vector<float>>(row_number, std::vector<float>(1024, -999.0f));
+            for (size_t i = 0; i < row_number; ++i) {
+                for (size_t j = 0; j < 1024; ++j) {
+                    shared_3Ddata[i][j] = data_ptr[i * 1024 + j];
+                }
             }
+            *sttlogs << "[3D] Read 3D coordinates from Shared memory";
         }
-        *sttlogs << "[3D] Readed 3D coordinates from Shared memory";
         UnmapViewOfFile(pBufCoord);
         CloseHandle(hMapFileCoord);
-    }
-    else {
-        shared_3Ddata = std::vector<std::vector<float>>(1, std::vector<float>(1, 0.0f));
-    }
-    return true;
 
+    }
+    else {shared_3Ddata = std::vector<std::vector<float>>(1, std::vector<float>(1, 0.0f));}
+
+    return true;
 }
 
 GLuint zmpdata::matToTexture(const cv::Mat& mat) {

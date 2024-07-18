@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "element.h"
 #include "shader/shader_util.h"
-
+#include "Filemgr/RobInitFile.h"
 namespace nelems
 {
   class Light : public Element
@@ -14,7 +14,9 @@ namespace nelems
     {
       mColor = glm::vec3(1.0f, 1.0f, 1.0f);
       mPosition = { 2.2f, 3.6f, 7.3f };
-      mStrength = 40.0f;
+      RobInitFile* robinit; robinit = &RobInitFile::getinstance();
+      if (robinit->get_settings("theme") == "Dark") { mStrength = 400; }
+      else { mStrength = 200.0f; }
       lightmode = 2;
     }
 

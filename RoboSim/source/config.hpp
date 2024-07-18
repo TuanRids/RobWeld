@@ -17,20 +17,18 @@ namespace Config {
 
     // == IMPORTANT NAME & ADDRESS ===
     // Address to Inte-Process Communication with Vision 
-    constexpr const char* IPC_GET_IMG = "Local\\ImgPytoCPP";
+    constexpr const char* IPC_GET_IMG = "Local\\ImgAbove";
     // Address to Inte-Process Communication with Vision 
-    constexpr const char* IPC_GET_IMG_BELOW = "Local\\ImgPytoCPPBelow";
+    constexpr const char* IPC_GET_IMG_BELOW = "Local\\ImgBelow";
     // Address to Inte-Process Communication with Vision 
-    constexpr const char* IPC_GET_STATUS = "Local\\StatusPytoCPP";
-    // Address to Inte-Process Communication with Vision 
-	constexpr const char* IPC_GET_DATA = "Local\\floatPytoCPP";
+    constexpr const char* IPC_GET_STATUS = "Local\\VisionStatus";
     // Get robot Position from Robot 
-    constexpr const char* IPC_GET_POS = "Local\\PosPytoCPP";
+    constexpr const char* IPC_GET_POS = "Local\\Robpos";
     // Get adjusted 3D coordinator
-    constexpr const char* IPC_GET_COOR3DMESH = "Local\\Coor3DMeshtoCPP";
+    constexpr const char* IPC_GET_COOR3DMESH = "Local\\Coor3DMesh";
 
     // Send mapping data with Vision 
-	constexpr const char* IPC_SEND_MAPPING = "Local\\MapCPPtoDictPy";
+	constexpr const char* IPC_SEND_TRIGGER = "Local\\TriggerVision";
     
     
 

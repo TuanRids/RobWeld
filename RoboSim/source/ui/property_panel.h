@@ -22,7 +22,6 @@
 #pragma warning( pop )
 #include "Eigen/Dense"
 
-#include "py3rdsrc/zmpdata.h"
 #include "Filemgr/RobInitFile.h"
 
 #include <Windows.h>
@@ -42,7 +41,6 @@ namespace nui
         nui::uiAction uiaction;
         std::unique_ptr<nymrobot::ymconnect> mRobot;
         nui::StatusLogs* sttlogs;
-        std::unique_ptr<zmpdata> IPreceiver;
         RobInitFile* robinit;
 
         float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };

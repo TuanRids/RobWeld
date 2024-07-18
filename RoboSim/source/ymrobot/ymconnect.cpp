@@ -76,8 +76,9 @@ namespace nymrobot {
         connect_robot();
         setup_MOVE_ui(ui_state);
         move_robot();
-
-        
+        auto future_read = std::async(std::launch::async, [this]() {read_robot(); });
+        if (future_read.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) { disconnect_robot(true); return; }
+                       
         static int x{ 200 }, y{ 400 };
         static float pos_x, pos_y,sizex,sizey;
         nui::FrameManage::getViewportSize(pos_x, pos_y);
@@ -91,10 +92,13 @@ namespace nymrobot {
         ImGui::Separator();
         if (resultmsg) {ImGui::TextColored(ImVec4(0.85f, 0.6f, 0.0f, 1.0f), resultmsg.str().c_str());        }
         ImGui::Separator();
-
-        auto future_read = std::async(std::launch::async, [this]() {read_robot(); });
-        if (future_read.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) { disconnect_robot(true); return; }
-
+        // set button for higher fps
+        if (ImGui::Button("Get Cr Pos") && controller)
+        {
+            PositionData raxisData{};
+            {controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, raxisData);}
+            std::stringstream ss; ss << raxisData; *sttlogs << "Position: " + ss.str();
+        }
         ImGui::End();
     }
 
@@ -161,6 +165,16 @@ namespace nymrobot {
         if (ui_state.START_Flag)
         {
             if (status.StatusCode != 0) { return; }
+            ControllerStateData stateData{}; std::stringstream ss;
+            if (controller) { controller->Status->ReadState(stateData); }
+            ss << stateData;
+            if (stateData.isAlarming) {
+                AlarmHistory alarmHistoryData;
+                if (controller) { controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData); }
+                ss << alarmHistoryData << std::endl; *sttlogs << "ERROR: "+ss.str();
+            }
+
+
             *sttlogs << "Start Moving to " + std::to_string(ui_state.coumove) + " points.";
             for (auto it = ui_state.movTypes.begin(); it != ui_state.movTypes.end(); it++) {
                 if (std::distance(ui_state.movTypes.begin(), it) >= ui_state.coumove) { break; }
@@ -317,42 +331,27 @@ namespace nymrobot {
     void ymconnect::read_robot() {
         std::stringstream strget;
         StatusInfo tpstatus;
-        PositionData raxisData{}, rposData{}, rjointangle{};
-        static auto start = std::chrono::high_resolution_clock::now();
-        ControllerStateData stateData{};
-        if (status.StatusCode != 0) {return;}
-        auto elapsed = std::chrono::high_resolution_clock::now() - start;
-        double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(elapsed).count();
-
-        if (controller) { controller->Status->ReadState(stateData); }
+        PositionData rposData{}, rjointangle{};
+        if (status.StatusCode != 0) {return;} 
         resultmsg.str(" ");
-        resultmsg << stateData;
-
-
-        // set button for higher fps
-        if (ImGui::Button("Get Cr Pos")) 
-        {
-            tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, raxisData);
-            std::stringstream ss; ss << raxisData; *sttlogs << "Position: " + ss.str();
+               
+        // think how to remove the render with 2 functions for improving fps
+        if (controller) 
+        { 
+            auto stt = std::chrono::high_resolution_clock::now();
+            controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse , 0, 0, rposData);          
+            controller->Kinematics->ConvertPosition(ControlGroupId::R1, rposData, KinematicConversions::PulseToJointAngle, rjointangle);
+            auto durtime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - stt).count();
+            std::cout << std::to_string(durtime) << std::endl;
         }
-
-        if (stateData.isAlarming) {
-            AlarmHistory alarmHistoryData;
-            if (controller) { controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData); }
-            resultmsg << alarmHistoryData << std::endl;
-        }
-
-
-        if (controller) { tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse , 0, 0, rposData); }
-        resultmsg << rposData;
-        if (controller) { tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, rposData, KinematicConversions::PulseToJointAngle, rjointangle);}
+        resultmsg << rposData; 
         std::copy(rjointangle.axisData.begin(), rjointangle.axisData.begin()+6, angle.begin());
 
         bool isOutOfLimit = std::any_of(std::begin(angle), std::end(angle), [this, i = 0](float a) mutable {
             return a < limitangle[i][0] || a > limitangle[i++][1];
             });
 
-        if (isOutOfLimit && stateData.isRunning) {
+        if (isOutOfLimit) {
             if (controller) { controller->MotionManager->MotionStop(true); }
             if (controller) { controller->MotionManager->ClearAllTrajectory(); }
             if (controller) { controller->ControlCommands->SetServos(SignalStatus::OFF); }

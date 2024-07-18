@@ -108,6 +108,7 @@ void PclToMesh::Create3DPCL(const float& SizeLeaf, const unsigned int& poidepth)
     poisson.reconstruct(*triangles);
 
     logTime("Poisson reconstruction");
+    proMesh->delete_byname("Poisson_Mesh");
 
     oMeshObject.changeName("Poisson_Mesh");
     oMeshObject.oMaterial.mColor = glm::vec3(0.2f, 0.4f, 0.75f);

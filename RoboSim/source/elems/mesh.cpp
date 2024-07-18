@@ -190,7 +190,7 @@ namespace nelems {
             glm::vec3(0.0, 0.5, 0.0), glm::vec3(1.0, 0.8, 0.2), glm::vec3(0.0, 0.6, 0.4),
             glm::vec3(0.2, 0.1, 0.1), glm::vec3(0.04, 0.04, 0.4), glm::vec3(0.4, 0.1, 0.7)
         };*/
-        glm::vec3 color =  glm::vec3(0.04, 0.04, 0.21) ;
+        glm::vec3 color =  glm::vec3(0.0, 0.04, 0.95) ;
         const uint32_t cMeshImportFlags =
             aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices|
             aiProcess_ValidateDataStructure;
@@ -236,8 +236,9 @@ namespace nelems {
                     else
                     {
                         newMesh.changeName(name);
+                        newMesh.oMaterial.mMetallic = 0.95; newMesh.oMaterial.mRoughness = 0.06;
                         if (name.find("RBSIMBase_6") != std::string::npos){ newMesh.oMaterial.mColor = glm::vec3(0.95f, 0.3f, 0.0f); }
-                        else if (name.find("RBSIMBase_7") != std::string::npos) { newMesh.oMaterial.mColor = glm::vec3(0.0f, 0.03f, 0.3f); }
+                        else if (name.find("RBSIMBase_7") != std::string::npos) { newMesh.oMaterial.mColor = glm::vec3(0.0f, 0.83f, 0.3f); }
 
                         else { newMesh.oMaterial.mColor = color; }
                         name = "RBSIMCenter_" + name.substr(name.find_last_of("_") + 1);
@@ -329,8 +330,8 @@ namespace nelems {
     }
 
     void mMesh::update(nshaders::Shader* shader, int lightmode) {
-        shader->set_i1(lightmode, "LightModes");
         for (auto& mesh : *mMeshes) {
+            shader->set_i1(lightmode, "LightModes");
             shader->set_material(mesh->oMaterial, "materialData");
             mesh->render();
             mesh->unbind();
@@ -339,19 +340,21 @@ namespace nelems {
             // incase robot
             if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos)
             {
+                shader->set_i1(lightmode, "LightModes");
                 shader->set_material(mesh->oMaterial, "materialData");
                 mesh->render_lines(5);
                 mesh->unbind();
                 continue;
             }
             // incase selected
+            shader->set_i1(3, "LightModes");
             if (!mesh->selected) { continue; }
             oMesh OBxyz, OBox, OBoy, OBoz;
             set_OBxyz(axis_length, *mesh, OBox, OBoy, OBoz);
             shader->set_material(OBox.oMaterial, "materialData");
-            OBox.render_lines();    shader->set_material(OBoy.oMaterial, "materialData");
-            OBoy.render_lines();    shader->set_material(OBoz.oMaterial, "materialData");
-            OBoz.render_lines();
+            OBox.render_lines(4);    shader->set_material(OBoy.oMaterial, "materialData");
+            OBoy.render_lines(4);    shader->set_material(OBoz.oMaterial, "materialData");
+            OBoz.render_lines(4);
             OBox.unbind(); OBoy.unbind(); OBoz.unbind();
         }
         if (mCoorSystem)
@@ -512,7 +515,7 @@ namespace nelems {
         oxMesh.add_vertex_index(1);
         oxMesh.init();
         OBox = oxMesh;
-        OBox.oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f);
+        OBox.oMaterial.mColor = glm::vec3(0.0f, 0.2f, 0.80f); // Red
         // Oy mesh (Cyan color)
         oMesh oyMesh;
         oyMesh.mVertices.clear();
@@ -523,7 +526,7 @@ namespace nelems {
         oyMesh.add_vertex_index(1);
         oyMesh.init();
         OBoy = oyMesh;
-        OBoy.oMaterial.mColor = glm::vec3(0.0f, 1.0f, 1.0f);
+        OBoy.oMaterial.mColor = glm::vec3(1.0f, 1.0f, 0.0f); // 
         // Oz mesh (Purple color)
         oMesh ozMesh;
         ozMesh.mVertices.clear();
@@ -534,7 +537,7 @@ namespace nelems {
         ozMesh.add_vertex_index(1);
         ozMesh.init();
         OBoz = ozMesh;
-        OBoz.oMaterial.mColor = glm::vec3(0.5f, 0.0f, 0.5f);
+        OBoz.oMaterial.mColor = glm::vec3(1.0f, 0.0f,0.5f);
 
     }
 }

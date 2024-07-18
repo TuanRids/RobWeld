@@ -18,7 +18,7 @@ using namespace Eigen;
 namespace nui
 {
     nui::Property_Panel::Property_Panel():
-        mRobot(nullptr), sttlogs(nullptr), IPreceiver(nullptr)
+        mRobot(nullptr), sttlogs(nullptr)
     {
         SceneView* sceneView = &nui::SceneView::getInstance();
         mCamera = sceneView->mCamera;
@@ -37,7 +37,6 @@ namespace nui
         if (std::filesystem::exists(fontPath) && fontPath.size() > 10)
         { io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f); }
 
-        IPreceiver = std::make_unique<zmpdata>();
         mRobot = std::make_unique<nymrobot::ymconnect>();
         sttlogs = &nui::StatusLogs::getInstance();
     }
@@ -50,8 +49,6 @@ namespace nui
         static nui::HotkeyMenubar hotkey_manage;
         hotkey_manage.mMenuBar(mWindow);
         hotkey_manage.mHotkey(mWindow);
-
-        IPreceiver->render();
         
         ImGui::Begin("Properties");
         layer_frame(); // define selectedID
@@ -64,10 +61,6 @@ namespace nui
         ImGui::Begin("StatusLogs", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
         ImGui::TextWrapped(sttlogs->getStatus().c_str());
         ImGui::End();
-
-
-        // sh_performance();
-
         Robot_Controls_table();
     }
     
@@ -245,22 +238,22 @@ namespace nui
                 ImGui::Text("Name"); ImGui::SameLine();
                 ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
                 // Text color: Red
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.5f, 0.80f, 0.9f, 1.0f), "x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##xPos", &posrot_obj[0], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
 
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.5f, 0.80f, 0.9f, 1.0f), "x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##xRot", &posrot_obj[3], 0.0f, 0.0f, "%.3f");
                 // Text color: Blue
-                ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.9f, 0.0f, 0.0f, 1.0f), "y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yPos", &posrot_obj[1], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
 
-                ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.9f, 0.0f, 0.0f, 1.0f), "y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yRot", &posrot_obj[4], 0.0f, 0.0f, "%.3f");
                 // Text color: Purple
-                ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.75f, 0.72f, 0.25f, 1.0f), "z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zPos", &posrot_obj[2], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
 
-                ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.75f, 0.72f, 0.25f, 1.0f), "z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zRot", &posrot_obj[5], 0.0f, 0.0f, "%.3f");
 
                 if (pressOk)
@@ -301,19 +294,19 @@ namespace nui
                 ImGui::Text("Name"); ImGui::SameLine(); ImGui::SetNextItemWidth(150);
                 ImGui::InputText("##Name", aname, ImGuiInputTextFlags_EnterReturnsTrue);
 
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.5f, 0.80f, 0.9f, 1.0f), "x_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##xPos", &posrot[0], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.5f, 0.80f, 0.9f, 1.0f), "x_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##xRot", &posrot[3], 0.0f, 0.0f, "%.3f");
 
-                ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.9f, 0.0f, 0.0f, 1.0f), "y_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yPos", &posrot[1], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
-                ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.9f, 0.0f, 0.0f, 1.0f), "y_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##yRot", &posrot[4], 0.0f, 0.0f, "%.3f");
 
-                ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.75f, 0.72f, 0.25f, 1.0f), "z_Pos"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zPos", &posrot[2], 0.0f, 0.0f, "%.3f"); ImGui::SameLine();
-                ImGui::TextColored(ImVec4(0.5f, 0.0f, 0.5f, 1.0f), "z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::TextColored(ImVec4(0.75f, 0.72f, 0.25f, 1.0f), "z_Rot"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
                 ImGui::InputFloat("##zRot", &posrot[5], 0.0f, 0.0f, "%.3f");
 
                 if (rdMesh->check_selected() != 0)
@@ -395,7 +388,7 @@ namespace nui
             nimgui::draw_vec3_widget("Position", mLight->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
             static const char* items[] = { "Single Point Light", "WorldBox 8 Lights","WorldBox 32 Lights" ,"NoLights" };
             ImGui::Combo("SetLight", &mLight->lightmode, items, IM_ARRAYSIZE(items)); ImGui::SetNextItemWidth(150);
-            ImGui::SliderFloat("Light Intensity", &mLight->mStrength, 0.00f, 200.0f);
+            ImGui::SliderFloat("Light Intensity", &mLight->mStrength, 200.00f, 2000.0f);
 
             if (mLight->mStrength == 0)
             {
@@ -565,7 +558,7 @@ namespace nui
         // D - Caclculate for simulate the movement
 
         // D - 2 Joints Siumulation
-        bool exceeds_tolerance = false;
+        bool exceeds_tolerance = false; 
         for (int i = 0; i < 6; ++i) {
             if (std::abs(ang[i] - pre[i]) > tolerance) {
                 exceeds_tolerance = true;

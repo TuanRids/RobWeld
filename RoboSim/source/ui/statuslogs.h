@@ -33,7 +33,7 @@ namespace nui {
             formattedStatus << "[" << timeBuffer << "]: " << status;
 
             // Add formatted status to the deque
-            statusQueue.push_back(formattedStatus.str());
+            statusQueue.push_front(formattedStatus.str());
             while (statusQueue.size() > maxSize) {
                 statusQueue.pop_front();
             }

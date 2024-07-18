@@ -1,8 +1,5 @@
 #include <pch.h>
 #include "RdrawChart.h"
-#include <cmath>
-#include <GLFW/glfw3.h>
-
 namespace nui
 {
     void RdrawChart::render()
@@ -31,7 +28,17 @@ namespace nui
         ImGui::EndGroup(); ImGui::End();
     }
 
-    RdrawChart::RdrawChart() {}
+    RdrawChart::RdrawChart() 
+    { 
+        robinit = &RobInitFile::getinstance();
+        if (robinit->get_settings("theme") == "Dark")
+        {
+            FontCol = IM_COL32(250, 230, 0, 255); //Yellow
+        }
+        else {
+            FontCol = IM_COL32(125, 50, 125, 255);
+        }
+    }
 
     RdrawChart::~RdrawChart() {}
 
@@ -64,8 +71,8 @@ namespace nui
             // Draw the x and y axes
             ImVec2 xAxisEnd = ImVec2(origin.x + totalBarsWidth, origin.y);
             ImVec2 yAxisEnd = ImVec2(origin.x, origin.y - maxBarHeight);
-            ImGui::GetWindowDrawList()->AddLine(origin, xAxisEnd, IM_COL32(125, 0, 125, 255)); // X-axis
-            ImGui::GetWindowDrawList()->AddLine(origin, yAxisEnd, IM_COL32(125, 0, 125, 255)); // Y-axis
+            ImGui::GetWindowDrawList()->AddLine(origin, xAxisEnd, FontCol); // X-axis
+            ImGui::GetWindowDrawList()->AddLine(origin, yAxisEnd, FontCol); // Y-axis
 
             int i = 0;
             for (const auto& [key, value] : data)
@@ -78,7 +85,7 @@ namespace nui
 
                 // Draw the x-axis labels
                 ImVec2 labelPos = ImVec2(barMin.x + barWidth / 2, origin.y + 5);
-                ImGui::GetWindowDrawList()->AddText(labelPos, IM_COL32(125, 0, 125, 255), key.c_str());
+                ImGui::GetWindowDrawList()->AddText(labelPos, FontCol, key.c_str());
 
                 // Check if the mouse is hovering over the bar
                 ImVec2 mousePos = ImGui::GetMousePos();
@@ -106,8 +113,8 @@ namespace nui
             // Draw the x and y axes
             ImVec2 xAxisEnd = ImVec2(origin.x + maxChartWidth, origin.y);
             ImVec2 yAxisEnd = ImVec2(origin.x, origin.y - maxChartHeight);
-            ImGui::GetWindowDrawList()->AddLine(origin, xAxisEnd, IM_COL32(125, 0, 125, 255)); // X-axis
-            ImGui::GetWindowDrawList()->AddLine(origin, yAxisEnd, IM_COL32(125, 0, 125, 255)); // Y-axis
+            ImGui::GetWindowDrawList()->AddLine(origin, xAxisEnd, FontCol); // X-axis
+            ImGui::GetWindowDrawList()->AddLine(origin, yAxisEnd, FontCol); // Y-axis
 
             int i = 0;
             std::vector<ImVec2> points;
@@ -119,7 +126,7 @@ namespace nui
 
                 // Draw the x-axis labels
                 ImVec2 labelPos = ImVec2(x, origin.y + 5);
-                ImGui::GetWindowDrawList()->AddText(labelPos, IM_COL32(125, 0, 125, 255), key.c_str());
+                ImGui::GetWindowDrawList()->AddText(labelPos, FontCol, key.c_str());
 
                 ++i;
             }
@@ -165,8 +172,8 @@ namespace nui
             // Draw the x and y axes
             ImVec2 xAxisEnd = ImVec2(origin.x + maxChartWidth, origin.y);
             ImVec2 yAxisEnd = ImVec2(origin.x, origin.y - maxChartHeight);
-            ImGui::GetWindowDrawList()->AddLine(origin, xAxisEnd, IM_COL32(125, 0, 125, 255)); // X-axis
-            ImGui::GetWindowDrawList()->AddLine(origin, yAxisEnd, IM_COL32(125, 0, 125, 255)); // Y-axis
+            ImGui::GetWindowDrawList()->AddLine(origin, xAxisEnd, FontCol); // X-axis
+            ImGui::GetWindowDrawList()->AddLine(origin, yAxisEnd, FontCol); // Y-axis
 
             int i = 0;
             std::vector<ImVec2> points;
@@ -181,7 +188,7 @@ namespace nui
 
                 // Draw the x-axis labels
                 ImVec2 labelPos = ImVec2(barMin.x + barWidth / 2, origin.y + 5);
-                ImGui::GetWindowDrawList()->AddText(labelPos, IM_COL32(125, 0, 125, 255), key.c_str());
+                ImGui::GetWindowDrawList()->AddText(labelPos, FontCol, key.c_str());
 
                 // Calculate line chart points
                 float x = barMin.x + barWidth / 2;

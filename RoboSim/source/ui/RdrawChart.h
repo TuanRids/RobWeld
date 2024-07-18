@@ -3,6 +3,10 @@
 #include <vector>
 #include <map>
 #include <imgui.h>
+#include <cmath>
+#include <GLFW/glfw3.h>
+
+#include <Filemgr/RobInitFile.h> // Theme dark/lights
 
 namespace nui
 {
@@ -10,6 +14,8 @@ namespace nui
     {
     private:
         bool dChartFlag{ false };
+        RobInitFile* robinit;
+        ImU32 FontCol;
     public:
         // Constructor
         RdrawChart();
