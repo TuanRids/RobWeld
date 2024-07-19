@@ -4,7 +4,10 @@
 
 This project involves developing a robot control system using C++ and OpenGL. The system incorporates vision and lidar technologies to scan objects, visualize the results, and perform inspection tasks. The project includes functionalities for real-time object detection, lidar-based scanning, and interactive 3D visualization.
 
-https://github.com/TuanRids/RoboSim-Ohlab/assets/63535662/7580334e-3030-425b-a4de-556249cee648
+
+
+https://github.com/user-attachments/assets/3df68ea0-bd89-4cad-b023-e6090e6a56f4
+
 
 ## Features
 
