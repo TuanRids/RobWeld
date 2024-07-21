@@ -15,10 +15,42 @@ namespace nymrobot {
     char ymconnect::connect_content[100] = "Welcome";
     UIState ymconnect::ui_state{};
     ymconnect::~ymconnect() {
-        if (status.StatusCode == 0) {
+        if (controller) {
             disconnect_robot(false);
         }
         delete controller;
+    }
+    bool isNetworkAvailable(const std::string& ip) {
+        std::string command = "cmd.exe /c ping -n 1 " + ip + " > nul 2>&1";
+
+        // Setup the process attributes
+        STARTUPINFO si;
+        PROCESS_INFORMATION pi;
+        ZeroMemory(&si, sizeof(si));
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESHOWWINDOW;
+        si.wShowWindow = SW_HIDE;
+        ZeroMemory(&pi, sizeof(pi));
+
+        // Create the process
+        if (CreateProcess(NULL, const_cast<char*>(command.c_str()), NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+            // Wait for the process to finish
+            WaitForSingleObject(pi.hProcess, INFINITE);
+
+            // Get the exit code
+            DWORD exitCode;
+            GetExitCodeProcess(pi.hProcess, &exitCode);
+
+            // Close process and thread handles
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+
+            return (exitCode == 0);
+        }
+        else {
+            std::cerr << "Failed to create process: " << GetLastError() << std::endl;
+            return false;
+        }
     }
 
     void ymconnect::connect_robot() {
@@ -32,26 +64,31 @@ namespace nymrobot {
         //ImGui::SetWindowSize(ImVec2(400, 100));
         ImGui::SetNextItemWidth(120);
         ImGui::InputText("IP", ip_address, sizeof(ip_address));
-        if (status.StatusCode == 0) { strcpy_s(connect_content, "Connected."); }
         ImGui::SetNextItemWidth(120);
         ImGui::InputText("Msg", connect_content, sizeof(connect_content));
 
-        if (ImGui::Button("Connect") && status.StatusCode != 0) {
+        if (ImGui::Button("Connect") && !controller) {
             std::string getip{ ip_address };
-            controller = YMConnect::OpenConnection(getip, status);
-            if (status.StatusCode != 0) {std::stringstream ss; ss << status; *sttlogs << "Error: " + ss.str();}
+            if (isNetworkAvailable(getip)) {
+                controller = YMConnect::OpenConnection(getip, status);
+                if (status.StatusCode != 0) { std::stringstream ss; ss << status; *sttlogs << "Error: " + ss.str(); }
+                else {
+                    strcpy_s(connect_content, "Welcome to OhLabs.");
+                    status = controller->ControlCommands->DisplayStringToPendant(connect_content);
+                    *sttlogs << "Connected";
+                }
+            }
             else {
-                status = controller->ControlCommands->DisplayStringToPendant(connect_content);
-                strcpy_s(connect_content, "Welcome to OhLabs.");
-                *sttlogs << "Connected";
+                *sttlogs << "Error: Cannot connect to " + getip + ". Check IP on your robot system.";
             }
         }
         ImGui::SameLine();
         if (ImGui::Button("Disconnect")) {
-            if (status.StatusCode == 0 && controller)
+            if (controller)
             {
                 status = controller->ControlCommands->DisplayStringToPendant("Disconnect!");
                 disconnect_robot(false);
+
             }
         }
         ImGui::Separator();
@@ -62,15 +99,7 @@ namespace nymrobot {
     void ymconnect::disconnect_robot(bool showmsg) {
         *sttlogs << "Disconnect" ;
         strcpy_s(connect_content, "Disconnect!");
-        if (status.StatusCode == 0) {
-            try
-            {
-                YMConnect::CloseConnection(controller);
-                //YMConnect::OpenConnection("192.168.0.0", status, restime);
-                controller = nullptr;
-            }
-            catch(...){}
-        }
+        if (controller) { controller = nullptr; }
         if (showmsg)
         { ImGui::OpenPopup("Disconnected"); }
     }
@@ -262,7 +291,7 @@ namespace nymrobot {
             }
         }
         ImGui::SameLine(); // Check the trajectory
-        if (ImGui::Button("Stop") && status.StatusCode == 0 && controller)
+        if (ImGui::Button("Stop") && controller)
         {
             std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
             *ui_state.tpstatus = controller->MotionManager->MotionStop();
@@ -271,7 +300,7 @@ namespace nymrobot {
             *sttlogs << "Trying to clear trajectory";
         }
         ImGui::SameLine(); // Check the trajectory
-        if (ImGui::Button("Clear") && status.StatusCode == 0 && controller)
+        if (ImGui::Button("Clear") && controller)
         {
             std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
             *temptstt = controller->Faults->ClearAllFaults();
@@ -283,7 +312,7 @@ namespace nymrobot {
             *sttlogs << "Trying to clear trajectory";
         }
         ImGui::SameLine();
-        if (ImGui::Button("Home") && status.StatusCode == 0 && controller)
+        if (ImGui::Button("Home") && controller)
         {
             //*ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
             //*ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
@@ -318,14 +347,14 @@ namespace nymrobot {
                 ui_state.rbpos.resize(ui_state.coumove, std::vector<float>(6, 0.0f));
                 ui_state.movTypes.resize(ui_state.coumove, 0);
             }
-            if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && status.StatusCode == 0 && controller) {
+            if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && controller) {
                 *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
                 *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
                 std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.begin() + 6, ui_state.rbpos[j].begin());
                 *sttlogs << "Update the Original Position for " << std::to_string(j);
             }
             ImGui::SameLine();
-            if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && status.StatusCode == 0 && controller) {
+            if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && controller) {
                 *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1workpos);
                 std::copy(ui_state.b1workpos->axisData.begin(), ui_state.b1workpos->axisData.begin()+6, ui_state.rbpos[j].begin());
                 *sttlogs << "Update the Current Position for " + std::to_string(j);

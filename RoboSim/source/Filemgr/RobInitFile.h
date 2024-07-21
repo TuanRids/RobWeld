@@ -45,7 +45,7 @@ public:
 
         bool writeError = false;
         for (const auto& kv : Init_settings) {
-            *sttlogs << "Key: " << kv.first << ", Value: " << kv.second; //
+            *sttlogs << kv.first + " : " + kv.second; //
 
             // Check if the value contains newlines or other problematic characters
             if (kv.second.find('\n') != std::string::npos) {
