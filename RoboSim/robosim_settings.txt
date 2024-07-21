@@ -2,4 +2,4 @@ SSXA_Ratio : 2.500000
 creating_speed : 0
 rob_font : seguihis
 robot_tcp : 192.168.10.102
-theme : Light
+theme : Dark

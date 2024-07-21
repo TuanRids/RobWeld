@@ -35,7 +35,7 @@ namespace nymrobot {
     private:
         mutable std::mutex ymmutex;
         static UIState ui_state;
-        StatusInfo status;
+        StatusInfo status{};
         MotomanController* controller;
         UINT32 restime = 10;
         bool switchVisualizeMode = false;
@@ -52,7 +52,6 @@ namespace nymrobot {
         static char connect_content[100];
         ymconnect() : controller(nullptr), angle{}, sttlogs(nullptr), shmdata(nullptr) {
             robinit = &RobInitFile::getinstance(); 
-            YMConnect::OpenConnection("192.168.1.102", status, restime);
             sttlogs = &nui::StatusLogs::getInstance();
             shmdata = std::make_unique<zmpdata>();
         }

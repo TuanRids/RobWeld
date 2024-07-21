@@ -48,7 +48,7 @@ namespace nymrobot {
         }
         ImGui::SameLine();
         if (ImGui::Button("Disconnect")) {
-            if (status.StatusCode == 0)
+            if (status.StatusCode == 0 && controller)
             {
                 status = controller->ControlCommands->DisplayStringToPendant("Disconnect!");
                 disconnect_robot(false);
@@ -63,8 +63,13 @@ namespace nymrobot {
         *sttlogs << "Disconnect" ;
         strcpy_s(connect_content, "Disconnect!");
         if (status.StatusCode == 0) {
-            YMConnect::OpenConnection("192.168.0.0", status,restime);
-            controller = nullptr;
+            try
+            {
+                YMConnect::CloseConnection(controller);
+                //YMConnect::OpenConnection("192.168.0.0", status, restime);
+                controller = nullptr;
+            }
+            catch(...){}
         }
         if (showmsg)
         { ImGui::OpenPopup("Disconnected"); }
@@ -168,7 +173,7 @@ namespace nymrobot {
             if (newmesh_flag) { proMeshRb->add_mesh(mesh); newmesh_flag = false; }
         }
         // Start Moving
-        if (ui_state.START_Flag)
+        if (ui_state.START_Flag &&controller)
         {
             if (status.StatusCode != 0) { return; }
             ControllerStateData stateData{}; std::stringstream ss;
@@ -257,7 +262,7 @@ namespace nymrobot {
             }
         }
         ImGui::SameLine(); // Check the trajectory
-        if (ImGui::Button("Stop") && status.StatusCode == 0)
+        if (ImGui::Button("Stop") && status.StatusCode == 0 && controller)
         {
             std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
             *ui_state.tpstatus = controller->MotionManager->MotionStop();
@@ -266,7 +271,7 @@ namespace nymrobot {
             *sttlogs << "Trying to clear trajectory";
         }
         ImGui::SameLine(); // Check the trajectory
-        if (ImGui::Button("Clear") && status.StatusCode == 0)
+        if (ImGui::Button("Clear") && status.StatusCode == 0 && controller)
         {
             std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
             *temptstt = controller->Faults->ClearAllFaults();
@@ -278,7 +283,7 @@ namespace nymrobot {
             *sttlogs << "Trying to clear trajectory";
         }
         ImGui::SameLine();
-        if (ImGui::Button("Home") && status.StatusCode == 0)
+        if (ImGui::Button("Home") && status.StatusCode == 0 && controller)
         {
             //*ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
             //*ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
@@ -313,14 +318,14 @@ namespace nymrobot {
                 ui_state.rbpos.resize(ui_state.coumove, std::vector<float>(6, 0.0f));
                 ui_state.movTypes.resize(ui_state.coumove, 0);
             }
-            if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && status.StatusCode == 0) {
+            if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && status.StatusCode == 0 && controller) {
                 *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
                 *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
                 std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.begin() + 6, ui_state.rbpos[j].begin());
                 *sttlogs << "Update the Original Position for " << std::to_string(j);
             }
             ImGui::SameLine();
-            if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && status.StatusCode == 0) {                
+            if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && status.StatusCode == 0 && controller) {
                 *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1workpos);
                 std::copy(ui_state.b1workpos->axisData.begin(), ui_state.b1workpos->axisData.begin()+6, ui_state.rbpos[j].begin());
                 *sttlogs << "Update the Current Position for " + std::to_string(j);
@@ -354,6 +359,7 @@ namespace nymrobot {
         // Have to check controler before calling for avoiding nullptr due to disconnect from threading.
         if (controller) { controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, rposData); }
         if (controller) {controller->Kinematics->ConvertPosition(ControlGroupId::R1, rposData, KinematicConversions::PulseToJointAngle, rjointangle);}
+        if (!controller) { return; }
         resultmsg << rposData; 
         std::copy(rjointangle.axisData.begin(), rjointangle.axisData.begin()+6, angle.begin());
 
