@@ -37,7 +37,7 @@ namespace nui
         if (std::filesystem::exists(fontPath) && fontPath.size() > 10)
         { io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f); }
 
-        mRobot = std::make_unique<nymrobot::ymconnect>();
+        mRobot = &nymrobot::ymconnect::getInstance();
         sttlogs = &nui::StatusLogs::getInstance();
     }
     // long long nui::Property_Panel::selectedID = 0;
@@ -116,7 +116,7 @@ namespace nui
                 ImGui::BeginChild("TableChild", ImVec2(0, 180), true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysVerticalScrollbar);
                 ImGui::BeginTable("Objects", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX);
                 ImGui::TableSetupColumn("Sel");
-                ImGui::TableSetupColumn("Name");
+                ImGui::TableSetupColumn("Name",ImGuiTableColumnFlags_WidthFixed, 50.0f);
                 ImGui::TableSetupColumn("Hide");
                 ImGui::TableHeadersRow();
 
@@ -516,7 +516,7 @@ namespace nui
 
                 // Display joint angle
                 //ImGui::TextColored(vecred, "Joint %d: %.2f", i + 1, ang[i]);
-                ImGui::Text("Joint %d: %.2f");
+                ImGui::Text("Joint %d: %.2f", i + 1, ang[i]);
                 // Display limits
                 ImGui::Text("Min: "); ImGui::SameLine();
                 ImGui::SetNextItemWidth(50);

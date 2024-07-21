@@ -39,7 +39,7 @@ namespace nui
         std::vector<std::shared_ptr<nelems::oMesh>> base;
 
         nui::uiAction uiaction;
-        std::unique_ptr<nymrobot::ymconnect> mRobot;
+        nymrobot::ymconnect* mRobot;
         nui::StatusLogs* sttlogs;
         RobInitFile* robinit;
 

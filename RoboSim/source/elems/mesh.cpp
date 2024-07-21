@@ -104,6 +104,7 @@ namespace nelems {
         oMaterial.mOxyz.zs.z += offsetZ; oMaterial.mOxyz.ze.z += offsetZ;
     }
 
+    
     void oMesh::applyTransformation(const glm::vec3& center, Eigen::Matrix4f transform) {
         
 
@@ -185,6 +186,7 @@ namespace nelems {
     std::mutex nelems::mMesh::mMutex;
 
     bool mMesh::load(const std::string& filepath, bool robot) {
+        std::lock_guard<std::mutex> lock(mMutex);
         /*static glm::vec3 color[9] = {
             glm::vec3(0.1, 0.4, 0.7),
             glm::vec3(0.0, 0.5, 0.0), glm::vec3(1.0, 0.8, 0.2), glm::vec3(0.0, 0.6, 0.4),
@@ -317,8 +319,8 @@ namespace nelems {
 
         return millis;
     }
-
     void mMesh::clear_meshes() {
+        std::lock_guard<std::mutex> lock(mMutex);
         if (mMeshes == nullptr) return;
         for (auto& mesh : *mMeshes) {
             mesh->delete_buffers();
@@ -330,6 +332,7 @@ namespace nelems {
     }
 
     void mMesh::update(nshaders::Shader* shader, int lightmode) {
+        std::lock_guard<std::mutex> lock(mMutex);
         for (auto& mesh : *mMeshes) {
             shader->set_i1(lightmode, "LightModes");
             shader->set_material(mesh->oMaterial, "materialData");
@@ -367,6 +370,7 @@ namespace nelems {
     }
 
     void mMesh::createGridSys(float gridNo, float step) {
+        std::lock_guard<std::mutex> lock(mMutex);
         float vlue;
         if (!mCoorSystem) {
             int mini_no = 2;
@@ -429,6 +433,7 @@ namespace nelems {
 
     void mMesh::delete_byname(const std::string& delmesh)
     {
+        std::lock_guard<std::mutex> lock(mMutex);
         auto new_end = std::remove_if(mMeshes->begin(), mMeshes->end(),
             [&](const std::shared_ptr<oMesh>& mesh) {
                 if (std::string(mesh->oname).find(delmesh) != std::string::npos)
@@ -444,6 +449,7 @@ namespace nelems {
 
     void mMesh::add_mesh(std::shared_ptr<oMesh> addnewmesh)
     {
+        std::lock_guard<std::mutex> lock(mMutex);
         mMeshes->push_back(addnewmesh);
     }
 

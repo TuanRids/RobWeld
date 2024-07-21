@@ -10,6 +10,7 @@
 #include "ui/statuslogs.h"
 #include "py3rdsrc/zmpdata.h"
 #include "Filemgr/RobInitFile.h"
+#include "mutex"
 struct UIState {
     unsigned int coumove{ 3 };
     bool START_Flag{ false };
@@ -32,6 +33,7 @@ namespace nymrobot {
 
     class ymconnect {
     private:
+        mutable std::mutex ymmutex;
         static UIState ui_state;
         StatusInfo status;
         MotomanController* controller;
@@ -48,8 +50,6 @@ namespace nymrobot {
         std::unique_ptr<zmpdata> shmdata;
         RobInitFile* robinit;
         static char connect_content[100];
-
-    public:
         ymconnect() : controller(nullptr), angle{}, sttlogs(nullptr), shmdata(nullptr) {
             robinit = &RobInitFile::getinstance(); 
             YMConnect::OpenConnection("192.168.1.102", status, restime);
@@ -57,6 +57,10 @@ namespace nymrobot {
             shmdata = std::make_unique<zmpdata>();
         }
         ~ymconnect();
+
+    public:
+        static ymconnect& getInstance() { static ymconnect instance; return instance; }
+        bool check_connect() { if (!controller) { return false; } else { return true; } }
         // setter for get6pos from shared memory. Only take when != -1. zmpdata
         void setter_get6pos(const std::vector<std::vector<float>>& get6pos_) { get6pos = get6pos_; }
 

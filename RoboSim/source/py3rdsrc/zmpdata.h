@@ -33,7 +33,7 @@ private:
     static std::vector<std::vector<float>> shared_get6pos;
     static std::vector<std::vector<float>> shared_3Ddata;
 
-    unsigned int stt_id = 999, coord_id = 999;
+    unsigned int stt_id = 999, coord_id = 0;
     nui::StatusLogs* sttlogs;
 
     void clean_image();

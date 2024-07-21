@@ -6,6 +6,7 @@
 #include <sstream>
 #include <ctime>
 #include <imgui.h>
+#include <mutex>
 
 namespace nui {
     class StatusLogs {
@@ -19,6 +20,7 @@ namespace nui {
         StatusLogs& operator=(const StatusLogs&) = delete;
 
         void setStatus(const std::string& status) {
+            std::lock_guard<std::mutex> lock(sttmutex);
             // Get current time
             std::time_t now = std::time(nullptr);
             std::tm localTime;
@@ -41,6 +43,7 @@ namespace nui {
         }
 
         const std::string& getStatus() const {
+            std::lock_guard<std::mutex> lock(sttmutex);
             return currentStatus;
         }
 
@@ -52,7 +55,7 @@ namespace nui {
     private:
         StatusLogs() {}
         ~StatusLogs() = default; 
-
+        mutable std::mutex sttmutex;
         void updateCurrentStatus() {
             std::ostringstream oss;
             for (const auto& s : statusQueue) {

@@ -90,7 +90,6 @@ namespace nelems {
         //load mesh from file
         bool load(const std::string& filepath, bool robot);
         long long getCurrentTimeMillis(int size);
-        void load_specific_mesh(const aiMesh* mesh, oMesh& outMesh);
         void clear_meshes();
         void update(nshaders::Shader* shader, int lightmode);
         void createGridSys(float size, float step);
@@ -98,7 +97,6 @@ namespace nelems {
         // ************** Check and get pointer **************
         static mMesh& getInstance()
         {
-            std::lock_guard<std::mutex> lock(mMutex);
             static mMesh instance;
             return instance;
         }
@@ -122,5 +120,6 @@ namespace nelems {
 
         mMesh() { if (!mMeshes) { mMeshes = std::make_shared<std::vector<std::shared_ptr<oMesh>>>(); } }
         void set_OBxyz(float length, oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz);
+        void load_specific_mesh(const aiMesh* mesh, oMesh& outMesh);
     };
 }

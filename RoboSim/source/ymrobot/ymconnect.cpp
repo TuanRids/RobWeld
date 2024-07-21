@@ -77,7 +77,11 @@ namespace nymrobot {
         setup_MOVE_ui(ui_state);
         move_robot();
         auto future_read = std::async(std::launch::async, [this]() {read_robot(); });
-        if (future_read.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) { disconnect_robot(true); return; }
+        if (future_read.wait_for(std::chrono::seconds(3)) == std::future_status::timeout) 
+        {
+            *sttlogs << "out of time";
+            disconnect_robot(true); return;
+        }
                        
         static int x{ 200 }, y{ 400 };
         static float pos_x, pos_y,sizex,sizey;
@@ -96,8 +100,10 @@ namespace nymrobot {
         if (ImGui::Button("Get Cr Pos") && controller)
         {
             PositionData raxisData{};
-            {controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, raxisData);}
-            std::stringstream ss; ss << raxisData; *sttlogs << "Position: " + ss.str();
+            controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, raxisData);
+            std::stringstream ss; ss << raxisData; std::string currentInfo = ss.str();
+            std::replace(currentInfo.begin(), currentInfo.end(), '\n', ';');
+            *sttlogs << "Position: " + currentInfo; std::cout << raxisData;
         }
         ImGui::End();
     }
@@ -251,6 +257,15 @@ namespace nymrobot {
             }
         }
         ImGui::SameLine(); // Check the trajectory
+        if (ImGui::Button("Stop") && status.StatusCode == 0)
+        {
+            std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
+            *ui_state.tpstatus = controller->MotionManager->MotionStop();
+            controller->ControlCommands->SetServos(SignalStatus::OFF);
+            //*ui_state.tpstatus = controller->MotionManager->MotionStart();
+            *sttlogs << "Trying to clear trajectory";
+        }
+        ImGui::SameLine(); // Check the trajectory
         if (ImGui::Button("Clear") && status.StatusCode == 0)
         {
             std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
@@ -259,15 +274,16 @@ namespace nymrobot {
 
             *ui_state.tpstatus = controller->MotionManager->ClearAllTrajectory();
             controller->ControlCommands->SetServos(SignalStatus::OFF);
-            *ui_state.tpstatus = controller->MotionManager->MotionStart();
+            //*ui_state.tpstatus = controller->MotionManager->MotionStart();
             *sttlogs << "Trying to clear trajectory";
         }
         ImGui::SameLine();
         if (ImGui::Button("Home") && status.StatusCode == 0)
         {
-            *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
-            *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
+            //*ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
+            //*ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
             ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+            ui_state.b1crpos->axisData = { 380,0,405,180,0,0 };
             JointMotion r1home(ControlGroupId::R1, *ui_state.b1crpos, 3);
             *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(r1home);
             *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
@@ -335,15 +351,9 @@ namespace nymrobot {
         if (status.StatusCode != 0) {return;} 
         resultmsg.str(" ");
                
-        // think how to remove the render with 2 functions for improving fps
-        if (controller) 
-        { 
-            auto stt = std::chrono::high_resolution_clock::now();
-            controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse , 0, 0, rposData);          
-            controller->Kinematics->ConvertPosition(ControlGroupId::R1, rposData, KinematicConversions::PulseToJointAngle, rjointangle);
-            auto durtime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - stt).count();
-            std::cout << std::to_string(durtime) << std::endl;
-        }
+        // Have to check controler before calling for avoiding nullptr due to disconnect from threading.
+        if (controller) { controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, rposData); }
+        if (controller) {controller->Kinematics->ConvertPosition(ControlGroupId::R1, rposData, KinematicConversions::PulseToJointAngle, rjointangle);}
         resultmsg << rposData; 
         std::copy(rjointangle.axisData.begin(), rjointangle.axisData.begin()+6, angle.begin());
 

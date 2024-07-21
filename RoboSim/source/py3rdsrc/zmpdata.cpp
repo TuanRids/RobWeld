@@ -1,11 +1,12 @@
 #include "pch.h"
 #include "zmpdata.h"
-
+#include <stdlib.h>
 zmpdata::zmpdata() : image_texture(0), image_texture_below{0} 
-{ sttlogs = &nui::StatusLogs::getInstance(); }
+{ 
+    sttlogs = &nui::StatusLogs::getInstance(); }
 
 std::vector<std::vector<float>> zmpdata::shared_get6pos (std::vector<std::vector<float>>(50, std::vector<float>(6, -999.0f)));
-std::vector<std::vector<float>> zmpdata::shared_3Ddata (std::vector<std::vector<float>>(3072, std::vector<float>(1024, -999.0f)));
+std::vector<std::vector<float>> zmpdata::shared_3Ddata (std::vector<std::vector<float>>(5, std::vector<float>(1024, -999.0f)));
 
 zmpdata::~zmpdata() {
     if (image_texture != 0) {
@@ -83,12 +84,12 @@ void zmpdata::Display_info()
         ImGuiWindowFlags_NoNavFocus);
 
     if (ImGui::BeginPopupContextItem("Vision Popup", ImGuiPopupFlags_MouseButtonRight)) {
-        if (ImGui::MenuItem("Run Inspection Plan")) { TriggerToPy["Send1"] = 1; }
+        if (ImGui::MenuItem("Run Inspection Plan")) {  TriggerToPy["Send1"] = 1; }
         if (ImGui::MenuItem("Start Robot Left")) { TriggerToPy["Send2"] = 1; }
         if (ImGui::MenuItem("Start Robot Right")) { TriggerToPy["Send3"] = 1; }
         if (ImGui::MenuItem("Stop RB")) { TriggerToPy["Send4"] = 1; }
         if (ImGui::MenuItem("Clean")) { clean_image(); }
-        if (ImGui::MenuItem("Home")) { TriggerToPy["Send5"] = 1; }
+        //if (ImGui::MenuItem("Home")) { TriggerToPy["Send5"] = 1; }
         if (ImGui::MenuItem("Stop All")) { TriggerToPy["Send6"] = 1; }
         ImGui::EndPopup();
     }
@@ -213,6 +214,7 @@ void zmpdata::trigger_3DCreator()
         *sttlogs << "Creating 3D Object" ;
         // Reset start to now after processing
         start = std::chrono::high_resolution_clock::now();
+        shared_3Ddata = std::vector<std::vector<float>>(5, std::vector<float>(1024, -999.0f));
     }
 }
 
@@ -348,15 +350,14 @@ bool zmpdata::receive_data() {
         if (key != coord_id) {
             coord_id = key;
             data_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufCoord) + 2); // +2 to skip key and row_number
-
             // Adjust the size of shared_3Ddata based on row_number
             shared_3Ddata = std::vector<std::vector<float>>(row_number, std::vector<float>(1024, -999.0f));
-            for (size_t i = 0; i < row_number; ++i) {
-                for (size_t j = 0; j < 1024; ++j) {
+            for (unsigned int i = 0; i < row_number; ++i) {
+                for (unsigned int j = 0; j < 1024; ++j) {
                     shared_3Ddata[i][j] = data_ptr[i * 1024 + j];
                 }
             }
-            *sttlogs << "[3D] Read 3D coordinates from Shared memory";
+            *sttlogs << "[3D] Read 3D coordinates from Shared memory, size: 1024 x " + std::to_string(row_number);
         }
         UnmapViewOfFile(pBufCoord);
         CloseHandle(hMapFileCoord);
