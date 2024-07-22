@@ -18,7 +18,7 @@ using namespace Eigen;
 namespace nui
 {
     nui::Property_Panel::Property_Panel():
-        mRobot(nullptr), sttlogs(nullptr)
+        mRobot(nullptr), sttlogs(nullptr), cmdrder(nullptr)
     {
         SceneView* sceneView = &nui::SceneView::getInstance();
         mCamera = sceneView->mCamera;
@@ -26,7 +26,7 @@ namespace nui
         mShader = sceneView->mShader;
         mLight = sceneView->mLight;
         rdMesh = sceneView->rdMesh;
-
+        cmdrder = std::make_unique<nui::CMDReader>();
 
         for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
         robinit = &RobInitFile::getinstance();
@@ -56,9 +56,19 @@ namespace nui
         material_frame(); // show material properties
         camera_frame(); // show camera properties
         ImGui::End();
-
+        
+        cmdrder->readCMD();
         obInfo_frame(); // show object info such as vertices and vertex 
         ImGui::Begin("StatusLogs", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+        if (ImGui::BeginPopupContextItem("RightStart", ImGuiPopupFlags_MouseButtonRight))
+        {
+            if (ImGui::MenuItem("Restart"))
+            {
+                cmdrder->restart();
+            }
+            ImGui::EndPopup();
+        }
+
         ImGui::TextWrapped(sttlogs->getStatus().c_str());
         ImGui::End();
         Robot_Controls_table();

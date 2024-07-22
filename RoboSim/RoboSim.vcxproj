@@ -172,6 +172,7 @@
     <ClCompile Include="source\mesh_import\pcltomesh.h" />
     <ClCompile Include="source\py3rdsrc\zmpdata.cpp" />
     <ClCompile Include="source\rigging\rigging.cpp" />
+    <ClCompile Include="source\ui\CMDReader.cpp" />
     <ClCompile Include="source\ui\FrameManage.cpp" />
     <ClCompile Include="source\ui\HotkeyMenubar.cpp" />
     <ClCompile Include="source\ui\RdrawChart.cpp" />
@@ -242,6 +243,7 @@
     <ClInclude Include="source\py3rdsrc\zmpdata.h" />
     <ClInclude Include="source\rigging\point.h" />
     <ClInclude Include="source\rigging\rigging.h" />
+    <ClInclude Include="source\ui\CMDReader.h" />
     <ClInclude Include="source\ui\FrameManage.h" />
     <ClInclude Include="source\ui\HotkeyMenubar.h" />
     <ClInclude Include="source\ui\IUIComponent.h" />

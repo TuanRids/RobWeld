@@ -30,11 +30,13 @@
 #include "statuslogs.h"
 using json = nlohmann::json;
 #include "IUIComponent.h"
+#include "CMDReader.h"
 namespace nui
 {
     class Property_Panel : public IUIComponent
     {
     private:
+        std::unique_ptr<nui::CMDReader> cmdrder;
         nelems::mMesh* rdMesh;
         std::vector<std::shared_ptr<nelems::oMesh>> base;
 
