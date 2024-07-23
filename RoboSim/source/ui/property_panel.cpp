@@ -56,21 +56,98 @@ namespace nui
         material_frame(); // show material properties
         camera_frame(); // show camera properties
         ImGui::End();
-        
-        cmdrder->readCMD();
+        if (cmdrder){cmdrder->readCMD();}
         obInfo_frame(); // show object info such as vertices and vertex 
+
+
         ImGui::Begin("StatusLogs", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+        static bool fullview_Flag = false;
         if (ImGui::BeginPopupContextItem("RightStart", ImGuiPopupFlags_MouseButtonRight))
         {
             if (ImGui::MenuItem("Restart"))
             {
+                if (!cmdrder){ cmdrder = std::make_unique<nui::CMDReader>();}
+                cmdrder->CMDClear();
                 cmdrder->restart();
+            }
+            if (ImGui::MenuItem("Clear") && cmdrder)
+            {
+                cmdrder->CMDClear();
+                cmdrder.reset();
+            }
+            if (ImGui::MenuItem("Full")) {
+                fullview_Flag = true;
             }
             ImGui::EndPopup();
         }
-
-        ImGui::TextWrapped(sttlogs->getStatus().c_str());
+        for (auto sttcontent = sttlogs->getStatus().begin(); sttcontent != sttlogs->getStatus().end(); sttcontent++){
+            if (sttcontent->find("****** cmd Logs") != std::string::npos) {
+                // print as Red color
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.65f, 0.0f, 1.0f));
+                ImGui::TextWrapped(sttcontent->c_str());
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {fullview_Flag = !fullview_Flag;}
+                ImGui::PopStyleColor();
+            }
+            else if (sttcontent->find("Machine Vision") != std::string::npos)
+            {
+                // print as purple
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f));
+                ImGui::TextWrapped(sttcontent->c_str());
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {fullview_Flag = !fullview_Flag;}
+                ImGui::PopStyleColor();
+            }
+            else
+            {
+                // print as yellow
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+                ImGui::TextWrapped(sttcontent->c_str());
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {fullview_Flag = !fullview_Flag;}
+                ImGui::PopStyleColor();
+            }
+        }
         ImGui::End();
+        if (fullview_Flag)
+        {
+            ImGui::SetWindowPos(ImVec2(100, 20));
+            ImGui::Begin("Laser View", &fullview_Flag, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove);
+            for (auto sttcontent = sttlogs->getStatus().begin(); sttcontent != sttlogs->getStatus().end(); sttcontent++) {
+                if (sttcontent->find("****** cmd Logs") != std::string::npos) {
+                    // print as Red color
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.65f, 0.0f, 1.0f));
+                    ImGui::TextWrapped(sttcontent->c_str());
+                    ImGui::PopStyleColor();
+                }
+                else if (sttcontent->find("Machine Vision") != std::string::npos)
+                {
+                    // print as purple
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f));
+                    ImGui::TextWrapped(sttcontent->c_str());
+                    ImGui::PopStyleColor();
+                }
+                else
+                {
+                    // print as yellow
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+                    ImGui::TextWrapped(sttcontent->c_str());
+                    ImGui::PopStyleColor();
+                }
+            }
+            ImGuiIO& io = ImGui::GetIO();
+            ImVec2 mouse_pos = io.MousePos;
+            ImVec2 window_pos = ImGui::GetWindowPos();
+            ImVec2 window_size = ImGui::GetWindowSize();
+            if (ImGui::IsMouseClicked(0)) {
+                if (mouse_pos.x < window_pos.x || mouse_pos.x > window_pos.x + window_size.x ||
+                    mouse_pos.y < window_pos.y || mouse_pos.y > window_pos.y + window_size.y) {
+                    fullview_Flag = false;
+                }
+            }
+
+            ImGui::End();
+        }
+
+
+
         Robot_Controls_table();
     }
     
@@ -84,6 +161,38 @@ namespace nui
         if (ImGui::CollapsingHeader("CameraSetting", false))        {
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
             ImGui::Separator();
+            if (ImGui::Button("Advance Settings Vision"))
+            {
+                std::string VsionPath = "Vision\\CameraSettings\\gui_vision.exe";
+
+                SECURITY_ATTRIBUTES sa;
+                sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+                sa.bInheritHandle = TRUE;
+                sa.lpSecurityDescriptor = NULL;
+
+                // Prepare startup information
+                STARTUPINFO si;
+                ZeroMemory(&si, sizeof(STARTUPINFO));
+                si.cb = sizeof(STARTUPINFO);
+                si.dwFlags |= STARTF_USESHOWWINDOW; 
+                si.wShowWindow = SW_HIDE;
+
+                // Prepare process information
+                PROCESS_INFORMATION pi;
+                ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+
+                std::string command = VsionPath;
+
+                // Create the process
+                if (!CreateProcess(NULL, const_cast<LPSTR>(command.c_str()), NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+                {
+                    DWORD error = GetLastError();
+                    *sttlogs << " Failed to create process. Check source file. ";
+                    return;
+                }
+                CloseHandle(pi.hProcess);
+                CloseHandle(pi.hThread);
+            }
             ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Near", &newnear, 0.01f, 10.0f, "%.1f"); ImGui::SetNextItemWidth(150);
             ImGui::SliderFloat("Far", &newfar, 1.0f, 20000.0f, "%.0f"); ImGui::SetNextItemWidth(150);
@@ -492,7 +601,7 @@ namespace nui
         // *****************************************************
         // B - Initialize static variables for joint angles & RB Hand pos
         static float tolerance = 0.1f, ang[6]{ 0 }, pre[6]{ 0 }, prehand[3]{ 0 };
-        static std::vector<std::vector <float>> limangle{ 6, {-180,180} };
+        static std::vector<std::vector <float>> limangle{ 6, {-360,360} };
         static bool CtrFlag = false;
         static std::vector<std::shared_ptr<nelems::oMesh>> OrgBase = {
             std::make_shared<nelems::oMesh>(*base[0]),

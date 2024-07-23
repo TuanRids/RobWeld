@@ -67,7 +67,7 @@ namespace nui
         void sh_performance();
         void draft_chart();
 
-        ~Property_Panel() {}
+        ~Property_Panel() { if (cmdrder) { cmdrder->CMDClear(); } }
         
         void SwitchVisualLiveSync(){ CtrFlag = !CtrFlag; }
       };

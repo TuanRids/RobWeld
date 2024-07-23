@@ -213,7 +213,12 @@ namespace nymrobot {
                 if (controller) { controller->Faults->GetAlarmHistory(AlarmCategory::Minor, 3, alarmHistoryData); }
                 ss << alarmHistoryData << std::endl; *sttlogs << "ERROR: "+ss.str();
             }
-
+            if (stateData.controlMode != ControllerStateData::ControlMode::Remote) {
+                *sttlogs << "Please check the Key to REMOTE mode."; return;
+            }
+            if ( stateData.isInHold) {
+                *sttlogs << "ROBOT is keeping in the HOLD Mode."; return;
+            }
 
             *sttlogs << "Start Moving to " + std::to_string(ui_state.coumove) + " points.";
             for (auto it = ui_state.movTypes.begin(); it != ui_state.movTypes.end(); it++) {

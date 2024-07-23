@@ -5,18 +5,20 @@
 #include <windows.h>
 #include <tlhelp32.h>
 #include "statuslogs.h"
-
+#include "Filemgr/RobInitFile.h"
 
 
 namespace nui
 {
     class CMDReader {
     public:
-        CMDReader() : sttlogs(nullptr), processHandle(nullptr), readHandle(nullptr), writeHandle(nullptr) {
+        CMDReader() : sttlogs(nullptr), processHandle(nullptr), readHandle(nullptr), writeHandle(nullptr),robinit(nullptr) {
             sttlogs = &nui::StatusLogs::getInstance();
-            initializeProcess();
+            robinit = &RobInitFile::getinstance();
+            CMDClear();
         }
-        ~CMDReader() {
+        ~CMDReader() {}
+        void CMDClear() {
             if (processHandle) {
                 TerminateProcess(processHandle, 0); // Terminate the process properly
                 CloseHandle(processHandle);
@@ -40,28 +42,28 @@ namespace nui
                 }
 
                 processedTimes.insert(time);
-                *sttlogs << "#CMD LOGS for Dev: " + line;
+                *sttlogs << "\n****************** cmd Logs: \n" + line + "\n******************";
             }
         }
         void restart() {
-            if (processHandle) {
-                TerminateProcess(processHandle, 0); // Terminate the process properly
-                CloseHandle(processHandle);
-            }
-            if (readHandle) {
-                CloseHandle(readHandle);
-            }
-
 			initializeProcess();
         }
     private:
+        RobInitFile* robinit;
         nui::StatusLogs* sttlogs;
-        HANDLE processHandle;
-        HANDLE readHandle;
-        HANDLE writeHandle;
+        HANDLE processHandle{};
+        HANDLE readHandle{};
+        HANDLE writeHandle{};
         std::set<std::chrono::system_clock::time_point> processedTimes;
+        std::string pythonPath; 
+        std::string scriptPath; 
+        std::string workDir;  
 
         void initializeProcess() {
+            robinit->get_settings("pythonPath", pythonPath); // = "C:\\Users\\FSAM\\AppData\\Local\\Programs\\Python\\Python312\\python.exe";
+            robinit->get_settings("scriptPath", scriptPath); //= "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\src\\Infer_software.py";
+            robinit->get_settings("workDir", workDir); // = "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot";
+            
             SECURITY_ATTRIBUTES sa;
             sa.nLength = sizeof(SECURITY_ATTRIBUTES);
             sa.bInheritHandle = TRUE;
@@ -83,8 +85,12 @@ namespace nui
             PROCESS_INFORMATION pi;
             ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
 
-            std::string pythonPath = "C:\\Users\\ngdtu\\AppData\\Local\\Programs\\Python\\Python312\\python.exe";
-            std::string scriptPath = "C:\\Users\\ngdtu\\source\\python\\zeromp\\test_cmdreader.py";
+            
+            char orgiDir[MAX_PATH];
+            GetCurrentDirectory(MAX_PATH, orgiDir);
+
+            // switch
+            SetCurrentDirectory(workDir.c_str());
             std::string command = pythonPath + " " + scriptPath;
 
             if (!CreateProcess(NULL, const_cast<LPSTR>(command.c_str()), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
@@ -97,11 +103,12 @@ namespace nui
             processHandle = pi.hProcess;
             CloseHandle(pi.hThread);
             CloseHandle(writeHandle);  // Close the write end of the pipe in the parent process
+            SetCurrentDirectory(orgiDir);
         }
 
         std::vector<std::pair<std::chrono::system_clock::time_point, std::string>> getProcessOutput() {
             std::vector<std::pair<std::chrono::system_clock::time_point, std::string>> result;
-            char buffer[512];
+            char buffer[1024];
             DWORD bytesRead;
             auto currentTime = std::chrono::system_clock::now();
 

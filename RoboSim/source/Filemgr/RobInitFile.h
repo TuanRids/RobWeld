@@ -73,9 +73,10 @@ public:
 private:
     nui::StatusLogs* sttlogs;
     std::map<std::string, std::string> Init_settings;
-
+    bool readINIT_Flag = false;
     
     void ReadIniFile_decode() {
+        *sttlogs << " Welcome ";
         std::ifstream inputFile("robosim_settings.txt");
         if (!inputFile.is_open()) {
             *sttlogs << "Failed to open file for reading: robosim_settings.txt";
@@ -100,7 +101,7 @@ private:
     // Singleton
     RobInitFile() {
         sttlogs = &nui::StatusLogs::getInstance();
-        ReadIniFile_decode(); // Only read once here, no need to check again after this call
+        if (!readINIT_Flag) { ReadIniFile_decode(); readINIT_Flag = true; }// Only read once here, no need to check again after this call
     }
 
 };

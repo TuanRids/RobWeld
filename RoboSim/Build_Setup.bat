@@ -11,6 +11,7 @@ xcopy /Y /s "%CD%\assets\*" "%CD%\..\x64\Debug\assets\"
 xcopy /Y /s "%CD%\RobotStandard\*" "%CD%\..\x64\Debug\RobotStandard\"
 xcopy /Y /s "%CD%\shaders\*" "%CD%\..\x64\Debug\shaders\"
 xcopy /Y /s "%CD%\RobFonts\*" "%CD%\..\x64\Debug\RobFonts\"
+xcopy /Y /s "%CD%\Vision\CameraSettings\*" "%CD%\..\x64\Debug\Vision\CameraSettings\"
 echo Debug files copied successfully.
 
 :: Copying files to Release directory
@@ -23,4 +24,5 @@ xcopy /Y /s "%CD%\assets\*" "%CD%\..\x64\Release\assets\"
 xcopy /Y /s "%CD%\RobotStandard\*" "%CD%\..\x64\Release\RobotStandard\"
 xcopy /Y /s "%CD%\shaders\*" "%CD%\..\x64\Release\shaders\"
 xcopy /Y /s "%CD%\RobFonts\*" "%CD%\..\x64\Release\RobFonts\"
+xcopy /Y /s "%CD%\Vision\CameraSettings\*" "%CD%\..\x64\Release\Vision\CameraSettings\"
 echo Release files copied successfully.

@@ -2,6 +2,7 @@
 #define NUI_STATUSLOGS_H
 
 #include <deque>
+#include <vector>
 #include <string>
 #include <sstream>
 #include <ctime>
@@ -37,12 +38,12 @@ namespace nui {
             // Add formatted status to the deque
             statusQueue.push_front(formattedStatus.str());
             while (statusQueue.size() > maxSize) {
-                statusQueue.pop_front();
+                statusQueue.pop_back();
             }
             updateCurrentStatus();
         }
 
-        const std::string& getStatus() const {
+        const std::vector<std::string>& getStatus() const {
             std::lock_guard<std::mutex> lock(sttmutex);
             return currentStatus;
         }
@@ -54,19 +55,18 @@ namespace nui {
 
     private:
         StatusLogs() {}
-        ~StatusLogs() = default; 
+        ~StatusLogs() = default;
         mutable std::mutex sttmutex;
+
         void updateCurrentStatus() {
-            std::ostringstream oss;
+            currentStatus.clear();
             for (const auto& s : statusQueue) {
-                oss << s << "\n";
+                currentStatus.push_back(s);
             }
-            currentStatus = oss.str();
         }
 
         std::deque<std::string> statusQueue;
-        std::string currentStatus;
-        unsigned int idex{0};
+        std::vector<std::string> currentStatus;
         const size_t maxSize = 50; // Maximum number of status messages to keep
     };
 

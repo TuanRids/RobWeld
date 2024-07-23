@@ -145,26 +145,31 @@ void zmpdata::Display_info()
         ImGui::Image((void*)(intptr_t)image_texture_below, image_size);
 
         if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-            UnImgFrameTrigger = true;
+            UnImgFrameTrigger = !UnImgFrameTrigger;
         }
         if (UnImgFrameTrigger)
         {
             ImGui::SetWindowPos(ImVec2(20, 20));
-            ImGui::Begin("Laser View", &UnImgFrameTrigger, ImGuiWindowFlags_NoDocking  | ImGuiWindowFlags_NoMove);
+            ImGui::Begin("Laser View", &UnImgFrameTrigger, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
             ImGui::BeginGroup();
+
             // Image adjustment sliders
             static int Brightness = 0, Contrast = 0, Sharpness = 0;
-            static float Gamma = 0.0f, Saturation = 0.0f;            ImGui::SetNextItemWidth(80);
-            ImGui::SliderInt("Brightness", &Brightness, -100, 100); ImGui::SetNextItemWidth(80);
-            ImGui::SliderInt("Contrast", &Contrast, -100, 100);     ImGui::SetNextItemWidth(80);
-            ImGui::SliderInt("Sharpness", &Sharpness, 0, 100);      ImGui::SetNextItemWidth(80);
-            ImGui::SliderFloat("Gamma", &Gamma, 0.0f, 3.0f);        ImGui::SetNextItemWidth(80);
-            ImGui::SliderFloat("Saturation", &Saturation, 0.0f, 3.0f);
-            
-            
-            ImGui::EndGroup(); ImGui::SameLine();
+            static float Gamma = 0.0f, Saturation = 0.0f;
+            static float zoomFactor = 1.0f; // Initialize zoom factor
+
+            ImGui::SetNextItemWidth(80);
+            ImGui::SliderInt("Brightness", &Brightness, -100, 100);ImGui::SetNextItemWidth(80);
+            ImGui::SliderInt("Contrast", &Contrast, -100, 100);ImGui::SetNextItemWidth(80);
+            ImGui::SliderInt("Sharpness", &Sharpness, 0, 100);ImGui::SetNextItemWidth(80);
+            ImGui::SliderFloat("Gamma", &Gamma, 0.0f, 3.0f);ImGui::SetNextItemWidth(80);
+            ImGui::SliderFloat("Saturation", &Saturation, 0.0f, 3.0f); ImGui::SetNextItemWidth(80);
+            ImGui::SliderFloat("ZoomFactor", &zoomFactor, 0.1f, 10.0f);
+            ImGui::EndGroup();
+            ImGui::SameLine();
             ImGui::BeginGroup();
-            
+
+            // Calculate the size of the image to fit the window
             ImVec2 win_size = ImGui::GetWindowSize();
             float scale_ratio = (float)img_below.cols / (float)img_below.rows;
             ImVec2 img_size;
@@ -174,27 +179,48 @@ void zmpdata::Display_info()
             }
             else {
                 img_size.x = win_size.x;
-                img_size.y = 0.95* win_size.x / scale_ratio;
+                img_size.y = 0.95f * win_size.x / scale_ratio;
             }
-            
+
+            // Apply zoom factor
+            img_size.x *= zoomFactor;
+            img_size.y *= zoomFactor;
+
             // Apply image adjustments using OpenCV
             cv::Mat adjusted_img;
             img_below.convertTo(adjusted_img, -1, 1 + Contrast / 100.0, Brightness);
             if (Gamma > 0) { applyGammaCorrection(adjusted_img, adjusted_img, Gamma); }
             if (Saturation > 0) { applySaturation(adjusted_img, adjusted_img, Saturation); }
             if (Sharpness) { applySharpness(adjusted_img, adjusted_img, Sharpness / 100.0); }
-            
+
             static GLuint adjusted_texture = 0;
             if (adjusted_texture != 0) {
                 glDeleteTextures(1, &adjusted_texture);
             }
             adjusted_texture = matToTexture(adjusted_img);
-            
+
             ImGui::Image((void*)(intptr_t)adjusted_texture, img_size);
+
+            // Handle zooming
+            ImGuiIO& io = ImGui::GetIO();
+            if (io.MouseWheel != 0) {
+                zoomFactor += io.MouseWheel * 0.1f; // Adjust zoom factor with mouse wheel
+                if (zoomFactor < 0.1f) zoomFactor = 0.1f; // Prevent zooming out too much
+            }
+            ImVec2 mouse_pos = io.MousePos;
+            ImVec2 window_pos = ImGui::GetWindowPos(); 
+            ImVec2 window_size = ImGui::GetWindowSize(); 
+            if (ImGui::IsMouseClicked(0)) {
+                if (mouse_pos.x < window_pos.x || mouse_pos.x > window_pos.x + window_size.x ||
+                    mouse_pos.y < window_pos.y || mouse_pos.y > window_pos.y + window_size.y) {
+                    UnImgFrameTrigger = false;
+                }
+            }
             ImGui::EndGroup();
-            
             ImGui::End();
         }
+
+
     }
     ImGui::End();
 }

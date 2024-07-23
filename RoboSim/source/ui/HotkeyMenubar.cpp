@@ -209,6 +209,7 @@ namespace nui {
             }
         }
     }
+    
     void HotkeyMenubar::OptionSettings()
     {
         static int theme_idx = 0;
@@ -217,9 +218,12 @@ namespace nui {
         static char robot_tcp[64] = "192.168.10.102";
         static int creating_speed = 0;
         static const char* creat_item[] = { "Fast", "Medium", "Slow" };
+        static char pythonPath[256] = "C:\\Users\\FSAM\\AppData\\Local\\Programs\\Python\\Python312\\python.exe";
+        static char scriptPath[256] = "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\src\\Infer_software.py";
+        static char workDir[256] = "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot";
 
         // Update for MeshImporterOption
-        
+
         // Load settings
         static bool loading_flag = true;
         if (loading_flag)
@@ -228,32 +232,60 @@ namespace nui {
             {
                 std::string temp_theme;
                 robinit->get_settings("theme", temp_theme);
-                theme_idx = (temp_theme == "Dark") ? 0 : 1;
+                if (!temp_theme.empty()) {
+                    theme_idx = (temp_theme == "Dark") ? 0 : 1;
+                }
 
                 std::string temp_font;
                 robinit->get_settings("rob_font", temp_font);
-                rob_font = temp_font;
+                if (!temp_font.empty()) {
+                    rob_font = temp_font;
+                }
 
                 std::string temp_ratio;
                 robinit->get_settings("SSXA_Ratio", temp_ratio);
-                SSXA_Ratio = std::stof(temp_ratio);  // Convert string to float
+                if (!temp_ratio.empty()) {
+                    SSXA_Ratio = std::stof(temp_ratio);  // Convert string to float
+                }
 
                 std::string temp_tcp;
                 robinit->get_settings("robot_tcp", temp_tcp);
-                strncpy_s(robot_tcp, temp_tcp.c_str(), sizeof(robot_tcp));
+                if (!temp_tcp.empty()) {
+                    strncpy_s(robot_tcp, temp_tcp.c_str(), sizeof(robot_tcp));
+                }
 
                 std::string temptvalue;
                 robinit->get_settings("creating_speed", temptvalue);
-                creating_speed = std::stoi(temptvalue);
+                if (!temptvalue.empty()) {
+                    creating_speed = std::stoi(temptvalue);
+                }
+
+                std::string temp_pythonPath;
+                robinit->get_settings("pythonPath", temp_pythonPath);
+                if (!temp_pythonPath.empty()) {
+                    strncpy_s(pythonPath, temp_pythonPath.c_str(), sizeof(pythonPath));
+                }
+
+                std::string temp_scriptPath;
+                robinit->get_settings("scriptPath", temp_scriptPath);
+                if (!temp_scriptPath.empty()) {
+                    strncpy_s(scriptPath, temp_scriptPath.c_str(), sizeof(scriptPath));
+                }
+
+                std::string temp_workDir;
+                robinit->get_settings("workDir", temp_workDir);
+                if (!temp_workDir.empty()) {
+                    strncpy_s(workDir, temp_workDir.c_str(), sizeof(workDir));
+                }
             }
             catch (const std::exception& e) {};
             loading_flag = false;
         }
 
         // UI
-        ImGui::Begin("Settings",nullptr, ImGuiWindowFlags_NoDocking);
+        ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoDocking);
         ImGui::Combo("Theme", &theme_idx, theme_items, IM_ARRAYSIZE(theme_items));
-        if (ImGui::Button("Choose Font")){OpenFontDialog(NULL);}
+        if (ImGui::Button("Choose Font")) { OpenFontDialog(NULL); }
         ImGui::SameLine();
         ImGui::Text("Font: %s", rob_font.c_str());
 
@@ -261,13 +293,21 @@ namespace nui {
         ImGui::InputFloat("SSXA Ratio", &SSXA_Ratio, 1.0f, 6.0f);
         ImGui::InputText("Robot TCP Input", robot_tcp, sizeof(robot_tcp));
         ImGui::Combo("ReBuild Mesh Level", &creating_speed, creat_item, IM_ARRAYSIZE(creat_item));
+
+        ImGui::InputText("Python Path", pythonPath, sizeof(pythonPath));
+        ImGui::InputText("Script Path", scriptPath, sizeof(scriptPath));
+        ImGui::InputText("Working Directory", workDir, sizeof(workDir));
+
         if (ImGui::Button("Save")) {
             robinit->update_settings("theme", theme_items[theme_idx]);
-            robinit->update_settings("rob_font",rob_font);
+            robinit->update_settings("rob_font", rob_font);
             robinit->update_settings("SSXA_Ratio", std::to_string(SSXA_Ratio));
             robinit->update_settings("robot_tcp", robot_tcp);
             robinit->update_settings("creating_speed", std::to_string(creating_speed));
-            robinit->SaveInit_encode();  
+            robinit->update_settings("pythonPath", pythonPath);
+            robinit->update_settings("scriptPath", scriptPath);
+            robinit->update_settings("workDir", workDir);
+            robinit->SaveInit_encode();
             OptionSetting_Flag = false;
             loading_flag = true;
         }
@@ -279,6 +319,9 @@ namespace nui {
 
         ImGui::End();
     }
+
+
+
 
     void HotkeyMenubar::OpenFileDialog()
     {
