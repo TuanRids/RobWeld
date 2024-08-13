@@ -27,13 +27,13 @@ namespace nelems
       shader->set_vec3(mPosition, "lightPosition");
       shader->set_vec3(mColor * static_cast<float>(1000 * mStrength), "lightColor");
       shader->set_i1(lightmode, "LightModes");
-
+      shader->set_i1(InspectAngle, "InspectAngle");
     }
 
     glm::vec3 mPosition;
 
     glm::vec3 mColor;
-
+    int InspectAngle = 40;
     float mStrength;
     int lightmode;
   };

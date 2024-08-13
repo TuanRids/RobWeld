@@ -16,7 +16,7 @@
 #include "elems/loadRobot.h"
 #include "elems/mesh.h"
 #include "ui/uiAction.h"
-#include "py3rdsrc/zmpdata.h"
+#include "IPCTransfer/IPCtransfer.h"
 using namespace nui;
 using namespace nelems;
 using namespace nrender;
@@ -36,7 +36,7 @@ namespace nwindow
 
       // UI components
       std::unique_ptr<nui::Property_Panel> mPropertyPanel;
-      static std::unique_ptr<zmpdata> IPreceiver;
+      static std::unique_ptr<IPCtransfer> IPreceiver;
 
       nui::SceneView* mSceneView;
       nui::uiAction uiaction;

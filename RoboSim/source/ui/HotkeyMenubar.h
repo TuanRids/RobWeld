@@ -3,7 +3,6 @@
 #include "scene_view.h"
 #include "ui/uiAction.h"
 #include "render/ui_context.h"
-#include "mesh_import/pcltomesh.h"
 #include "mutex"
 #include "Filemgr/RobInitFile.h"
 #pragma warning( push )
@@ -24,7 +23,7 @@ namespace nui {
         static bool waitloop[6];
         static bool shint;
         std::string theme;
-        std::string rob_font;
+        std::string rob_font="seguihis";
         std::mutex mtx;
 
         bool OptionSetting_Flag = false;
@@ -42,10 +41,7 @@ namespace nui {
         ////====    ==============MENU BAR==================
         //void commandLogs(){  }
         void mMenuBar(GLFWwindow* mWindow);
-        void mHotkey(GLFWwindow* mWindow);
-                
-
-        ////====    ============== CONNECT TO ROBOT====================
+        void mHotkey(GLFWwindow* mWindow);              
 
 	};
 }

@@ -11,7 +11,6 @@
 #include <Commdlg.h>
 #include <filesystem> // For std::filesystem
 #include "utils/RobsFileIO.h"
-#include "ui/FrameManage.h"
 
 #include "ui/uiAction.h"
 #include <unordered_set>
@@ -37,8 +36,6 @@ namespace nui
     {
     private:
         std::unique_ptr<nui::CMDReader> cmdrder;
-        nelems::mMesh* rdMesh;
-        std::vector<std::shared_ptr<nelems::oMesh>> base;
 
         nui::uiAction uiaction;
         nymrobot::ymconnect* mRobot;
@@ -47,29 +44,20 @@ namespace nui
 
         float an1{ 0 }, an2{ 0 }, an3{ 0 }, an4{ 0 }, an5{ 0 }, an6{ 0 };
         bool CtrFlag = false; // Livesync & visualize
-    public:
-        Property_Panel();
-
-        void render() override {}
-        void render(GLFWwindow* mWindow);
         void resize(int32_t width, int32_t height) override {}
-
         void material_frame();
         void camera_frame();
-        void layer_frame();
-        void Robot_Controls_table();
-        void rotateJoint(size_t jointIndex, float& ang, float& pre, const float tolerance,
-            std::vector<std::shared_ptr<nelems::oMesh>>& base,
-            float diffX, float diffY, float diffZ);
+        void layer_frame();        
         void obInfo_frame();
         void coordinate_frame();
         bool check_skip(const std::shared_ptr<nelems::oMesh>& mesh);
         void sh_performance();
-        void draft_chart();
-
+    public:
+        Property_Panel();
+        void render() override {}
+        void render(GLFWwindow* mWindow);
         ~Property_Panel() { if (cmdrder) { cmdrder->CMDClear(); } }
-        
-        void SwitchVisualLiveSync(){ CtrFlag = !CtrFlag; }
+       
       };
 }
 

@@ -4,8 +4,7 @@
 #include <ctime>
 #include "ui/HotkeyMenubar.h"
 
-#include "rigging/rigging.h"
-#include "rigging/point.h"
+
 #include <cmath>
 #include "elems/TranRBMatrix.h"
 #include <cmath>
@@ -21,14 +20,10 @@ namespace nui
         mRobot(nullptr), sttlogs(nullptr), cmdrder(nullptr)
     {
         SceneView* sceneView = &nui::SceneView::getInstance();
-        mCamera = sceneView->mCamera;
-        mFrameBuffer = sceneView->mFrameBuffer;
-        mShader = sceneView->mShader;
-        mLight = sceneView->mLight;
-        rdMesh = sceneView->rdMesh;
+        // rdMesh = sceneView->rdMesh;
         cmdrder = std::make_unique<nui::CMDReader>();
 
-        for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
+        // for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
         robinit = &RobInitFile::getinstance();
         ImGuiIO& io = ImGui::GetIO();
         std::string fontPath; robinit->get_settings("rob_font", fontPath);
@@ -40,7 +35,7 @@ namespace nui
         mRobot = &nymrobot::ymconnect::getInstance();
         sttlogs = &nui::StatusLogs::getInstance();
     }
-    // long long nui::Property_Panel::selectedID = 0;
+
     void Property_Panel::render(GLFWwindow* mWindow)
     {
 
@@ -70,37 +65,50 @@ namespace nui
                 cmdrder->CMDClear();
                 cmdrder->restart();
             }
-            if (ImGui::MenuItem("Clear") && cmdrder)
+            if (ImGui::MenuItem("Clear"))
             {
                 cmdrder->CMDClear();
                 cmdrder.reset();
+                cmdrder = std::make_unique<nui::CMDReader>();
             }
             if (ImGui::MenuItem("Full")) {
                 fullview_Flag = true;
             }
             ImGui::EndPopup();
         }
-        for (auto sttcontent = sttlogs->getStatus().begin(); sttcontent != sttlogs->getStatus().end(); sttcontent++){
-            if (sttcontent->find("****** cmd Logs") != std::string::npos) {
+        // Flag for show or hidden
+        static bool cmd_flag = true, mavis_flag = true, system_flag = true;
+        ImGui::Checkbox("cmdLogs", &cmd_flag); ImGui::SameLine(); ImGui::Checkbox("Vision", &mavis_flag);
+        ImGui::SameLine(); ImGui::Checkbox("System", &system_flag);
+
+        // color
+        for (auto stt_content = sttlogs->getStatus().begin(); stt_content != sttlogs->getStatus().end(); stt_content++){
+            if (stt_content->find("cmd Logs") != std::string::npos && cmd_flag) {
                 // print as Red color
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.65f, 0.0f, 1.0f));
-                ImGui::TextWrapped(sttcontent->c_str());
+                ImGui::TextWrapped(stt_content->substr(0,10).c_str()); // time
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.65f, 0.0f, 1.0f)); ImGui::SameLine();
+                ImGui::TextWrapped(stt_content->substr(10).c_str()); // content
                 if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {fullview_Flag = !fullview_Flag;}
                 ImGui::PopStyleColor();
             }
-            else if (sttcontent->find("Machine Vision") != std::string::npos)
+            else if (stt_content->find("Machine Vision") != std::string::npos && mavis_flag)
             {
                 // print as purple
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f));
-                ImGui::TextWrapped(sttcontent->c_str());
+                ImGui::TextWrapped(stt_content->substr(0, 10).c_str()); // time
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f)); ImGui::SameLine();
+                ImGui::TextWrapped(stt_content->substr(10).c_str()); // content
                 if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {fullview_Flag = !fullview_Flag;}
                 ImGui::PopStyleColor();
             }
-            else
+            else if (system_flag)
             {
+                // out if cmdLogs and Machine Vision
+                if (stt_content->find("cmd Logs") != std::string::npos || stt_content->find("Machine Vision") != std::string::npos)
+                {continue;}
                 // print as yellow
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
-                ImGui::TextWrapped(sttcontent->c_str());
+                ImGui::TextWrapped(stt_content->substr(0, 10).c_str()); // time
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); ImGui::SameLine();
+                ImGui::TextWrapped(stt_content->substr(10).c_str()); // content
                 if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {fullview_Flag = !fullview_Flag;}
                 ImGui::PopStyleColor();
             }
@@ -109,26 +117,42 @@ namespace nui
         if (fullview_Flag)
         {
             ImGui::SetWindowPos(ImVec2(100, 20));
-            ImGui::Begin("Laser View", &fullview_Flag, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove);
-            for (auto sttcontent = sttlogs->getStatus().begin(); sttcontent != sttlogs->getStatus().end(); sttcontent++) {
-                if (sttcontent->find("****** cmd Logs") != std::string::npos) {
+            static std::unique_ptr<bool> lock_frame = std::make_unique<bool>(); ;
+            if (lock_frame == nullptr) { robinit->get_settings("lock_frame", *lock_frame); }
+            
+            if (!lock_frame)  { ImGui::Begin("Laser View", &fullview_Flag, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove); }
+            else  { ImGui::Begin("Laser View", &fullview_Flag, ImGuiWindowFlags_NoDocking); }
+
+            for (auto stt_content = sttlogs->getStatus().begin(); stt_content != sttlogs->getStatus().end(); stt_content++) {
+                if (stt_content->find("cmd Logs") != std::string::npos && cmd_flag) {
                     // print as Red color
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.65f, 0.0f, 1.0f));
-                    ImGui::TextWrapped(sttcontent->c_str());
+                    ImGui::TextWrapped(stt_content->substr(0, 10).c_str()); // time
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.65f, 0.0f, 1.0f)); ImGui::SameLine();
+                    ImGui::TextWrapped(stt_content->substr(10).c_str()); // content
+                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) { fullview_Flag = !fullview_Flag; }
                     ImGui::PopStyleColor();
                 }
-                else if (sttcontent->find("Machine Vision") != std::string::npos)
+                else if (stt_content->find("Machine Vision") != std::string::npos && mavis_flag)
                 {
                     // print as purple
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f));
-                    ImGui::TextWrapped(sttcontent->c_str());
+                    ImGui::TextWrapped(stt_content->substr(0, 10).c_str()); // time
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f)); ImGui::SameLine();
+                    ImGui::TextWrapped(stt_content->substr(10).c_str()); // content
+                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) { fullview_Flag = !fullview_Flag; }
                     ImGui::PopStyleColor();
                 }
-                else
+                else if (system_flag)
                 {
+                    // out if cmdLogs and Machine Vision
+                    if (stt_content->find("cmd Logs") != std::string::npos || stt_content->find("Machine Vision") != std::string::npos)
+                    {
+                        continue;
+                    }
                     // print as yellow
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
-                    ImGui::TextWrapped(sttcontent->c_str());
+                    ImGui::TextWrapped(stt_content->substr(0, 10).c_str()); // time
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); ImGui::SameLine();
+                    ImGui::TextWrapped(stt_content->substr(10).c_str()); // content
+                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) { fullview_Flag = !fullview_Flag; }
                     ImGui::PopStyleColor();
                 }
             }
@@ -136,7 +160,7 @@ namespace nui
             ImVec2 mouse_pos = io.MousePos;
             ImVec2 window_pos = ImGui::GetWindowPos();
             ImVec2 window_size = ImGui::GetWindowSize();
-            if (ImGui::IsMouseClicked(0)) {
+            if (ImGui::IsMouseClicked(0) && !lock_frame) {
                 if (mouse_pos.x < window_pos.x || mouse_pos.x > window_pos.x + window_size.x ||
                     mouse_pos.y < window_pos.y || mouse_pos.y > window_pos.y + window_size.y) {
                     fullview_Flag = false;
@@ -148,7 +172,7 @@ namespace nui
 
 
 
-        Robot_Controls_table();
+        // Robot_Controls_table();
     }
     
     void Property_Panel::camera_frame()
@@ -158,13 +182,12 @@ namespace nui
         static float newnear{ 1.0f }, newfar{ 10000.0f }; // Far =0 => Render error
         static int newzoom(50); static int gridNum(110); static int gridStep(5);
 
-        if (ImGui::CollapsingHeader("CameraSetting", false))        {
+        if (ImGui::CollapsingHeader("CameraSetting", false ))        {
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
             ImGui::Separator();
             if (ImGui::Button("Advance Settings Vision"))
             {
                 std::string VsionPath = "Vision\\CameraSettings\\gui_vision.exe";
-
                 SECURITY_ATTRIBUTES sa;
                 sa.nLength = sizeof(SECURITY_ATTRIBUTES);
                 sa.bInheritHandle = TRUE;
@@ -219,7 +242,7 @@ namespace nui
     void Property_Panel::layer_frame()
     {
         if (ImGui::CollapsingHeader("Layer", ImGuiTreeNodeFlags_DefaultOpen)) {
-            nui::FrameManage::setCrActiveGui("Layer", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
+            if (ImGui::IsWindowFocused() || ImGui::IsWindowHovered()) { frameStatus["Layer"] = false; }
 
             static std::unordered_set<long long> selectedMeshes;
             static int lastSelectedIndex = -1; // To remember the last selected index for range selection
@@ -307,8 +330,8 @@ namespace nui
     void Property_Panel::obInfo_frame()
     {
         static float pos_x, pos_y, sizex, sizey;
-        nui::FrameManage::getViewportSize(pos_x, pos_y);
-        nui::FrameManage::get3DSize(sizex, sizey);
+        GetViewPos(pos_x, pos_y);
+        get3DSize(sizex, sizey);
         ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ sizex * 0.83, pos_y + 35)); // Set the position of the frame
         ImGui::SetNextWindowSize(ImVec2(sizex * 0.15, sizey * 0.2)); // Set the size of the frame
         ImGui::Begin("Vertices & Vertex Indices", nullptr, 
@@ -501,32 +524,26 @@ namespace nui
             }
         }
         /// Light
-        if (ImGui::CollapsingHeader("Light", false))
+        if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::Separator(); ImGui::SetNextItemWidth(150);
             nimgui::draw_vec3_widget("Position", mLight->mPosition, 80.0f); ImGui::SetNextItemWidth(150);
-            static const char* items[] = { "Single Point Light", "WorldBox 8 Lights","WorldBox 32 Lights" ,"NoLights" };
+            static const char* items[] = { "Single Point Light", "WorldBox 8 Lights","WorldBox 32 Lights" ,"NoLights","Normal Adjustment"};
             ImGui::Combo("SetLight", &mLight->lightmode, items, IM_ARRAYSIZE(items)); ImGui::SetNextItemWidth(150);
-            ImGui::SliderFloat("Light Intensity", &mLight->mStrength, 200.00f, 2000.0f);
+            ImGui::SliderFloat("Light Intensity", &mLight->mStrength, 200.00f, 2000.0f); ImGui::SetNextItemWidth(150);
+            if (mLight->lightmode == 4) { ImGui::SliderInt("Normal Vector: ", &mLight->InspectAngle, 1, 80); }
 
-            if (mLight->mStrength == 0)
+            /*if (mLight->mStrength == 0)
             {
                 ImGui::TextWrapped("Light is off. Render by Shaded mode.");
             }
             else
             {
                 ImGui::TextWrapped("Light is on. Normal Render mode.");
-            }
+            }*/
         }
 
 
-    }
-    void Property_Panel::draft_chart()
-    {
-        ImGui::Begin("Draft Chart", nullptr);
-        ImGui::Text("Draft Chart");
-
-        ImGui::End();
     }
     bool Property_Panel::check_skip(const std::shared_ptr<nelems::oMesh>& mesh)
     {
@@ -538,7 +555,7 @@ namespace nui
     {
         static int x{ 200 }, y{ 200 };
         static float pos_x, pos_y;
-        nui::FrameManage::getViewportSize(pos_x, pos_y);
+        GetViewPos(pos_x, pos_y);
 
         static auto start = std::chrono::high_resolution_clock::now();
         static auto countime = std::chrono::high_resolution_clock::now();
@@ -575,199 +592,5 @@ namespace nui
 
         ImGui::End();
 
-    }
-    void nui::Property_Panel::Robot_Controls_table()
-    {
-        // *****************************************************
-        // A - Get base objects if not already retrieved
-        if (base[0] == nullptr)
-        {
-            for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
-            {
-                auto mesh = *it;
-                std::string name = std::string(mesh->oname);
-                if (name.find("RBSIMBase_1") != std::string::npos) { base[0] = std::move(mesh); }
-                else if (name.find("RBSIMBase_2") != std::string::npos) { base[1] = std::move(mesh); }
-                else if (name.find("RBSIMBase_3") != std::string::npos) { base[2] = std::move(mesh); }
-                else if (name.find("RBSIMBase_4") != std::string::npos) { base[3] = std::move(mesh); }
-                else if (name.find("RBSIMBase_5") != std::string::npos) { base[4] = std::move(mesh); }
-                else if (name.find("RBSIMBase_6") != std::string::npos) { base[5] = std::move(mesh); }
-                else if (name.find("RBSIMBase_7") != std::string::npos) { base[6] = std::move(mesh); }
-            }
-        }
-        // If no base objects found, return
-        if (base[0] == nullptr) { return; }
-
-        // *****************************************************
-        // B - Initialize static variables for joint angles & RB Hand pos
-        static float tolerance = 0.1f, ang[6]{ 0 }, pre[6]{ 0 }, prehand[3]{ 0 };
-        static std::vector<std::vector <float>> limangle{ 6, {-360,360} };
-        static bool CtrFlag = false;
-        static std::vector<std::shared_ptr<nelems::oMesh>> OrgBase = {
-            std::make_shared<nelems::oMesh>(*base[0]),
-            std::make_shared<nelems::oMesh>(*base[1]),
-            std::make_shared<nelems::oMesh>(*base[2]),
-            std::make_shared<nelems::oMesh>(*base[3]),
-            std::make_shared<nelems::oMesh>(*base[4]),
-            std::make_shared<nelems::oMesh>(*base[5]),
-            std::make_shared<nelems::oMesh>(*base[6])
-        };      
-
-        ImGui::Begin("Robot Controls", nullptr);
-
-        if (ImGui::BeginPopupContextItem("Robot Controls Popup", ImGuiPopupFlags_MouseButtonRight)) {
-            if (ImGui::MenuItem("Toggle Control Flag")) {CtrFlag = !CtrFlag; mRobot->setSwitchVisualize();}
-            ImGui::EndPopup();
-        }
-
-        prehand[0] = base[5]->oMaterial.position.x;
-        prehand[1] = base[5]->oMaterial.position.y;
-        prehand[2] = base[5]->oMaterial.position.z;
-        // *****************************************************
-        // C - Livesync & Control mode 
-        // LiveSync Mode: 
-        if (CtrFlag == false) {
-            mRobot->get_angle(ang[0], ang[1], ang[2], ang[3], ang[4], ang[5]);
-            ImVec4 vecred(0.0f, 0.0f, 1.0f, 1.0f); 
-            for (int i = 0; i < 6; ++i) {
-                ImGui::BeginChild((std::string("JointGroup") + std::to_string(i)).c_str(), ImVec2(110, 85), true);
-                ImGui::BeginGroup();
-
-                // Display joint angle
-                //ImGui::TextColored(vecred, "Joint %d: %.2f", i + 1, ang[i]);
-                ImGui::Text("Joint %d: %.2f", i + 1, ang[i]);
-                // Display limits
-                ImGui::Text("Min: "); ImGui::SameLine();
-                ImGui::SetNextItemWidth(50);
-                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_0").c_str(), &limangle[i][0], 0, 0, "%.2f");
-
-                ImGui::Text("Max:"); ImGui::SameLine();
-                ImGui::SetNextItemWidth(50);
-                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_1").c_str(), &limangle[i][1], 0, 0, "%.2f");
-
-                // End the group
-                ImGui::EndGroup();
-                ImGui::EndChild();
-
-                if (i % 3 != 2) { ImGui::SameLine(); }
-            }
-            mRobot->set_limitangle(limangle);
-        }
-        // Control Mode:
-        else
-        {
-
-            ImGui::SetNextItemWidth(100);
-            ImGui::InputFloat("Joint 1", &ang[0], 1, 0.1, "%.2f");
-            ImGui::SetNextItemWidth(100);
-            ImGui::InputFloat("Joint 2", &ang[1], 1, 0.1, "%.2f");
-            ImGui::SetNextItemWidth(100);
-            ImGui::InputFloat("Joint 3", &ang[2], 1, 0.1, "%.2f");
-            ImGui::SetNextItemWidth(100);
-            ImGui::InputFloat("Joint 4", &ang[3], 1, 0.1, "%.2f");
-            ImGui::SetNextItemWidth(100);
-            ImGui::InputFloat("Joint 5", &ang[4], 1, 0.1, "%.2f");
-            ImGui::SetNextItemWidth(100);
-            ImGui::InputFloat("Joint 6", &ang[5], 1, 0.1, "%.2f");
-            ImGui::Separator();
-
-            if (mRobot->getSwitchVisualize()) { CtrFlag = false; }
-        }
-        //*****************************************************
-        // D - Caclculate for simulate the movement
-
-        // D - 2 Joints Siumulation
-        bool exceeds_tolerance = false; 
-        for (int i = 0; i < 6; ++i) {
-            if (std::abs(ang[i] - pre[i]) > tolerance) {
-                exceeds_tolerance = true;
-                break;
-            }
-        }
-        if (exceeds_tolerance)
-        { 
-            for (int i = 0; i < 7; i++)
-            {
-                base[i]->mVertices.clear();
-                base[i]->oMaterial.rotation = OrgBase[i]->oMaterial.rotation;
-                base[i]->mVertices = OrgBase[i]->mVertices;
-                base[i]->oMaterial.position = OrgBase[i]->oMaterial.position;
-                base[i]->oMaterial.mOxyz = OrgBase[i]->oMaterial.mOxyz;
-            }
-            pre[0] = pre[1] = pre[2] = pre[3] = pre[4] = pre[5] = 0;
-            // rotateJoint(6, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
-            rotateJoint(5, ang[5], pre[5], tolerance, base, -(ang[5] - pre[5]), 0, 0);
-            rotateJoint(4, ang[4], pre[4], tolerance, base, 0, -(ang[4] - pre[4]), 0);
-            rotateJoint(3, ang[3], pre[3], tolerance, base, -(ang[3] - pre[3]), 0, 0);
-            rotateJoint(2, ang[2], pre[2], tolerance, base, 0, -(ang[2] - pre[2]), 0);
-            rotateJoint(1, ang[1], pre[1], tolerance, base, 0, (ang[1] - pre[1]), 0);
-            rotateJoint(0, ang[0], pre[0], tolerance, base, 0, 0, (ang[0] - pre[0]));
-        }
-        // Create buffers for each base
-        for (auto& bs : base) 
-        { 
-            bs->delete_buffers();
-            bs->create_buffers(); }
-        ImGui::End();
-    }
-    void nui::Property_Panel::rotateJoint(size_t jointIndex, float& ang, float& pre, const float tolerance,
-        std::vector<std::shared_ptr <nelems::oMesh>>& base,
-        float diffX, float diffY, float diffZ)
-    {
-        // Create rotation matrix using Eigen
-        Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
-
-        // Combine rotation matrices
-        if (diffX != 0.0f) {
-            float rad = glm::radians(diffX);
-            Eigen::Matrix4f rotX;
-            rotX << 1, 0, 0, 0,
-                0, cos(rad), -sin(rad), 0,
-                0, sin(rad), cos(rad), 0,
-                0, 0, 0, 1;
-            transform *= rotX;
-        }
-        if (diffY != 0.0f) {
-            float rad = glm::radians(diffY);
-            Eigen::Matrix4f rotY;
-            rotY << cos(rad), 0, sin(rad), 0,
-                0, 1, 0, 0,
-                -sin(rad), 0, cos(rad), 0,
-                0, 0, 0, 1;
-            transform *= rotY;
-        }
-        if (diffZ != 0.0f) {
-            float rad = glm::radians(diffZ);
-            Eigen::Matrix4f rotZ;
-            rotZ << cos(rad), -sin(rad), 0, 0,
-                sin(rad), cos(rad), 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1;
-            transform *= rotZ;
-        }
-
-        ang = std::round(ang * 100.0f) / 100.0f;
-
-
-        if (std::abs(ang - pre) > tolerance) 
-        {
-            float diff = ang - pre;
-            glm::vec3 center = base[jointIndex]->oMaterial.position;
-
-            // Parallelize the loop using OpenMP
-            #pragma omp parallel for
-            for (size_t i = jointIndex; i < base.size(); ++i) {
-                for (auto& vertex : base[i]->mVertices) {
-                    Eigen::Vector4f newPos = transform * Eigen::Vector4f(vertex.mPos.x - center.x, vertex.mPos.y - center.y, vertex.mPos.z - center.z, 1.0f);
-                    vertex.mPos = glm::vec3(newPos.x() + center.x, newPos.y() + center.y, newPos.z() + center.z);
-                }
-
-                // Update oMaterial position
-                Eigen::Vector4f centerPos(base[i]->oMaterial.position.x - center.x, base[i]->oMaterial.position.y - center.y, base[i]->oMaterial.position.z - center.z, 1.0f);
-                Eigen::Vector4f newCenterPos = transform * centerPos;
-                base[i]->oMaterial.position = glm::vec3(newCenterPos.x() + center.x, newCenterPos.y() + center.y, newCenterPos.z() + center.z);
-            }
-            pre = std::round(ang * 100.0f) / 100.0f;
-        }
     }
 }

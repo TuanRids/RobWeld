@@ -94,16 +94,6 @@ namespace nui {
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("3DPCL"))
-            {
-                if (ImGui::MenuItem("ImportPCL"))
-                {
-                    PclToMesh pclToMesh;
-                    pclToMesh.processPointCloud();
-
-                }
-                ImGui::EndMenu();
-            }
 
             if (ImGui::BeginMenu("Chart"))
             {
@@ -162,7 +152,7 @@ namespace nui {
         if (glfwGetKey(mWindow, GLFW_KEY_DELETE) == GLFW_PRESS)
         { lastPressTime = currentTime;  uiaction.Del_selected_objects(); }
         // TODO: move this and camera to scene UI component?
-        if (nui::FrameManage::getCrActiveGui("ViewPort") == true)
+        if (scene_view->getCrActiveGui("ViewPort") == true)
         {
             float panspeed = 0.04f;
             if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
@@ -212,16 +202,16 @@ namespace nui {
     
     void HotkeyMenubar::OptionSettings()
     {
-        static int theme_idx = 0;
-        static const char* theme_items[] = { "Dark", "Light" };
-        static float SSXA_Ratio = 3.0f;
+        static const char* theme_items[] = { "Dark", "Light","DarkGreen"};
         static char robot_tcp[64] = "192.168.10.102";
-        static int creating_speed = 0;
         static const char* creat_item[] = { "Fast", "Medium", "Slow" };
         static char pythonPath[256] = "C:\\Users\\FSAM\\AppData\\Local\\Programs\\Python\\Python312\\python.exe";
         static char scriptPath[256] = "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\src\\Infer_software.py";
         static char workDir[256] = "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot";
-
+        static int theme_idx = 0;
+        static int creating_speed = 0;
+        static float SSXA_Ratio = 3.0f;
+        static bool lock_frame = true;
         // Update for MeshImporterOption
 
         // Load settings
@@ -230,53 +220,15 @@ namespace nui {
         {
             try
             {
-                std::string temp_theme;
-                robinit->get_settings("theme", temp_theme);
-                if (!temp_theme.empty()) {
-                    theme_idx = (temp_theme == "Dark") ? 0 : 1;
-                }
-
-                std::string temp_font;
-                robinit->get_settings("rob_font", temp_font);
-                if (!temp_font.empty()) {
-                    rob_font = temp_font;
-                }
-
-                std::string temp_ratio;
-                robinit->get_settings("SSXA_Ratio", temp_ratio);
-                if (!temp_ratio.empty()) {
-                    SSXA_Ratio = std::stof(temp_ratio);  // Convert string to float
-                }
-
-                std::string temp_tcp;
-                robinit->get_settings("robot_tcp", temp_tcp);
-                if (!temp_tcp.empty()) {
-                    strncpy_s(robot_tcp, temp_tcp.c_str(), sizeof(robot_tcp));
-                }
-
-                std::string temptvalue;
-                robinit->get_settings("creating_speed", temptvalue);
-                if (!temptvalue.empty()) {
-                    creating_speed = std::stoi(temptvalue);
-                }
-
-                std::string temp_pythonPath;
-                robinit->get_settings("pythonPath", temp_pythonPath);
-                if (!temp_pythonPath.empty()) {
-                    strncpy_s(pythonPath, temp_pythonPath.c_str(), sizeof(pythonPath));
-                }
-
-                std::string temp_scriptPath;
-                robinit->get_settings("scriptPath", temp_scriptPath);
-                if (!temp_scriptPath.empty()) {
-                    strncpy_s(scriptPath, temp_scriptPath.c_str(), sizeof(scriptPath));
-                }
-
-                std::string temp_workDir;
-                robinit->get_settings("workDir", temp_workDir);
-                if (!temp_workDir.empty()) {
-                    strncpy_s(workDir, temp_workDir.c_str(), sizeof(workDir));
-                }
+                robinit->get_settings("theme", theme_idx);
+                robinit->get_settings("rob_font", rob_font);
+                robinit->get_settings("SSXA_Ratio", SSXA_Ratio);
+                robinit->get_settings("robot_tcp", robot_tcp);
+                robinit->get_settings("creating_speed", creating_speed);
+                robinit->get_settings("pythonPath", pythonPath);
+                robinit->get_settings("scriptPath", scriptPath);
+                robinit->get_settings("workDir", workDir);
+				robinit->get_settings("lock_frame", lock_frame);
             }
             catch (const std::exception& e) {};
             loading_flag = false;
@@ -298,15 +250,18 @@ namespace nui {
         ImGui::InputText("Script Path", scriptPath, sizeof(scriptPath));
         ImGui::InputText("Working Directory", workDir, sizeof(workDir));
 
+        ImGui::Checkbox("Unlock All Frames:", &lock_frame);
+
         if (ImGui::Button("Save")) {
-            robinit->update_settings("theme", theme_items[theme_idx]);
+            robinit->update_settings("theme", theme_idx);
             robinit->update_settings("rob_font", rob_font);
-            robinit->update_settings("SSXA_Ratio", std::to_string(SSXA_Ratio));
-            robinit->update_settings("robot_tcp", robot_tcp);
-            robinit->update_settings("creating_speed", std::to_string(creating_speed));
-            robinit->update_settings("pythonPath", pythonPath);
-            robinit->update_settings("scriptPath", scriptPath);
-            robinit->update_settings("workDir", workDir);
+            robinit->update_settings("SSXA_Ratio", SSXA_Ratio);
+            robinit->update_settings("robot_tcp", std::string(robot_tcp));
+            robinit->update_settings("creating_speed", creating_speed);
+            robinit->update_settings("pythonPath", std::string(pythonPath));
+            robinit->update_settings("scriptPath", std::string(scriptPath));
+            robinit->update_settings("workDir", std::string(workDir));
+            robinit->update_settings("lock_frame", lock_frame);
             robinit->SaveInit_encode();
             OptionSetting_Flag = false;
             loading_flag = true;
@@ -316,7 +271,6 @@ namespace nui {
             OptionSetting_Flag = false;
             loading_flag = true;
         }
-
         ImGui::End();
     }
 
@@ -358,7 +312,7 @@ namespace nui {
         std::lock_guard<std::mutex> lock(mtx);
         robinit->get_settings("theme",theme);
         static float pos_x, pos_y;
-        nui::FrameManage::getViewportSize(pos_x, pos_y); 
+        scene_view->GetViewPos(pos_x, pos_y);
         ImGui::SetNextWindowPos(ImVec2(pos_x + 5, pos_y + 250 + 25));
         ImGui::Begin("Hint", nullptr,
             ImGuiWindowFlags_NoTitleBar | // Do not display title bar

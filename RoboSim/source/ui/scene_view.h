@@ -2,11 +2,9 @@
 
 #include "render/opengl_buffer_manager.h"
 #include "elems/input.h"
-#include "FrameManage.h"
+//#include "FrameManage.h"
 #include "imgui.h"
 #include "functional"
-#include "YMConnect/YMConnect.h"
-#include "Filemgr/RobInitFile.h"
 #include "IUIComponent.h"
 namespace nui
 {
@@ -17,12 +15,13 @@ namespace nui
     class SceneView: public IUIComponent
     {
     private:
-        RobInitFile* robinit;
         glm::vec2 mSize;
         int zoom = 1;
         static std::string arg_render_mode;
-        std::function<void(const std::string&)> mMeshLoadCallback;
         SceneView();
+
+        std::function<void(const std::string&)> mMeshLoadCallback;
+        std::shared_ptr<nrender::OpenGL_FrameBuffer> mFrameBuffer;
 
     public:
         static SceneView& getInstance() { static SceneView instance; return instance; }
@@ -31,6 +30,7 @@ namespace nui
 
         void render() override;
         void resize(int32_t width, int32_t height) override;
+
         ~SceneView() { mShader->unload(); rdMesh = nullptr; }
 
         void load_mesh(const std::string& filepath, bool robot);

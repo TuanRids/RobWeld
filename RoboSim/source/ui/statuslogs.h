@@ -8,9 +8,9 @@
 #include <ctime>
 #include <imgui.h>
 #include <mutex>
-
 namespace nui {
-    class StatusLogs {
+    class StatusLogs
+    {
     public:
         static StatusLogs& getInstance() {
             static StatusLogs instance;
@@ -22,6 +22,7 @@ namespace nui {
 
         void setStatus(const std::string& status) {
             std::lock_guard<std::mutex> lock(sttmutex);
+            if (status.size() < 1) { return; }
             // Get current time
             std::time_t now = std::time(nullptr);
             std::tm localTime;
@@ -67,7 +68,7 @@ namespace nui {
 
         std::deque<std::string> statusQueue;
         std::vector<std::string> currentStatus;
-        const size_t maxSize = 50; // Maximum number of status messages to keep
+        const size_t maxSize = 100; // Maximum number of status messages to keep
     };
 
 }

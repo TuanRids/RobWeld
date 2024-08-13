@@ -15,12 +15,12 @@ namespace nelems
 	{
 	public:
 
-		Camera( float fov, float aspect, float near, float far)
+		Camera()
 		{
-			mAspect = aspect;
-			mNear = near;
-			mFar = far;
-			mFOV = fov;
+			mAspect = 1.3f;
+			mNear = 0.1f;
+			mFar = 100.0f;
+			mFOV = 45.0f;
 
 			set_aspect(mAspect);
 			update_view_matrix();
@@ -93,7 +93,7 @@ namespace nelems
 		mFocus = {position.x,position.z,-position.y};
 
 		// Set the distance to 1 to zoom in to the new position
-		mDistance = 900.0f;
+		mDistance = 100.0f;
 
 		// Calculate the direction vector from the current position to the new position
 		glm::vec3 direction = mFocus - mPosition;
@@ -121,15 +121,15 @@ namespace nelems
 		update_projection_matrix();
 	}
 
-	void set_near(float near)
+	void set_near(float& gnear)
 	{
-		mNear = near;
+		mNear = gnear;
 		update_projection_matrix();
 	}
 
-	void set_far(float far)
+	void set_far(float &gfar)
 	{
-		mFar = far;
+		mFar = gfar;
 		update_projection_matrix();
 	}
 

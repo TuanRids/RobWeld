@@ -3,6 +3,7 @@
 out vec4 FragColor;
 in vec3 WorldPos;
 in vec3 Normal;
+in vec3 FragNormal;
 
 struct material {
     vec3 mColor;
@@ -13,7 +14,7 @@ struct material {
 uniform material materialData;
 
 // lights
-uniform int LightModes; // 0 = single lights, 1 = world box 8 lights, 3= no lights, 2 = 32 spherical lights
+uniform int LightModes; // 0 = single lights, 1 = world box 8 lights, 2 = 32 spherical lights, 3 = no lights, 4 = detect light
 uniform vec3 lightPosition;
 uniform vec3 lightColor;
 
@@ -171,31 +172,59 @@ void main()
         {
             vec3 L = normalize(rotation * lightPositions[i] - WorldPos);
             vec3 H = normalize(V + L);
+
             float distance = length(rotation * lightPositions[i] - WorldPos);
             float attenuation = 1.0 / (distance * distance);
             vec3 radiance = lightColor * attenuation * 100;
 
             float NDF = DistributionGGX(N, H, roughness);
             float G = GeometrySmith(N, V, L, roughness);
-            vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+            vec3 F = fresnelSchlick(max(dot(H, V), 0.5), F0);
 
-            vec3 nominator = NDF * G * F;
-            float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-            vec3 specular = nominator / max(denominator, 0.001); 
+            vec3 specular = (NDF * G * F) / max(4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0), 0.001);
+            vec3 kD = (1.0 - F) * (1.0 - metallic);
 
-            vec3 kS = F;
-            vec3 kD = vec3(1.0) - kS;
-            kD *= 1.0 - metallic;
-
-            float NdotL = max(dot(N, L), 0.0);
+            float NdotL = max(dot(N, L) + 0.0001, 0.0);
             Lo += (kD * albedo / PI + specular) * radiance * NdotL;
         }
+
     }
     else if (LightModes == 3)
     {
-        //color and light intensity
-        vec3 ambientLight = vec3(0.2, 0.2, 0.2); 
-        Lo += ambientLight * albedo;
+        // Normalize the normal vector to ensure it has unit length
+        vec3 normal = normalize(FragNormal);
+    
+        // Map the normal vector components (-1, 1) to color range (0, 1)
+        vec3 color = (normal * 0.5) + 0.5;
+    
+        FragColor = vec4(color, 1.0);
+        return;
+
+    }
+    else if (LightModes == 4)
+    {
+        // Normalize the normal vector to ensure it has unit length
+        vec3 normal = normalize(FragNormal);
+
+        // Define the vertical reference vector (assuming Z is up)
+        vec3 vertical = vec3(0.0, 0.0, 1.0);
+
+        // Calculate the dot product between the normal and the vertical vector
+        float dotProduct = dot(normal, vertical);
+
+        // Calculate the angle in degrees
+        float angle = degrees(acos(dotProduct));
+
+        vec3 color;
+        if (angle < 10.0) { // If the angle is less than 10 degrees
+            color = vec3(0.6); // Gray color for near-vertical normals
+        } else {    
+            color = (normal * 0.5) + 0.5; 
+        }
+
+        FragColor = vec4(color, 1.0);
+        return;
+
     }
     else
     {

@@ -75,10 +75,10 @@ namespace nrender
   {
     glViewport(0, 0, mWindow->Width, mWindow->Height);
 
-    std::string theme;     nrender::UIContext::get_theme(theme);
+    static std::string theme;     nrender::UIContext::get_theme(theme);
     if (theme == "Dark"){glClearColor(0.13f, 0.14f, 0.26f, 1.0f);}
     else if (theme == "Light"){glClearColor(0.7f, 0.95f, 0.95f, 1.0f);}
-
+    else if (theme == "DarkGreen") { glClearColor(0.01f, 0.11f, 0.0f, 1.0f); }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 

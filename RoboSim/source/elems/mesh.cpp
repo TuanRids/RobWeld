@@ -334,7 +334,19 @@ namespace nelems {
     void mMesh::update(nshaders::Shader* shader, int lightmode) {
         std::lock_guard<std::mutex> lock(mMutex);
         for (auto& mesh : *mMeshes) {
-            shader->set_i1(lightmode, "LightModes");
+            //table
+            if (std::string(mesh->oname).find("table") != std::string::npos || std::string(mesh->oname).find("RBSIMBase_") != std::string::npos) //RBSIMBase_
+            {
+                if (lightmode > 2)
+                {
+                    shader->set_i1(2, "LightModes");
+                }
+                else
+                {
+                    shader->set_i1(lightmode, "LightModes");
+                }
+            }
+            else { shader->set_i1(lightmode, "LightModes"); }
             shader->set_material(mesh->oMaterial, "materialData");
             mesh->render();
             mesh->unbind();
@@ -343,7 +355,14 @@ namespace nelems {
             // incase robot
             if (std::string(mesh->oname).find("movepath__SKIP__") != std::string::npos)
             {
-                shader->set_i1(lightmode, "LightModes");
+                if (lightmode > 2)
+                {
+                    shader->set_i1(2, "LightModes");
+                }
+                else
+                {
+                    shader->set_i1(lightmode, "LightModes");
+                }
                 shader->set_material(mesh->oMaterial, "materialData");
                 mesh->render_lines(5);
                 mesh->unbind();

@@ -4,40 +4,26 @@ namespace nui
 {
     void RdrawChart::render()
     {
-        
+        if (robinit->get_settings("theme") == "Dark"){FontCol = IM_COL32(250, 230, 0, 255);}
+        else {FontCol = IM_COL32(125, 50, 125, 255);}
         static std::unique_ptr<nui::RdrawChart> drawChart = std::make_unique<nui::RdrawChart>();
-        static std::map<std::string, std::pair<float, std::string>> data = {
-            {"Weld A", {60.2f , " This section involves the initial welding process to join metal parts together."}},
-            {"Weld B", {75.5f , " This section includes the quality inspection and verification of the welded joints."}},
-            {"Weld C", {85.4f , " This section covers the secondary welding for reinforcing the initial joints."}},
-            {"Weld D", {93.0f , " This section focuses on cooling and setting the welded parts to ensure stability."}},
-            {"Weld E", {66.3f , " This section involves post-welding treatments such as grinding and smoothing the surfaces."}},
-            {"Weld F", {96.7f , " This section is dedicated to the final inspection and certification of the welded components."}}
-        };
+        
         ImGui::Begin("Chart");
         ImGui::BeginGroup();
         ImVec2 windowSize = ImGui::GetWindowSize();
         /*ImGui::BeginChild("BarChart", ImVec2(0, windowSize.y * 0.3f));
         drawChart->DrawBarChart(data); ImGui::EndChild();*/
-        ImGui::BeginChild("LineChart", ImVec2(windowSize.x*0.7f, windowSize.y * 0.4f));
+        /*ImGui::BeginChild("LineChart", ImVec2(windowSize.x*0.7f, windowSize.y * 0.4f));
         drawChart->DrawLineChart(data); ImGui::EndChild(); ImGui::SameLine();
         ImGui::BeginChild("PieChart", ImVec2(windowSize.x * 0.5f, windowSize.y * 0.4f));
-        drawChart->DrawPieChart(data); ImGui::EndChild();
-        ImGui::BeginChild("BarLineChart", ImVec2(windowSize.x, windowSize.y * 0.4f)); 
-        drawChart->DrawBarLineChart(data); ImGui::EndChild(); ImGui::SameLine();
+        drawChart->DrawPieChart(data); ImGui::EndChild();*/
+        ImGui::BeginChild("BarLineChart", ImVec2(windowSize.x, windowSize.y * 0.8f)); 
+        drawChart->DrawBarLineChart(); ImGui::EndChild(); ImGui::SameLine();
         ImGui::EndGroup(); ImGui::End();
     }
 
-    RdrawChart::RdrawChart() 
+    RdrawChart::RdrawChart()
     { 
-        robinit = &RobInitFile::getinstance();
-        if (robinit->get_settings("theme") == "Dark")
-        {
-            FontCol = IM_COL32(250, 230, 0, 255); //Yellow
-        }
-        else {
-            FontCol = IM_COL32(125, 50, 125, 255);
-        }
     }
 
     RdrawChart::~RdrawChart() {}
@@ -151,21 +137,21 @@ namespace nui
                 float distance = sqrtf(dx * dx + dy * dy);
                 if (distance < pointRadius)
                 {
-                    ImGui::SetTooltip("%s\nData: %.1f\nContent: %s", key.c_str(), value.first, value.second.c_str());
+                    ImGui::SetTooltip("%s\nData: %.1f\nContent: %s",  value.first, key.c_str());
                 }
                 ++i;
             }
 
     }
 
-    void RdrawChart::DrawBarLineChart(const std::map<std::string, std::pair<float, std::string>>& data)
+    void RdrawChart::DrawBarLineChart()
     {
         
             ImVec2 windowSize = ImGui::GetContentRegionAvail(); // Get the available content region size
 
             float maxChartHeight = windowSize.y - 40; // Leave some space for the x-axis
             float maxChartWidth = windowSize.x - 20; // Leave some space for the y-axis
-            float barWidth = maxChartWidth / data.size() - 10; // Calculate the width of each bar, including spacing
+            float barWidth = maxChartWidth / Chartdata.size() - 10; // Calculate the width of each bar, including spacing
             float pointRadius = 3.0f;
             ImVec2 origin(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + maxChartHeight);
 
@@ -177,29 +163,29 @@ namespace nui
 
             int i = 0;
             std::vector<ImVec2> points;
-            for (const auto& [key, value] : data)
+            for (const auto& [content,value] : Chartdata)
             {
                 // Calculate bar dimensions
-                float barHeight = (value.first / 100.0f) * maxChartHeight;
+                float barHeight = (value / 100.0f) * maxChartHeight;
                 ImVec2 barMin(origin.x + i * (barWidth + 10), origin.y - barHeight);
                 ImVec2 barMax(barMin.x + barWidth, origin.y);
-                ImU32 color = ImGui::GetColorU32(ImVec4((float)i / data.size(), 0.6f, 0.6f, 1.0f));
+                ImU32 color = ImGui::GetColorU32(ImVec4((float)i / Chartdata.size(), 0.6f, 0.6f, 1.0f));
                 ImGui::GetWindowDrawList()->AddRectFilled(barMin, barMax, color);
 
                 // Draw the x-axis labels
                 ImVec2 labelPos = ImVec2(barMin.x + barWidth / 2, origin.y + 5);
-                ImGui::GetWindowDrawList()->AddText(labelPos, FontCol, key.c_str());
+                ImGui::GetWindowDrawList()->AddText(labelPos, FontCol, "");
 
                 // Calculate line chart points
                 float x = barMin.x + barWidth / 2;
-                float y = origin.y - (value.first / 100.0f) * maxChartHeight;
+                float y = origin.y - (value / 100.0f) * maxChartHeight;
                 points.emplace_back(x, y);
 
                 // Check if the mouse is hovering over the bar
                 ImVec2 mousePos = ImGui::GetMousePos();
                 if (mousePos.x >= barMin.x && mousePos.x <= barMax.x && mousePos.y >= barMin.y && mousePos.y <= barMax.y)
                 {
-                    ImGui::SetTooltip("Key: %s\nData: %.1f\nContent: %s", key.c_str(), value.first, value.second.c_str());
+                    ImGui::SetTooltip("\nData: %.1f\nContent: %s",value, content);
                 }
 
                 ++i;
@@ -213,20 +199,11 @@ namespace nui
 
             // Draw points and check if mouse is hovering over a point
             i = 0;
-            for (const auto& [key, value] : data)
+            for (const auto& [content, value] : Chartdata)
             {
                 float x = points[i].x;
                 float y = points[i].y;
                 ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(x, y), pointRadius, ImGui::GetColorU32(ImVec4(1.0f, 0.6f, 0.6f, 1.0f)));
-
-                ImVec2 mousePos = ImGui::GetMousePos();
-                float dx = mousePos.x - x;
-                float dy = mousePos.y - y;
-                float distance = sqrtf(dx * dx + dy * dy);
-                if (distance < pointRadius)
-                {
-                    ImGui::SetTooltip("Key: %s\nData: %.1f\nContent: %s", key.c_str(), value.first, value.second.c_str());
-                }
                 ++i;
             }
 

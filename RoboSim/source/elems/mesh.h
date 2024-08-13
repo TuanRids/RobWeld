@@ -12,8 +12,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#pragma warning(pop)
 #include <Eigen/Dense>
+#pragma warning(pop)
 #include <chrono>
 #include "material.h"
 #include <mutex>
@@ -103,10 +103,23 @@ namespace nelems {
         virtual ~mMesh() { clear_meshes(); }
         std::shared_ptr<std::vector<std::shared_ptr<oMesh>>> getMesh() const { return mMeshes; }
 
+        // check if mesh is selected
         int check_selected() {
             if (!mMeshes || mMeshes->empty()) { return 0; }
             return std::count_if(mMeshes->begin(), mMeshes->end(), [](const std::shared_ptr<oMesh> &mesh)
                 {return mesh->selected; });
+        }
+        // check if mesh exists
+        bool check_selected(const std::string& name) {
+            if (!mMeshes || mMeshes->empty()) { return false; }
+            for (auto it = mMeshes->begin(); it != mMeshes->end(); it++)
+            {
+				if (std::string((*it)->oname).find(name) != std::string::npos)
+				{
+                    return true;
+				}
+            }
+            return false;
         }
         void delete_byname(const std::string& delmesh);
         void add_mesh(std::shared_ptr<oMesh> addnewmesh);

@@ -2,47 +2,34 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include "IUIComponent.h"
+
 namespace nui {
-    /*
-    FrameManage is a singleton class that manages the active GUI frame
-    CAN BE USED TO MANAGE OTHER FRAME PROPERTIES IN FUTURE
-    Current: crActiveGui
-    */
-    class FrameManage {
+    /// <summary>
+    /// Class use for calling the function of IUIComponent
+    /// Use to communicate with other classes outside of ui
+    /// </summary>
+    class FrameManage : public IUIComponent {
+        FrameManage() {};
     public:
-        // Getter for crActiveGui variable
-        static bool getCrActiveGui(const std::string& frameName);
+        static FrameManage& getInstance() { static FrameManage instance; return instance; }
+        ~FrameManage() = default;
 
-        // Setter for crActiveGui variable
-        static void setCrActiveGui(const std::string& frameName, bool isActive);
-        // getter 3D size
-        static void set3DSize(float& x, float& y) { vdsize_x = x; vdsize_y = y; }
-        // setter 3D size
-        static void get3DSize(float& x, float& y) { x =vdsize_x ; y = vdsize_y; }
 
-        //getter for viewport position
-        static void getViewportSize(float& x, float& y) {x = viewport_x;y = viewport_y;}
-        //setter for viewport position
-        static void setViewportSize(float& x, float& y) 
-        {
-            viewport_x = x;
-            viewport_y = y;
+        static void get3DSize(float& x, float& y){
+            x = vdsize_x;
+            y = vdsize_y;
         }
+        static void GetViewPos(float& x, float& y){
+            x = viewport_x;
+            y = viewport_y;
+        }
+        static bool getCrActiveGui(const std::string& frameName) {
+            return frameName == crActiveGui ? true : false;
+        }
+        
+        static void update_chart_dat(const std::map<std::string, float>& newdata){Chartdata = newdata;}
 
-    private:
-        // Private constructor to ensure no other FrameManage objects can be created outside the singleton
-        FrameManage() {}
-
-        // Static method to return the unique instance of FrameManage
-        static FrameManage& getInstance();
-
-        // crActiveGui variable stored in FrameManage and shared via singleton
-        std::unordered_map<std::string, bool> crActiveGui;
-
-        // viewport position
-        static float viewport_x, viewport_y;
-        // viewport size
-        static float vdsize_x, vdsize_y;
     };
 
 }

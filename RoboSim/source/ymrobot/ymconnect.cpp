@@ -105,8 +105,11 @@ namespace nymrobot {
     }
 
     void ymconnect::render() {
+        if (!controller){shmdata->status_robot(false);}
+        else { shmdata->status_robot(true); }
         // get proMeshRb and Statuslogs
         if (!proMeshRb) { proMeshRb = &nelems::mMesh::getInstance(); }
+        Robot_Controls_table();
         connect_robot();
         setup_MOVE_ui(ui_state);
         move_robot();
@@ -119,7 +122,7 @@ namespace nymrobot {
                        
         static int x{ 200 }, y{ 400 };
         static float pos_x, pos_y,sizex,sizey;
-        nui::FrameManage::getViewportSize(pos_x, pos_y);
+        nui::FrameManage::GetViewPos(pos_x, pos_y);
         nui::FrameManage::get3DSize(sizex, sizey);
         ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ sizex*0.83f, pos_y + sizey * 0.25f)); // Set the position of the frame
         ImGui::SetNextWindowSize(ImVec2(sizex*0.15f, sizey*0.73f)); // Set the size of the frame
@@ -321,10 +324,15 @@ namespace nymrobot {
         {
             //*ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
             //*ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
-            ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
-            ui_state.b1crpos->axisData = { 380,0,405,180,0,0 };
+            controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
+            controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
             JointMotion r1home(ControlGroupId::R1, *ui_state.b1crpos, 3);
             *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(r1home);
+
+            ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+            ui_state.b1crpos->axisData = { 380.0f,0.0f,405.0f,-180.0f,0.0f,180.0f };
+            JointMotion r2home(ControlGroupId::R1, *ui_state.b1crpos, 3);
+            *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(r2home);
             *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *ui_state.tpstatus = controller->MotionManager->MotionStart();
             *sttlogs << "Go back to the Home pos";
@@ -409,14 +417,197 @@ namespace nymrobot {
         }
     }
 
-    void ymconnect::get_angle(float& g1, float& g2, float& g3, float& g4, float& g5, float& g6) {
-        if (status.StatusCode != 0) { return; }
-        g1 = angle[0];
-        g2 = angle[1];
-        g3 = angle[2];
-        g4 = angle[3];
-        g5 = angle[4];
-        g6 = angle[5];
-    }
 
+    void ymconnect::Robot_Controls_table()
+    {
+        // *****************************************************
+        // A - Get base objects if not already retrieved
+        if (base[0] == nullptr)
+        {
+            for (auto it = proMeshRb->getMesh()->begin(); it != proMeshRb->getMesh()->end(); it++)
+            {
+                auto mesh = *it;
+                std::string name = std::string(mesh->oname);
+                if (name.find("RBSIMBase_1") != std::string::npos) { base[0] = std::move(mesh); }
+                else if (name.find("RBSIMBase_2") != std::string::npos) { base[1] = std::move(mesh); }
+                else if (name.find("RBSIMBase_3") != std::string::npos) { base[2] = std::move(mesh); }
+                else if (name.find("RBSIMBase_4") != std::string::npos) { base[3] = std::move(mesh); }
+                else if (name.find("RBSIMBase_5") != std::string::npos) { base[4] = std::move(mesh); }
+                else if (name.find("RBSIMBase_6") != std::string::npos) { base[5] = std::move(mesh); }
+                else if (name.find("RBSIMBase_7") != std::string::npos) { base[6] = std::move(mesh); }
+            }
+        }
+        // If no base objects found, return
+        if (base[0] == nullptr) { return; }
+
+        // *****************************************************
+        // B - Initialize static variables for joint angles & RB Hand pos
+        static float tolerance = 0.1f, pre[6]{ 0 }, prehand[3]{ 0 };
+        // static std::vector<std::vector <float>> limangle{ 6, {-360,360} };
+        // static bool CtrFlag = false;
+        static std::vector<std::shared_ptr<nelems::oMesh>> OrgBase = {
+            std::make_shared<nelems::oMesh>(*base[0]),
+            std::make_shared<nelems::oMesh>(*base[1]),
+            std::make_shared<nelems::oMesh>(*base[2]),
+            std::make_shared<nelems::oMesh>(*base[3]),
+            std::make_shared<nelems::oMesh>(*base[4]),
+            std::make_shared<nelems::oMesh>(*base[5]),
+            std::make_shared<nelems::oMesh>(*base[6])
+        };
+
+        ImGui::Begin("Robot Controls", nullptr);
+
+        if (ImGui::BeginPopupContextItem("Robot Controls Popup", ImGuiPopupFlags_MouseButtonRight)) {
+            if (ImGui::MenuItem("Toggle Control Flag")) {  VisualizeFlag = !VisualizeFlag; }
+            ImGui::EndPopup();
+        }
+
+        prehand[0] = base[5]->oMaterial.position.x;
+        prehand[1] = base[5]->oMaterial.position.y;
+        prehand[2] = base[5]->oMaterial.position.z;
+        // *****************************************************
+        // C - Livesync & Control mode 
+        // LiveSync Mode: 
+        if (VisualizeFlag == false) {
+            ImVec4 vecred(0.0f, 0.0f, 1.0f, 1.0f);
+            for (int i = 0; i < 6; ++i) {
+                ImGui::BeginChild((std::string("JointGroup") + std::to_string(i)).c_str(), ImVec2(110, 85), true);
+                ImGui::BeginGroup();
+
+                // Display joint angle
+                //ImGui::TextColored(vecred, "Joint %d: %.2f", i + 1, ang[i]);
+                ImGui::Text("Joint %d: %.2f", i + 1, angle[i]);
+                // Display limits
+                ImGui::Text("Min: "); ImGui::SameLine();
+                ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_0").c_str(), &limitangle[i][0], 0, 0, "%.2f");
+
+                ImGui::Text("Max:"); ImGui::SameLine();
+                ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_1").c_str(), &limitangle[i][1], 0, 0, "%.2f");
+
+                // End the group
+                ImGui::EndGroup();
+                ImGui::EndChild();
+
+                if (i % 3 != 2) { ImGui::SameLine(); }
+            }
+        }
+        // Control Mode:
+        else
+        {
+
+            ImGui::SetNextItemWidth(100);
+            ImGui::InputFloat("Joint 1", &angle[0], 1, 0.1, "%.2f");
+            ImGui::SetNextItemWidth(100);
+            ImGui::InputFloat("Joint 2", &angle[1], 1, 0.1, "%.2f");
+            ImGui::SetNextItemWidth(100);
+            ImGui::InputFloat("Joint 3", &angle[2], 1, 0.1, "%.2f");
+            ImGui::SetNextItemWidth(100);
+            ImGui::InputFloat("Joint 4", &angle[3], 1, 0.1, "%.2f");
+            ImGui::SetNextItemWidth(100);
+            ImGui::InputFloat("Joint 5", &angle[4], 1, 0.1, "%.2f");
+            ImGui::SetNextItemWidth(100);
+            ImGui::InputFloat("Joint 6", &angle[5], 1, 0.1, "%.2f");
+            ImGui::Separator();
+
+        }
+        //*****************************************************
+        // D - Caclculate for simulate the movement
+
+        // D - 2 Joints Siumulation
+        bool exceeds_tolerance = false;
+        for (int i = 0; i < 6; ++i) {
+            if (std::abs(angle[i] - pre[i]) > tolerance) {
+                exceeds_tolerance = true;
+                break;
+            }
+        }
+        if (exceeds_tolerance)
+        {
+            for (int i = 0; i < 7; i++)
+            {
+                base[i]->mVertices.clear();
+                base[i]->oMaterial.rotation = OrgBase[i]->oMaterial.rotation;
+                base[i]->mVertices = OrgBase[i]->mVertices;
+                base[i]->oMaterial.position = OrgBase[i]->oMaterial.position;
+                base[i]->oMaterial.mOxyz = OrgBase[i]->oMaterial.mOxyz;
+            }
+            pre[0] = pre[1] = pre[2] = pre[3] = pre[4] = pre[5] = 0;
+            // rotateJoint(6, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
+            rotateJoint(5, angle[5], pre[5], tolerance, base, -(angle[5] - pre[5]), 0, 0);
+            rotateJoint(4, angle[4], pre[4], tolerance, base, 0, -(angle[4] - pre[4]), 0);
+            rotateJoint(3, angle[3], pre[3], tolerance, base, -(angle[3] - pre[3]), 0, 0);
+            rotateJoint(2, angle[2], pre[2], tolerance, base, 0, -(angle[2] - pre[2]), 0);
+            rotateJoint(1, angle[1], pre[1], tolerance, base, 0, (angle[1] - pre[1]), 0);
+            rotateJoint(0, angle[0], pre[0], tolerance, base, 0, 0, (angle[0] - pre[0]));
+        }
+        // Create buffers for each base
+        for (auto& bs : base)
+        {
+            bs->delete_buffers();
+            bs->create_buffers();
+        }
+        ImGui::End();
+    }
+    void ymconnect::rotateJoint(size_t jointIndex, float& ang, float& pre, const float tolerance,
+        std::vector<std::shared_ptr <nelems::oMesh>>& base,
+        float diffX, float diffY, float diffZ)
+    {
+        // Create rotation matrix using Eigen
+        Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
+
+        // Combine rotation matrices
+        if (diffX != 0.0f) {
+            float rad = glm::radians(diffX);
+            Eigen::Matrix4f rotX;
+            rotX << 1, 0, 0, 0,
+                0, cos(rad), -sin(rad), 0,
+                0, sin(rad), cos(rad), 0,
+                0, 0, 0, 1;
+            transform *= rotX;
+        }
+        if (diffY != 0.0f) {
+            float rad = glm::radians(diffY);
+            Eigen::Matrix4f rotY;
+            rotY << cos(rad), 0, sin(rad), 0,
+                0, 1, 0, 0,
+                -sin(rad), 0, cos(rad), 0,
+                0, 0, 0, 1;
+            transform *= rotY;
+        }
+        if (diffZ != 0.0f) {
+            float rad = glm::radians(diffZ);
+            Eigen::Matrix4f rotZ;
+            rotZ << cos(rad), -sin(rad), 0, 0,
+                sin(rad), cos(rad), 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1;
+            transform *= rotZ;
+        }
+
+        ang = std::round(ang * 100.0f) / 100.0f;
+
+
+        if (std::abs(ang - pre) > tolerance)
+        {
+            float diff = ang - pre;
+            glm::vec3 center = base[jointIndex]->oMaterial.position;
+
+            // Parallelize the loop using OpenMP
+#pragma omp parallel for
+            for (size_t i = jointIndex; i < base.size(); ++i) {
+                for (auto& vertex : base[i]->mVertices) {
+                    Eigen::Vector4f newPos = transform * Eigen::Vector4f(vertex.mPos.x - center.x, vertex.mPos.y - center.y, vertex.mPos.z - center.z, 1.0f);
+                    vertex.mPos = glm::vec3(newPos.x() + center.x, newPos.y() + center.y, newPos.z() + center.z);
+                }
+
+                // Update oMaterial position
+                Eigen::Vector4f centerPos(base[i]->oMaterial.position.x - center.x, base[i]->oMaterial.position.y - center.y, base[i]->oMaterial.position.z - center.z, 1.0f);
+                Eigen::Vector4f newCenterPos = transform * centerPos;
+                base[i]->oMaterial.position = glm::vec3(newCenterPos.x() + center.x, newCenterPos.y() + center.y, newCenterPos.z() + center.z);
+            }
+            pre = std::round(ang * 100.0f) / 100.0f;
+        }
+    }
 }

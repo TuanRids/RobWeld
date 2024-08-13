@@ -11,11 +11,16 @@ uniform vec4 color;
 out vec3 WorldPos;
 out vec3 Normal;
 out vec4 Color;
+out vec3 FragNormal;
 
 void main() {
     Color = color;
     WorldPos = vec3(model * vec4(aPosition.x, aPosition.z, -aPosition.y, 1.0));
     Normal = mat3(transpose(inverse(model))) * aNormal;
+    
+    // frag normal 
+    FragNormal = mat3(transpose(inverse(model))) * aNormal; 
+
 
     // Apply the model-view-projection transformation to the vertex position
     gl_Position = projection * view * model * vec4(aPosition.x, aPosition.z, -aPosition.y, 1.0f);

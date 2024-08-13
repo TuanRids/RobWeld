@@ -14,165 +14,216 @@
 
 namespace nrender
 {
-    std::string UIContext::theme = "light";
-  bool UIContext::init(nwindow::IWindow* window)
-  {
-    __super::init(window);
-
-    // GL 4.5 + GLSL 450
-    const char* glsl_version = "#version 450";
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-
-    auto& colors = ImGui::GetStyle().Colors;
-
-
-    if (!robinit) { robinit = &RobInitFile::getinstance(); }
-    // TODO: ADJUST ALL COLOR           #TODOCOLOR TODO COLOR
-    robinit->get_settings("theme", theme);
-    if (theme == "Dark")
+    std::string UIContext::theme = "Light";
+    bool UIContext::init(nwindow::IWindow* window)
     {
-        ImGui::StyleColorsDark();
-        colors[ImGuiCol_WindowBg] = ImVec4{ 0.13f, 0.14f, 0.26f, 1.0f };
+        __super::init(window);
 
-        colors[ImGuiCol_MenuBarBg] = ImVec4{ 0.08f, 0.15f, 0.21f, 1.0f };
-        colors[ImGuiCol_Separator] = ImVec4{ 0.35f, 0.21f, 0.16f, 1.0f };
+        // GL 4.5 + GLSL 450
+        const char* glsl_version = "#version 450";
+
+        // Setup Dear ImGui context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+
+        auto& colors = ImGui::GetStyle().Colors;
 
 
-        colors[ImGuiCol_Header] = ImVec4{ 0.32f, 0.2f, 0.4f, 1.0f };
-        colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
-        colors[ImGuiCol_HeaderActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+        if (!robinit) { robinit = &RobInitFile::getinstance(); }
+        // TODO: ADJUST ALL COLOR           #TODOCOLOR TODO COLOR
+        theme = robinit->get_settings("theme");
+        // ini var
+        ThemeColors ct_colors = get_colortheme(theme);
 
-        colors[ImGuiCol_Button] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
-        colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
-        colors[ImGuiCol_ButtonActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+        colors[ImGuiCol_WindowBg] = ct_colors.winbg;
+        colors[ImGuiCol_MenuBarBg] = ct_colors.menubarbg;
+        colors[ImGuiCol_Separator] = ct_colors.separator;
+        colors[ImGuiCol_Header] = ct_colors.header;
+        colors[ImGuiCol_HeaderHovered] = ct_colors.headerhovered;
+        colors[ImGuiCol_HeaderActive] = ct_colors.headeractive;
+        colors[ImGuiCol_Button] = ct_colors.button;
+        colors[ImGuiCol_ButtonHovered] = ct_colors.buttonhovered;
+        colors[ImGuiCol_ButtonActive] = ct_colors.buttonactive;
+        colors[ImGuiCol_FrameBg] = ct_colors.framebg;
+        colors[ImGuiCol_FrameBgHovered] = ct_colors.framebghovered;
+        colors[ImGuiCol_FrameBgActive] = ct_colors.framebgactive;
+        colors[ImGuiCol_Tab] = ct_colors.tab;
+        colors[ImGuiCol_TabHovered] = ct_colors.tabhovered;
+        colors[ImGuiCol_TabActive] = ct_colors.tabactive;
+        colors[ImGuiCol_TabUnfocused] = ct_colors.tabunfocused;
+        colors[ImGuiCol_TabUnfocusedActive] = ct_colors.tabunfocusedhovered;
+        colors[ImGuiCol_TitleBg] = ct_colors.titlebg;
+        colors[ImGuiCol_TitleBgActive] = ct_colors.titlebgactive;
+        colors[ImGuiCol_TitleBgCollapsed] = ct_colors.titlebgcollapsed;
+        colors[ImGuiCol_Text] = ct_colors.textcolor;
+        colors[ImGuiCol_ScrollbarBg] = ct_colors.scrollbarbg;
 
-        colors[ImGuiCol_FrameBg] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
-        colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
-        colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
+        // customize style for special frame
 
-        colors[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-        colors[ImGuiCol_TabHovered] = ImVec4{ 0.23f, 0.41f, 0.23f, 1.0f };
-        colors[ImGuiCol_TabActive] = ImVec4{ 0.23f, 0.41f, 0.23f, 1.0f };
-        colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-        colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
+        ImGuiStyle& style = ImGui::GetStyle();
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            style.WindowRounding = 12.0f;
+            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+            style.FrameRounding = 3.0f;
+            style.GrabRounding = 3.0f;
+            style.WindowRounding = 8.0f;
+            style.ChildRounding = 3.0f;
+            style.PopupRounding = 3.0f;
+            style.ScrollbarRounding = 8.0f;
+            style.TabRounding = 6.0f;
+            style.Colors[ImGuiCol_FrameBg].w = 0.7f;
+        }
 
-        colors[ImGuiCol_TitleBg] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
-        colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
-        colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.18f, 0.2f, 0.35f, 1.0f };
+        // Setup Platform/Renderer backends
+
+        ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)mWindow->get_native_window(), true);
+        ImGui_ImplOpenGL3_Init(glsl_version);
+        return true;
     }
-    else if (theme == "Light")
-    {
-        ImGui::StyleColorsLight();
-        colors[ImGuiCol_Text] = ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f };
-        colors[ImGuiCol_WindowBg] = ImVec4{ 0.95f, 0.95f, 0.95f, 1.0f };
-
-        colors[ImGuiCol_MenuBarBg] = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
-        colors[ImGuiCol_Separator] = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
-
-        colors[ImGuiCol_Header] = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
-        colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
-        colors[ImGuiCol_HeaderActive] = ImVec4{ 0.6f, 0.6f, 0.6f, 1.0f };
-
-        colors[ImGuiCol_Button] = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
-        colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.9f, 0.9f, 0.9f, 1.0f };
-        colors[ImGuiCol_ButtonActive] = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
-
-        colors[ImGuiCol_FrameBg] = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
-        colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.9f, 0.9f, 0.9f, 1.0f };
-        colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
-
-        colors[ImGuiCol_Tab] = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
-        colors[ImGuiCol_TabHovered] = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
-        colors[ImGuiCol_TabActive] = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
-        colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
-        colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
-
-        colors[ImGuiCol_TitleBg] = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
-        colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
-        colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
-
-        //colors[ImGuiCol_ChildBg] = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
-        
-        colors[ImGuiCol_NavHighlight] = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
-        colors[ImGuiCol_PopupBg] = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
-    }
-    // customize style for special frame
     
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    ThemeColors nrender::UIContext::get_colortheme(std::string theme)
     {
-      style.WindowRounding = 0.0f;
-      style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        if (theme == "Dark") {
+            ImGui::StyleColorsDark();
+            ThemeColors newcolor;
+            newcolor.winbg                 = ImVec4{ 0.13f, 0.14f, 0.26f, 1.0f };
+            newcolor.menubarbg             = ImVec4{ 0.08f, 0.15f, 0.21f, 1.0f };
+            newcolor.separator             = ImVec4{ 0.35f, 0.21f, 0.16f, 1.0f };
+            newcolor.header                = ImVec4{ 0.32f, 0.2f, 0.4f, 1.0f };
+            newcolor.headerhovered         = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+            newcolor.headeractive          = ImVec4{ 0.23f, 0.24f, 0.40f, 1.0f };
+            newcolor.button                = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
+            newcolor.buttonhovered         = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+            newcolor.buttonactive          = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+            newcolor.framebg               = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
+            newcolor.framebghovered        = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+            newcolor.framebgactive         = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+            newcolor.tab                   = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
+            newcolor.tabhovered            = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+            newcolor.tabactive             = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+            newcolor.tabunfocused          = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
+            newcolor.tabunfocusedhovered   = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+            newcolor.titlebg               = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
+            newcolor.titlebgactive         = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+            newcolor.titlebgcollapsed      = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
+            newcolor.textcolor             = ImVec4{ 0.9f, 0.995f, 0.95f, 1.0f };
+            newcolor.scrollbarbg           = ImVec4{ 0.13f, 0.14f, 0.26f, 1.0f };
+            return newcolor;
+        }
+        else if (theme == "Light") {
+            ImGui::StyleColorsLight();
+            ThemeColors newcolor;
+            newcolor.winbg                 = ImVec4{ 0.95f, 0.95f, 0.95f, 1.0f };
+            newcolor.menubarbg             = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
+            newcolor.separator             = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
+            newcolor.header                = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
+            newcolor.headerhovered         = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
+            newcolor.headeractive          = ImVec4{ 0.6f, 0.6f, 0.6f, 1.0f };
+            newcolor.button                = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
+            newcolor.buttonhovered         = ImVec4{ 0.9f, 0.9f, 0.9f, 1.0f };
+            newcolor.buttonactive          = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
+            newcolor.framebg               = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
+            newcolor.framebghovered        = ImVec4{ 0.9f, 0.9f, 0.9f, 1.0f };
+            newcolor.framebgactive         = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
+            newcolor.tab                   = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
+            newcolor.tabhovered            = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
+            newcolor.tabactive             = ImVec4{ 0.7f, 0.7f, 0.7f, 1.0f };
+            newcolor.tabunfocused          = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
+            newcolor.tabunfocusedhovered   = ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f };
+            newcolor.titlebg               = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
+            newcolor.titlebgactive         = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
+            newcolor.titlebgcollapsed      = ImVec4{ 0.85f, 0.85f, 0.85f, 1.0f };
+            newcolor.textcolor             = ImVec4{ 0.01f, 0.1f, 0.01f, 1.0f };
+            newcolor.scrollbarbg           = ImVec4{ 0.95f, 0.95f, 0.95f, 1.0f };
+            return newcolor;
+        }
+        else if (theme == "DarkGreen") {
+            ImGui::StyleColorsDark();
+            ThemeColors newcolor;
+            newcolor.winbg                 = ImVec4{ 0.0f, 0.15f, 0.08f, 1.0f };
+            newcolor.menubarbg             = ImVec4{ 0.0f, 0.2f, 0.0f, 1.0f };
+            newcolor.separator             = ImVec4{ 0.0f, 0.5f, 0.3f, 1.0f };
+            newcolor.header                = ImVec4{ 0.0f, 0.4f, 0.0f, 1.0f };
+            newcolor.headerhovered         = ImVec4{ 0.0f, 0.45f, 0.09f, 1.0f };
+            newcolor.headeractive          = ImVec4{ 0.09f, 0.45f, 0.10f, 1.0f };
+            newcolor.button                = ImVec4{ 0.0f, 0.3f, 0.0f, 1.0f };
+            newcolor.buttonhovered         = ImVec4{ 0.07f, 0.45f, 0.20f, 1.0f };
+            newcolor.buttonactive          = ImVec4{ 0.0f, 0.25f, 0.0f, 1.0f };
+            newcolor.framebg               = ImVec4{ 0.0f, 0.2f, 0.0f, 1.0f };
+            newcolor.framebghovered        = ImVec4{ 0.0f, 0.25f, 0.0f, 1.0f };
+            newcolor.framebgactive         = ImVec4{ 0.0f, 0.15f, 0.0f, 1.0f };
+            newcolor.tab                   = ImVec4{ 0.0f, 0.2f, 0.0f, 1.0f };
+            newcolor.tabhovered            = ImVec4{ 0.0f, 0.25f, 0.0f, 1.0f };
+            newcolor.tabactive             = ImVec4{ 0.0f, 0.15f, 0.0f, 1.0f };
+            newcolor.tabunfocused          = ImVec4{ 0.0f, 0.2f, 0.0f, 1.0f };
+            newcolor.tabunfocusedhovered   = ImVec4{ 0.0f, 0.25f, 0.0f, 1.0f };
+            newcolor.titlebg               = ImVec4{ 0.0f, 0.2f, 0.0f, 1.0f };
+            newcolor.titlebgactive         = ImVec4{ 0.0f, 0.15f, 0.0f, 1.0f };
+            newcolor.titlebgcollapsed      = ImVec4{ 0.0f, 0.2f, 0.0f, 1.0f };
+            newcolor.textcolor             = ImVec4{ 0.99f, 0.99f, 0.99f, 1.0f };
+            newcolor.scrollbarbg           = ImVec4{ 0.0f, 0.15f, 0.0f, 1.0f };
+            return newcolor;
+        }
     }
 
-    // Setup Platform/Renderer backends
-
-    ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)mWindow->get_native_window(), true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-    return true;
-  }
-
-
-  void UIContext::pre_render()
-  {
-
-    // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    // Create the docking environment
-    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
-      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-      ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
-      ImGuiWindowFlags_NoBackground;
-
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + 22));
-    ImGui::SetNextWindowSize(viewport->Size);
-    ImGui::SetNextWindowViewport(viewport->ID);
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::Begin("InvisibleWindow", nullptr, windowFlags);
-    ImGui::PopStyleVar(3);
-
-    ImGuiID dockSpaceId = ImGui::GetID("InvisibleWindowDockSpace");
-
-    ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
-    ImGui::End();
-  }
-
-  void UIContext::post_render()
-  {
-    // Rendering
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    ImGuiIO& io = ImGui::GetIO();
-
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    void UIContext::pre_render()
     {
-        GLFWwindow* backup_current_context = glfwGetCurrentContext();
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-        glfwMakeContextCurrent(backup_current_context);
-    }
-  }
 
-  void UIContext::end()
-  {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-  }
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Create the docking environment
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
+            ImGuiWindowFlags_NoBackground;
+
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + 22));
+        ImGui::SetNextWindowSize(viewport->Size);
+        ImGui::SetNextWindowViewport(viewport->ID);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::Begin("InvisibleWindow", nullptr, windowFlags);
+        ImGui::PopStyleVar(3);
+
+        ImGuiID dockSpaceId = ImGui::GetID("InvisibleWindowDockSpace");
+
+        ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+        ImGui::End();
+    }
+
+    void UIContext::post_render()
+    {
+        // Rendering
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        ImGuiIO& io = ImGui::GetIO();
+
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
+    }
+
+    void UIContext::end()
+    {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+    }
 
 }

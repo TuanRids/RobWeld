@@ -8,7 +8,7 @@
 #include <vector>
 #include <sstream>
 #include "ui/statuslogs.h"
-#include "py3rdsrc/zmpdata.h"
+#include "IPCTransfer/IPCtransfer.h"
 #include "Filemgr/RobInitFile.h"
 #include "mutex"
 struct UIState {
@@ -38,51 +38,51 @@ namespace nymrobot {
         StatusInfo status{};
         MotomanController* controller;
         UINT32 restime = 10;
-        bool switchVisualizeMode = false;
-        std::vector<std::vector<float>> limitangle;
+        bool VisualizeFlag = false;
+        std::vector<std::vector<float>> limitangle{ 6, {-360,360} };
 
-        static std::vector<std::vector<float>> get6pos; // Get 6 positions from shared memory
+        static std::vector<std::vector<float>> get6pos; 
+        std::vector<std::shared_ptr<nelems::oMesh>> base;
 
         std::array<float,6> angle;
         nelems::mMesh* proMeshRb = nullptr;
         std::stringstream resultmsg;
         nui::StatusLogs* sttlogs;
-        std::unique_ptr<zmpdata> shmdata;
+        std::unique_ptr<IPCtransfer> shmdata;
         RobInitFile* robinit;
         static char connect_content[100];
         ymconnect() : controller(nullptr), angle{}, sttlogs(nullptr), shmdata(nullptr) {
             robinit = &RobInitFile::getinstance(); 
             sttlogs = &nui::StatusLogs::getInstance();
-            shmdata = std::make_unique<zmpdata>();
+            shmdata = std::make_unique<IPCtransfer>();
+            for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
         }
         ~ymconnect();
-
-    public:
-        static ymconnect& getInstance() { static ymconnect instance; return instance; }
-        bool check_connect() { if (!controller) { return false; } else { return true; } }
-        // setter for get6pos from shared memory. Only take when != -1. zmpdata
-        void setter_get6pos(const std::vector<std::vector<float>>& get6pos_) { get6pos = get6pos_; }
-
-        // Connect to robot
-        void connect_robot();
-		// Disconnect from robot
-        void disconnect_robot(bool showmsg);
-        // Render the Robot & UI
-        void render();
+        // ROBOT CONTROL & RENDER 
+        void Robot_Controls_table();
+        void rotateJoint(size_t jointIndex, float& ang, float& pre, const float tolerance,
+            std::vector<std::shared_ptr<nelems::oMesh>>& base,
+            float diffX, float diffY, float diffZ);
         // Limangle for Robot
-        void set_limitangle(const std::vector<std::vector<float>>& getlim) { limitangle = getlim; }
         // Move Robot
         void move_robot();
 		// Setup UI
         void setup_MOVE_ui(UIState& ui_state);
         // Read Robot
         void read_robot();
-        // Get SwitchVisualize
-        bool getSwitchVisualize() const { return switchVisualizeMode; }
-        // Set SwitchVisualize
-        void setSwitchVisualize() { switchVisualizeMode = false; }
-        // Get Angle
-        void get_angle(float& g1, float& g2, float& g3, float& g4, float& g5, float& g6);
+        // Connect to robot
+        void connect_robot();
+		// Disconnect from robot
+        void disconnect_robot(bool showmsg);
+        // Render the Robot & UI
+        bool check_connect() { if (!controller) { return false; } else { return true; } }
+
+    public:
+        static ymconnect& getInstance() { static ymconnect instance; return instance; }
+        // setter for get6pos from shared memory. Only take when != -1.
+        void setter_get6pos(const std::vector<std::vector<float>>& get6pos_) { get6pos = get6pos_; }
+        void render();
+
     };
 
 }

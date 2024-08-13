@@ -1,12 +1,11 @@
 #pragma once
 #include "pch.h"
-#include <set>
 #include <cstdio>
 #include <windows.h>
 #include <tlhelp32.h>
 #include "statuslogs.h"
 #include "Filemgr/RobInitFile.h"
-
+#include "exception"
 
 namespace nui
 {
@@ -17,32 +16,54 @@ namespace nui
             robinit = &RobInitFile::getinstance();
             CMDClear();
         }
-        ~CMDReader() {}
-        void CMDClear() {
+        ~CMDReader() {
             if (processHandle) {
-                TerminateProcess(processHandle, 0); // Terminate the process properly
                 CloseHandle(processHandle);
             }
             if (readHandle) {
                 CloseHandle(readHandle);
             }
+            if (writeHandle) {
+                CloseHandle(writeHandle);
+            }
         }
+        void CMDClear() {
+            PROCESSENTRY32 processEntry;
+            processEntry.dwSize = sizeof(PROCESSENTRY32);
+            HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+            if (snapshot == INVALID_HANDLE_VALUE) {
+                std::cerr << "Failed to create snapshot" << std::endl;
+                return;
+            }
+
+            if (Process32First(snapshot, &processEntry)) {
+                do {
+                    if (_stricmp(processEntry.szExeFile, "python.exe") == 0) {
+                        HANDLE processHandle = OpenProcess(PROCESS_TERMINATE, FALSE, processEntry.th32ProcessID);
+                        if (processHandle != nullptr) {
+                            TerminateProcess(processHandle, 0); // Terminate the process properly
+                            CloseHandle(processHandle);
+                        }
+                    }
+                } while (Process32Next(snapshot, &processEntry));
+            }
+
+            CloseHandle(snapshot);
+        }
+
 
         void readCMD() {
             auto currentTime = std::chrono::system_clock::now();
             auto processOutput = getProcessOutput();
 
             for (const auto& [time, line] : processOutput) {
-                if (std::chrono::duration_cast<std::chrono::minutes>(currentTime - time).count() > 5) {
-                    continue;
-                }
-
-                if (processedTimes.find(time) != processedTimes.end()) {
+                if (bufferLines.find(line) != bufferLines.end()) {
                     continue;
                 }
 
                 processedTimes.insert(time);
-                *sttlogs << "\n****************** cmd Logs: \n" + line + "\n******************";
+                *sttlogs << "cmd Logs: \n" + line + "\n";
             }
         }
         void restart() {
@@ -54,6 +75,7 @@ namespace nui
         HANDLE processHandle{};
         HANDLE readHandle{};
         HANDLE writeHandle{};
+        std::set<std::string> bufferLines;
         std::set<std::chrono::system_clock::time_point> processedTimes;
         std::string pythonPath; 
         std::string scriptPath; 
@@ -90,8 +112,14 @@ namespace nui
             GetCurrentDirectory(MAX_PATH, orgiDir);
 
             // switch
+            std::string command;
             SetCurrentDirectory(workDir.c_str());
-            std::string command = pythonPath + " " + scriptPath;
+            try
+            {
+                command = pythonPath + " " + scriptPath;
+            }
+            catch (std::exception& e) 
+            { *sttlogs << "ERROR: " + *(e.what()); return; }
 
             if (!CreateProcess(NULL, const_cast<LPSTR>(command.c_str()), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
                 *sttlogs << "Failed to create process" ;
@@ -108,7 +136,7 @@ namespace nui
 
         std::vector<std::pair<std::chrono::system_clock::time_point, std::string>> getProcessOutput() {
             std::vector<std::pair<std::chrono::system_clock::time_point, std::string>> result;
-            char buffer[1024];
+            char buffer[1024*2];
             DWORD bytesRead;
             auto currentTime = std::chrono::system_clock::now();
 

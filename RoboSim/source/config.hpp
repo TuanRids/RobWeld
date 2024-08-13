@@ -26,6 +26,8 @@ namespace Config {
     constexpr const char* IPC_GET_POS = "Local\\Robpos";
     // Get adjusted 3D coordinator
     constexpr const char* IPC_GET_COOR3DMESH = "Local\\Coor3DMesh";
+    // Get 3D chart 
+    constexpr const char* IPC_GET_CHART = "Local\\ChartInspection";
 
     // Send mapping data with Vision 
 	constexpr const char* IPC_SEND_TRIGGER = "Local\\TriggerVision";

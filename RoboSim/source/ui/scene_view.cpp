@@ -1,35 +1,26 @@
 #include "pch.h"
 #include "scene_view.h"
 #include <Windows.h>
-#include <opencv2/opencv.hpp>
+
 namespace nui
 {
     std::string SceneView::arg_render_mode = "Surface";
     SceneView::SceneView():zoom(1), mSize(800, 600)
     {
-        rdMesh = &nelems::mMesh::getInstance();
-        robinit = &RobInitFile::getinstance();
-        mFrameBuffer = std::make_unique<nrender::OpenGL_FrameBuffer>();
-
         float SXAA = 2.5;
-        std::string temptsxaa;
-        robinit->get_settings("SSXA_Ratio", temptsxaa);
-        if (!temptsxaa.empty()) {
-            SXAA = std::stof(temptsxaa);
-        }
+        robinit->get_settings("SSXA_Ratio", SXAA);
 
-        mFrameBuffer->create_buffers(800 * SXAA, 600 * SXAA);
-        mShader = std::make_unique<nshaders::Shader>();
+        mFrameBuffer = std::make_shared<nrender::OpenGL_FrameBuffer>();
+        mFrameBuffer->create_buffers(static_cast<int>(800 * SXAA), static_cast<int>(600 * SXAA));
+        // mShader = std::make_shared<nshaders::Shader>();
         mShader->load("shaders/vs.vert", "shaders/fs_pbr.frag");
-        mLight = std::make_unique<nelems::Light>();
-        mCamera = std::make_unique<nelems::Camera>(45.0f, 1.3f, 0.1f, 100.0f);
     }
 
     void SceneView::resize(int32_t width, int32_t height)
     {
         mSize.x = float(width);
         mSize.y = float(height);
-        mFrameBuffer->create_buffers((int32_t)mSize.x, (int32_t)mSize.y);
+        mFrameBuffer->create_buffers(static_cast<int32_t>(mSize.x), static_cast<int32_t>(mSize.y));
     }
 
     void SceneView::on_mouse_move(double x, double y, nelems::EInputButton button)
@@ -48,9 +39,9 @@ namespace nui
         for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
         {
             auto mesh = *it;
-            if (selMesh->selected)
+            if (mesh->selected)
             {
-                mCamera->set_rotation_center(selMesh->oMaterial.position);
+                mCamera->set_rotation_center(mesh->oMaterial.position);
                 return;
             }
         }
@@ -97,8 +88,6 @@ namespace nui
         // Returning a clone of the matrix to ensure that the data persists beyond the function scope
         return texture_image;
     }
-
-
     void matToTexture(const cv::Mat& mat, GLuint & textureID) {
         //glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
@@ -109,6 +98,7 @@ namespace nui
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.cols, mat.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, mat.data);
         glBindTexture(GL_TEXTURE_2D, 0);        
     }
+#pragma optimize("", off)
 
     void SceneView::render()
     {
@@ -117,39 +107,46 @@ namespace nui
         mLight->update(mShader.get());
 
         mFrameBuffer->bind();
-        if (!rdMesh) { rdMesh = &nelems::mMesh::getInstance(); }
-        else { render_mode(); }
+        render_mode(); 
         mFrameBuffer->unbind();
+        GLenum error = glGetError();
+        if (error != GL_NO_ERROR) {
+            std::cerr << "OpenGL error after rendering to framebuffer: " << error << std::endl;
+        }
 
         ImGui::Begin("ViewPort");
         {
-            nui::FrameManage::setCrActiveGui("ViewPort", ImGui::IsWindowFocused() || ImGui::IsWindowHovered());
+            setCrActiveGui("ViewPort", ImGui::IsWindowHovered());
             ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
             mSize = { viewportPanelSize.x, viewportPanelSize.y };
+
             mCamera->set_aspect(mSize.x / mSize.y);
             mCamera->update(mShader.get());
             ImVec2 viewportWindowPos = ImGui::GetWindowPos();
-            nui::FrameManage::setViewportSize(viewportWindowPos.x, viewportWindowPos.y);
-            nui::FrameManage::set3DSize(mSize.x, mSize.y);
+            SetViewPos(viewportWindowPos.x, viewportWindowPos.y);
+            set3DSize(mSize.x, mSize.y);
 
             // Add rendered texture to ImGUI scene window
             uint64_t textureID = mFrameBuffer->get_texture();
-            //convert texture frambuffer to opencv mat
-            cv::Mat image = framebufferToMat(textureID, viewportPanelSize.x, viewportPanelSize.y);
-            cv::GaussianBlur(image, image, cv::Size(3, 3), 0);
-            cv::Mat sharpImage;
-            cv::Mat kernel = (cv::Mat_<float>(3, 3) <<
-                0, -1, 0,
-                -1, 5, -1,
-                0, -1, 0);
-            cv::filter2D(image, sharpImage, image.depth(), kernel);
 
-            matToTexture(image, processedTextureID);
-            ImGui::Image(reinterpret_cast<void*>(processedTextureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+            // Ensure the texture ID is valid before using it
+            if (textureID != 0) {
+                cv::Mat image = framebufferToMat(textureID, static_cast<int>(viewportPanelSize.x), static_cast<int>(viewportPanelSize.y));
+                cv::GaussianBlur(image, image, cv::Size(3, 3), 0);
+                cv::Mat sharpImage;
+                cv::Mat kernel = (cv::Mat_<float>(3, 3) <<
+                    0, -1, 0,
+                    -1, 5, -1,
+                    0, -1, 0);
+                cv::filter2D(image, sharpImage, image.depth(), kernel);
 
+                matToTexture(image, processedTextureID);
+                ImGui::Image(reinterpret_cast<void*>(processedTextureID), ImVec2{ mSize.x, mSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+            } else {
+                ImGui::Text("Error: FrameBuffer texture is invalid.");
+            }
         }
         ImGui::End();
-        //glDeleteTextures(1, &processedTextureID);
     }
 
     void SceneView::render_mode()
@@ -174,4 +171,6 @@ namespace nui
             rdMesh->update(mShader.get(), mLight->lightmode);
         }
     }
+#pragma optimize("", on)
+
 }
