@@ -223,7 +223,9 @@ namespace nymrobot {
                 *sttlogs << "ROBOT is keeping in the HOLD Mode."; return;
             }
 
-            *sttlogs << "Start Moving to " + std::to_string(ui_state.coumove) + " points.";
+            *sttlogs << "Start Sending Rob Coor to " + std::to_string(ui_state.coumove) + " points.";
+            
+            
             for (auto it = ui_state.movTypes.begin(); it != ui_state.movTypes.end(); it++) {
                 if (std::distance(ui_state.movTypes.begin(), it) >= ui_state.coumove) { break; }
                 ui_state.b1workpos->coordinateType = CoordinateType::RobotCoordinate;
@@ -239,22 +241,23 @@ namespace nymrobot {
 
                 if ((*it) == 0)
                 {
-                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(LinearMotion(ControlGroupId::R1, *ui_state.b1workpos, ui_state.spdlinear));
+                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(LinearMotion(ControlGroupId::R1, *ui_state.b1workpos, ui_state.spdlinear, ui_state.accdec));
                 }
                 else if ((*it) == 2)
                 {
-                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *ui_state.b1workpos, ui_state.spdjoint));
+                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(JointMotion(ControlGroupId::R1, *ui_state.b1workpos, ui_state.spdjoint, ui_state.accdec));
                 }
                 else if ((*it) == 1) // Circular
                 {
                     CoordinateArray coorarr;
                     std::copy(ui_state.rbpos[index-1].begin(), ui_state.rbpos[index - 1].end(), coorarr.begin());                    
-                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *ui_state.b1workpos, coorarr, ui_state.spdlinear));
+                    *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(CircularMotion(ControlGroupId::R1, *ui_state.b1workpos, coorarr, ui_state.spdlinear, ui_state.accdec));
                 }
                 else if ((*it) == 3) { continue; } // Skip as mid point
             }
             *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
             *ui_state.tpstatus = controller->MotionManager->MotionStart();
+            std::cout << "deldone";
         }
     }
   
@@ -345,7 +348,10 @@ namespace nymrobot {
         ImGui::Text("Lin spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
         ImGui::InputFloat("##LS", &ui_state.spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
         ImGui::Text("Joint spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("##JS", &ui_state.spdjoint, 0.0f, 0.0f, "%.2f");
+        ImGui::InputFloat("##JS", &ui_state.spdjoint, 0.0f, 0.0f, "%.2f"); ImGui::SameLine(); ImGui::SetNextItemWidth(30);
+        // MotionAccelDecel accdec{ 20,20 };
+        ImGui::InputDouble("ACC", &ui_state.accdec.accelRatio,0.0f,0.0f,"%.2f"); ImGui::SameLine(); ImGui::SetNextItemWidth(30);
+        ImGui::InputDouble("DEC", &ui_state.accdec.decelRatio, 0.0f, 0.0f, "%.2f");
         ImGui::Separator();
 
         std::vector<const char*> selection = { "Linear", "Circular", "Joint","Mid-Cur"};

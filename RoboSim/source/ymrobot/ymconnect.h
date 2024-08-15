@@ -15,6 +15,7 @@ struct UIState {
     unsigned int coumove{ 3 };
     bool START_Flag{ false };
     bool lineshpath{ true };
+    MotionAccelDecel accdec{ 20,20 };
     // 1: Linear, 2: Circular, 3: Joint 4: Mid-Cir
     std::vector<int> movTypes = std::vector<int>(50, 0);
     float spdlinear{};
