@@ -66,19 +66,21 @@ void IPCtransfer::trigger_3DCreator()
 }
 
 void IPCtransfer::getter_6pos(std::vector<std::vector<float>>& get6pos) {
-    std::vector<std::vector<float>> temptemp;
+
+    std::vector<std::vector<float>> valid_positions;
 
     for (const auto& pos : shared_get6pos) {
-        float cc = std::fabs(pos[0] + 999.0f);
-        if (cc > 5.0f) {
-            temptemp.push_back(pos);
+        float difference_from_invalid_value = std::fabs(pos[0] + 999.0f);
+        if (difference_from_invalid_value > 5.0f) {
+            valid_positions.push_back(pos);
         }
         else {
-            break;
+            break;  // Stop processing if an invalid position is encountered
         }
     }
-    if (!temptemp.empty()) {
-        get6pos = temptemp;
+    shared_get6pos = std::vector<std::vector<float>>(10, std::vector<float>(6, -999.0f));
+    if (!valid_positions.empty()) {
+        get6pos = valid_positions;
     }
 }
 
@@ -163,10 +165,28 @@ bool IPCtransfer::receive_data() {
 
     // Read robot position from shared memory, if not return -999, then zero out
     if (pBufPos != NULL) {
-        float* pos_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufPos));
-        for (size_t i = 0; i < 50; ++i) {
-            for (size_t j = 0; j < 6; ++j) { shared_get6pos[i][j] = pos_ptr[i * 6 + j]; }
+        unsigned int ros_gkey, ros_gnumber;
+        float* ros_gdata;
+        static unsigned int ros_check_key{ 0 };
+        if (memcpy_s(&ros_gkey, sizeof(unsigned int), pBufPos, sizeof(unsigned int)) != 0) { *sttlogs << "Error copying 3D RobPos key from shared memory.";  }
+
+        if (memcpy_s(&ros_gnumber, sizeof(unsigned int), const_cast<char*>(reinterpret_cast<const char*>(pBufPos)) + sizeof(unsigned int), sizeof(unsigned int)) != 0) {
+            *sttlogs << "Error copying rospos Number from shared memory."; 
         }
+
+        if (ros_gkey != ros_check_key) {
+            ros_check_key = ros_gkey;
+            ros_gdata = const_cast<float*>(reinterpret_cast<const float*>(pBufPos) + 2); // +2 to skip key and row_number
+            // Adjust the size of shared_3Ddata based on row_number
+            shared_get6pos = std::vector<std::vector<float>>(ros_gnumber, std::vector<float>(6, -999.0f));
+            for (unsigned int i = 0; i < ros_gnumber; ++i) {
+                for (unsigned int j = 0; j < 6; ++j) {
+                    shared_get6pos[i][j] = ros_gdata[i * 6 + j];
+                }
+            }
+            *sttlogs << "Read Robot Position from Shared memory: " + std::to_string(ros_gnumber);
+        }
+
         UnmapViewOfFile(pBufPos);
         CloseHandle(hMapFileRosPos);
     }
@@ -206,7 +226,7 @@ bool IPCtransfer::receive_data() {
             coord_id = key;
             data_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufCoord) + 2); // +2 to skip key and row_number
             // Adjust the size of shared_3Ddata based on row_number
-            shared_3Ddata = std::vector<std::vector<float>>(row_number, std::vector<float>(1024, -999.0f));
+            shared_3Ddata = std::vector<std::vector<float>>(row_number+20, std::vector<float>(1024, -999.0f));
             for (unsigned int i = 0; i < row_number; ++i) {
                 for (unsigned int j = 0; j < 1024; ++j) {
                     shared_3Ddata[i][j] = data_ptr[i * 1024 + j];
@@ -330,8 +350,8 @@ void IPCtransfer::displayPopupMenu() {
         if (ImGui::MenuItem("Start Robot Left")) { if (checkconnect()) { TriggerToPy["Send2"] = 1; } }
         if (ImGui::MenuItem("Start Robot Right")) { if (checkconnect()) { TriggerToPy["Send3"] = 1; } }
         if (ImGui::MenuItem("R Inspection")) { if (checkconnect()) { TriggerToPy["Send4"] = 1; } }
-        if (ImGui::MenuItem("Clean")) { clean_image(); }
-        if (ImGui::MenuItem("Stop All")) { if (checkconnect()) { TriggerToPy["Send6"] = 1; } }
+        if (ImGui::MenuItem("Resend 3D")) { if (checkconnect()) { TriggerToPy["Send5"] = 1; } }
+        if (ImGui::MenuItem("Resend Robot")) { if (checkconnect()) { TriggerToPy["Send6"] = 1; } }
         ImGui::EndPopup();
     }
 }

@@ -297,6 +297,10 @@ namespace nymrobot {
             for (auto it = get6pos.begin(); it != get6pos.end(); ++it) {
                 ui_state.rbpos[std::distance(get6pos.begin(), it)] = *it;
             }
+            ui_state.movTypes[0] = 2;
+            // reset get6pos to size 0
+            get6pos.clear();
+
         }
         ImGui::SameLine(); // Check the trajectory
         if (ImGui::Button("Stop") && controller)
