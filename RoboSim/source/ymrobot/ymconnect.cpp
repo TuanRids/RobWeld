@@ -297,8 +297,10 @@ namespace nymrobot {
             ui_state.movTypes.resize(get6pos.size(), 1);
         }
         if (get6pos.size() > 0) {
+            ui_state.coumove = get6pos.size()-1;
             for (auto it = get6pos.begin(); it != get6pos.end(); ++it) {
                 ui_state.rbpos[std::distance(get6pos.begin(), it)] = *it;
+                ui_state.movTypes[it - get6pos.begin()] = 0;
             }
             ui_state.movTypes[0] = 2;
             // reset get6pos to size 0
