@@ -20,7 +20,6 @@ class PclToMesh {
 public:
 
     PclToMesh();
-    void processPointCloud();
     void setter_data(const std::vector<std::vector<float>>& setterdata) { data = setterdata; }
     void setter_creating_speed(const unsigned int& speed) { creating_speed = speed; }
 

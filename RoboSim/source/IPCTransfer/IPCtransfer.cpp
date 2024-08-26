@@ -311,10 +311,10 @@ void IPCtransfer::Display_info()
     nui::FrameManage::GetViewPos(pos_x, pos_y);
     nui::FrameManage::get3DSize(size_x, size_y);
 
-    ImGui::SetNextWindowPos(ImVec2(pos_x + 15.0f, pos_y + 35.0f)); // Set the position of the frame
-    ImGui::SetNextWindowSize(ImVec2(size_x * 0.2f, size_y * 0.97f - 35.0f)); // Set the size of the frame
+    //ImGui::SetNextWindowPos(ImVec2(pos_x + 15.0f, pos_y + 35.0f)); // Set the position of the frame
+    // ImGui::SetNextWindowSize(ImVec2(size_x * 0.2f, size_y * 0.97f - 35.0f)); // Set the size of the frame
     ImGui::Begin("Camera Vision (R)", nullptr,
-        ImGuiWindowFlags_NoDocking |    // Cannot be docked
+       // ImGuiWindowFlags_NoDocking |    // Cannot be docked
         ImGuiWindowFlags_NoBackground | // Do not display background
         ImGuiWindowFlags_NoNavFocus);
 

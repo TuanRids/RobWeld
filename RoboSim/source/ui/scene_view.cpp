@@ -45,7 +45,7 @@ namespace nui
                 return;
             }
         }
-        mCamera->set_rotation_center({300,0,0 },900);
+        mCamera->set_rotation_center({300,0,0 },1100);
     }
     void SceneView::setZoom(int newZoom)
     {

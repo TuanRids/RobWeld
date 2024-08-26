@@ -17,7 +17,7 @@ namespace nelems
       RobInitFile* robinit; robinit = &RobInitFile::getinstance();
       if (robinit->get_settings("theme") == "Dark") { mStrength = 400; }
       else { mStrength = 200.0f; }
-      lightmode = 2;
+      lightmode = 3;
     }
 
     ~Light() {}

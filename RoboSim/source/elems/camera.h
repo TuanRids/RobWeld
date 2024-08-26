@@ -93,7 +93,7 @@ namespace nelems
 		mFocus = {position.x,position.z,-position.y};
 
 		// Set the distance to 1 to zoom in to the new position
-		mDistance = 100.0f;
+		mDistance = 200.0f;
 
 		// Calculate the direction vector from the current position to the new position
 		glm::vec3 direction = mFocus - mPosition;

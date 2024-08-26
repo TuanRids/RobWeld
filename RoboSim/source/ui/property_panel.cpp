@@ -182,7 +182,7 @@ namespace nui
         static float newnear{ 1.0f }, newfar{ 10000.0f }; // Far =0 => Render error
         static int newzoom(50); static int gridNum(110); static int gridStep(5);
 
-        if (ImGui::CollapsingHeader("CameraSetting", false ))        {
+        if (ImGui::CollapsingHeader("CameraSetting", ImGuiTreeNodeFlags_DefaultOpen))        {
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
             ImGui::Separator();
             if (ImGui::Button("Advance Settings Vision"))
@@ -258,7 +258,7 @@ namespace nui
                 {
                     selectionStates[it - rdMesh->getMesh()->begin()] = it->get()->selected;
                 }
-                ImGui::BeginChild("TableChild", ImVec2(0, 80), true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+                ImGui::BeginChild("TableChild", ImVec2(0, 100), true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysVerticalScrollbar);
                 ImGui::BeginTable("Objects", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX);
                 ImGui::TableSetupColumn("Sel");
                 ImGui::TableSetupColumn("Name",ImGuiTableColumnFlags_WidthFixed, 50.0f);
@@ -489,7 +489,7 @@ namespace nui
 
         static ImVec4 clor = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
         static float rness = 0.5f; static float mlic = 0.5f;
-        if (ImGui::CollapsingHeader("Material", false))
+        if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImVec4 preClor = clor; float prerness = rness; float premlic = mlic;
             for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
