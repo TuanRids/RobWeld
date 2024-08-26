@@ -12,7 +12,7 @@ IPCtransfer::IPCtransfer() : image_texture(0), image_texture_below{ 0 }
 }
 
 std::vector<std::vector<float>> IPCtransfer::shared_get6pos(std::vector<std::vector<float>>(50, std::vector<float>(6, -999.0f)));
-std::vector<std::vector<float>> IPCtransfer::shared_3Ddata(std::vector<std::vector<float>>(5, std::vector<float>(1024, -999.0f)));
+// std::vector<std::vector<float>> IPCtransfer::shared_3Ddata(std::vector<std::vector<float>>(5, std::vector<float>(1024, -999.0f)));
 bool IPCtransfer::robot_cnstt = false;
 IPCtransfer::~IPCtransfer() {
     if (image_texture != 0) {
@@ -21,7 +21,11 @@ IPCtransfer::~IPCtransfer() {
 }
 
 void IPCtransfer::send_datatoIPC() {
-
+    if (TriggerToPy["Send1"] != 0) {
+        if (!sceneview) { sceneview = &nui::SceneView::getInstance(); }
+        promesh->delete_byname("ScanMesh");
+        sceneview->set_rotation_center();
+    }
     const char* ipc_send_mapping = Config::IPC_SEND_TRIGGER;
 
     HANDLE hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, TEXT(ipc_send_mapping));
@@ -50,20 +54,20 @@ void IPCtransfer::send_datatoIPC() {
 }
 
 
-void IPCtransfer::trigger_3DCreator()
-{
-    // pcl2m->mainlooping();
-    // check to delete fast LidarObj_medium  LidarObj_fast
-    /*if (promesh->check_selected("LidarObj_medium")) {
-        if (promesh->check_selected("LidarObj_fast")) {
-            promesh->delete_byname("LidarObj_fast");
-        }
-    }*/
-    pcl2m->setter_data(shared_3Ddata);
-    pcl2m->processPointCloud(coord_id);
-    shared_3Ddata = std::vector<std::vector<float>>(5, std::vector<float>(1024, -999.0f));
-
-}
+//void IPCtransfer::trigger_3DCreator()
+//{
+//    // pcl2m->mainlooping();
+//    // check to delete fast LidarObj_medium  LidarObj_fast
+//    /*if (promesh->check_selected("LidarObj_medium")) {
+//        if (promesh->check_selected("LidarObj_fast")) {
+//            promesh->delete_byname("LidarObj_fast");
+//        }
+//    }*/
+//    pcl2m->setter_data(shared_3Ddata);
+//    pcl2m->processPointCloud(coord_id);
+//    shared_3Ddata = std::vector<std::vector<float>>(5, std::vector<float>(1024, -999.0f));
+//
+//}
 
 void IPCtransfer::getter_6pos(std::vector<std::vector<float>>& get6pos) {
 
@@ -85,8 +89,9 @@ void IPCtransfer::getter_6pos(std::vector<std::vector<float>>& get6pos) {
 }
 
 void IPCtransfer::IPCTransferRender() {
+    pcl2m->show3d_data(); // For testing
     receive_data();
-    trigger_3DCreator();
+    // trigger_3DCreator();
     Display_info();
     send_datatoIPC();
     reset_TriggerToPy();
@@ -210,35 +215,35 @@ bool IPCtransfer::receive_data() {
         CloseHandle(hMapFileStatus);
     }
 
-    // Read 3D coordinates from python, then close
-    if (pBufCoord != NULL) {
-        unsigned int key;
-        unsigned int row_number;
-        float* data_ptr;
+    //// Read 3D coordinates from python, then close
+    //if (pBufCoord != NULL) {
+    //    unsigned int key;
+    //    unsigned int row_number;
+    //    float* data_ptr;
 
-        if (memcpy_s(&key, sizeof(unsigned int), pBufCoord, sizeof(unsigned int)) != 0) { *sttlogs << "Error copying 3D Coord  key from shared memory."; }
+    //    if (memcpy_s(&key, sizeof(unsigned int), pBufCoord, sizeof(unsigned int)) != 0) { *sttlogs << "Error copying 3D Coord  key from shared memory."; }
 
-        if (memcpy_s(&row_number, sizeof(unsigned int), const_cast<char*>(reinterpret_cast<const char*>(pBufCoord)) + sizeof(unsigned int), sizeof(unsigned int)) != 0) {
-            *sttlogs << "Error copying row_number from shared memory.";
-        }
+    //    if (memcpy_s(&row_number, sizeof(unsigned int), const_cast<char*>(reinterpret_cast<const char*>(pBufCoord)) + sizeof(unsigned int), sizeof(unsigned int)) != 0) {
+    //        *sttlogs << "Error copying row_number from shared memory.";
+    //    }
 
-        if (key != coord_id) {
-            coord_id = key;
-            data_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufCoord) + 2); // +2 to skip key and row_number
-            // Adjust the size of shared_3Ddata based on row_number
-            shared_3Ddata = std::vector<std::vector<float>>(row_number+20, std::vector<float>(1024, -999.0f));
-            for (unsigned int i = 0; i < row_number; ++i) {
-                for (unsigned int j = 0; j < 1024; ++j) {
-                    shared_3Ddata[i][j] = data_ptr[i * 1024 + j];
-                }
-            }
-            *sttlogs << "[3D] Read 3D coordinates from Shared memory, size: 1024 x " + std::to_string(row_number);
-        }
-        UnmapViewOfFile(pBufCoord);
-        CloseHandle(hMapFileCoord);
+    //    if (key != coord_id) {
+    //        coord_id = key;
+    //        data_ptr = const_cast<float*>(reinterpret_cast<const float*>(pBufCoord) + 2); // +2 to skip key and row_number
+    //        // Adjust the size of shared_3Ddata based on row_number
+    //        shared_3Ddata = std::vector<std::vector<float>>(row_number+20, std::vector<float>(1024, -999.0f));
+    //        for (unsigned int i = 0; i < row_number; ++i) {
+    //            for (unsigned int j = 0; j < 1024; ++j) {
+    //                shared_3Ddata[i][j] = data_ptr[i * 1024 + j];
+    //            }
+    //        }
+    //        *sttlogs << "[3D] Read 3D coordinates from Shared memory, size: 1024 x " + std::to_string(row_number);
+    //    }
+    //    UnmapViewOfFile(pBufCoord);
+    //    CloseHandle(hMapFileCoord);
 
-    }
-    else { shared_3Ddata = std::vector<std::vector<float>>(1, std::vector<float>(1, 0.0f)); }
+    //}
+    //else { shared_3Ddata = std::vector<std::vector<float>>(1, std::vector<float>(1, 0.0f)); }
 
     // Read chart from python, then close
     if (pBufChart != NULL) {
@@ -313,7 +318,6 @@ void IPCtransfer::Display_info()
         ImGuiWindowFlags_NoBackground | // Do not display background
         ImGuiWindowFlags_NoNavFocus);
 
-    displayPopupMenu();
     displayControlButtons();
     ImGui::BeginGroup();
     displayMainImage();
@@ -343,26 +347,18 @@ GLuint IPCtransfer::matToTexture(const cv::Mat& mat) {
     return textureID;
 }
 
-void IPCtransfer::displayPopupMenu() {
-    auto checkconnect = [this]()->bool {if (!robot_cnstt) { *sttlogs << "Robot is not Connected."; return false; } else { return true; } };
-    if (ImGui::BeginPopupContextItem("Vision Popup", ImGuiPopupFlags_MouseButtonRight)) {
-        if (ImGui::MenuItem("Run Detection Plan")) { if (checkconnect()) { TriggerToPy["Send1"] = 1; } }
-        if (ImGui::MenuItem("Start Robot Left")) { if (checkconnect()) { TriggerToPy["Send2"] = 1; } }
-        if (ImGui::MenuItem("Start Robot Right")) { if (checkconnect()) { TriggerToPy["Send3"] = 1; } }
-        if (ImGui::MenuItem("R Inspection")) { if (checkconnect()) { TriggerToPy["Send4"] = 1; } }
-        if (ImGui::MenuItem("Resend 3D")) { if (checkconnect()) { TriggerToPy["Send5"] = 1; } }
-        if (ImGui::MenuItem("Resend Robot")) { if (checkconnect()) { TriggerToPy["Send6"] = 1; } }
-        ImGui::EndPopup();
-    }
-}
-
 void IPCtransfer::displayControlButtons() {
     auto checkconnect = [this]()->bool {if (!robot_cnstt) { *sttlogs << "Robot is not Connected."; return false; } else { return true; } };
-    if (ImGui::Button("R Detect")) { if (checkconnect()) { TriggerToPy["Send1"] = 1; } }ImGui::SameLine();
-    if (ImGui::Button("R Left")) { if (checkconnect()) { TriggerToPy["Send2"] = 1; } }ImGui::SameLine();
-    if (ImGui::Button("R Right")) { if (checkconnect()) { TriggerToPy["Send3"] = 1; } } ImGui::SameLine();
-    if (ImGui::Button("R Insp")) { if (checkconnect()) { TriggerToPy["Send4"] = 1; } }ImGui::SameLine();
+
+    ImVec4 runcolor = ImVec4(0.5f, 0.0f, 0.2f, 1.0f);
+    ImGui::PushStyleColor(ImGuiCol_Button, runcolor); 
+    if (ImGui::Button("   Run   ")) { if (checkconnect()) { TriggerToPy["Send1"] = 1; } }ImGui::SameLine();
+    ImGui::PopStyleColor(1);
+
+    if (ImGui::Button("Reload 3D")) {  pcl2m->reset_unqueIDpath();  }ImGui::SameLine();
     if (ImGui::Button("Details")) {UnImgFrameTrigger = true;}
+    // if (ImGui::Button("R Right")) { if (checkconnect()) { TriggerToPy["Send3"] = 1; } } ImGui::SameLine();
+    // if (ImGui::Button("R Insp")) { if (checkconnect()) { TriggerToPy["Send4"] = 1; } }ImGui::SameLine();
 }
 
 void IPCtransfer::displayMainImage() {

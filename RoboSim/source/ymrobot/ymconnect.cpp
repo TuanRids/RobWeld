@@ -607,7 +607,7 @@ namespace nymrobot {
             glm::vec3 center = base[jointIndex]->oMaterial.position;
 
             // Parallelize the loop using OpenMP
-#pragma omp parallel for
+            #pragma omp parallel for
             for (size_t i = jointIndex; i < base.size(); ++i) {
                 for (auto& vertex : base[i]->mVertices) {
                     Eigen::Vector4f newPos = transform * Eigen::Vector4f(vertex.mPos.x - center.x, vertex.mPos.y - center.y, vertex.mPos.z - center.z, 1.0f);

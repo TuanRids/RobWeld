@@ -254,8 +254,11 @@ namespace nui
                 if (selectionStates.size() != rdMesh->getMesh()->size()) {
                     selectionStates.resize(rdMesh->getMesh()->size(), false);
                 }
-
-                ImGui::BeginChild("TableChild", ImVec2(0, 180), true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+                for (auto it = rdMesh->getMesh()->begin(); it != rdMesh->getMesh()->end(); it++)
+                {
+                    selectionStates[it - rdMesh->getMesh()->begin()] = it->get()->selected;
+                }
+                ImGui::BeginChild("TableChild", ImVec2(0, 80), true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysVerticalScrollbar);
                 ImGui::BeginTable("Objects", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX);
                 ImGui::TableSetupColumn("Sel");
                 ImGui::TableSetupColumn("Name",ImGuiTableColumnFlags_WidthFixed, 50.0f);

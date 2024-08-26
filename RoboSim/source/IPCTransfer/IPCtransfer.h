@@ -8,6 +8,7 @@
 #include "ui/FrameManage.h"
 #include "mesh_import/pcltomesh.h"
 #include "elems/mesh.h"
+#include "ui/scene_view.h"
 class IPCtransfer {
 public:
     IPCtransfer();
@@ -27,7 +28,7 @@ private:
 
     bool SharedMemoryTrigger = false;
     static std::vector<std::vector<float>> shared_get6pos;
-    static std::vector<std::vector<float>> shared_3Ddata;
+    // static std::vector<std::vector<float>> shared_3Ddata;
     std::unique_ptr<std::deque<cv::Mat>> history_img;
     unsigned int stt_id = 999, coord_id = 0, chart_id = 0, img_below_id = 0;
 
@@ -35,10 +36,11 @@ private:
     nui::StatusLogs* sttlogs;
     RobInitFile* robinit;
     nelems::mMesh* promesh;
+    nui::SceneView* sceneview;
     std::unique_ptr<PclToMesh> pcl2m;
     static bool robot_cnstt;
     void send_datatoIPC();
-    void trigger_3DCreator();
+    // void trigger_3DCreator();
     void clean_image();
     void reset_TriggerToPy();
     bool receive_data();
@@ -46,7 +48,6 @@ private:
 
     void Display_info();
     GLuint matToTexture(const cv::Mat& mat);
-    void displayPopupMenu();
     void displayControlButtons();
     void displayMainImage();
     void displaySecondaryImage();

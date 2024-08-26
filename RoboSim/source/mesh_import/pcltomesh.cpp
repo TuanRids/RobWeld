@@ -16,7 +16,6 @@
 #include "omp.h"
 #include "future"
 
-
 void PclToMesh::logTime(std::chrono::time_point<std::chrono::high_resolution_clock>& start, const std::string& message) {
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
     std::string content = message + " [" + std::to_string(duration) + "ms]";
@@ -64,7 +63,7 @@ std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PolygonMesh> Create3DPCL(std
     mesh.polygons = triangles;
     return std::make_pair(vertices, mesh);
 }
-void pushobjtomMesh(nelems::mMesh* proMesh, pcl::PointCloud<pcl::PointXYZ>::Ptr vertices, pcl::PolygonMesh mesh, nui::StatusLogs* sttlogs)
+void pushobjtomMesh(nelems::mMesh* proMesh, pcl::PointCloud<pcl::PointXYZ>::Ptr vertices, pcl::PolygonMesh mesh, nui::StatusLogs* sttlogs, nui::SceneView* sceneview)
 {
     auto start = std::chrono::high_resolution_clock::now();
     proMesh->delete_byname("ScanMesh");
@@ -98,38 +97,107 @@ void pushobjtomMesh(nelems::mMesh* proMesh, pcl::PointCloud<pcl::PointXYZ>::Ptr 
     oMeshObject.init();
     oMeshObject.move(500 - center.x, 0 - center.y, -300 - center.z);
     oMeshObject.rotate(0, 180, 0);
+    oMeshObject.selected = true;
     oMeshObject.create_buffers();
+
     proMesh->getMesh()->push_back(std::make_shared<nelems::oMesh>(std::move(oMeshObject)));
     *sttlogs << "3D Object reconstructed: %i" + std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start).count();
+    // rotation center
+    sceneview->set_rotation_center();
+    for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++) 
+    {
+            if (std::string(it->get()->oname).find( "ScanMesh") != std::string::npos) {it->get()->selected = true;}
+    }
+    // MeshObject.create_buffers();
+
 }
 
-void PclToMesh::processPointCloud(int keyID) {
-    static std::unique_ptr<std::future<std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PolygonMesh>>> future = nullptr;
-
-    if (data.size() == 0 || data.size() > 10000) {
-        return;
+PclToMesh::PclToMesh(): proMesh(nullptr), sttlogs(nullptr), robinit(nullptr), sceneview(nullptr)
+{ 
+    proMesh = &nelems::mMesh::getInstance(); 
+    sttlogs = &nui::StatusLogs::getInstance(); 
+    // get all files name "data_x......dat" in C:\\Robdat
+    if (std::filesystem::exists("C:\\Robdat"))
+    {
+        for (const auto& entry : std::filesystem::directory_iterator("C:\\Robdat")) {
+            if (entry.path().extension() == ".dat") {
+                datpath = entry.path().string();
+                break;
+            }
+        }
     }
+}
 
-    // Check if key has changed or if no async task is running
-    if (keyID != key) {
-        future =std::make_unique<std::future<std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PolygonMesh>>>();
-        *future = std::async(std::launch::async, [this]() { return Create3DPCL(data); });
-        key = keyID;
-        *sttlogs << "Started processing 3D Object: Key " + std::to_string(keyID);
-    }
+void PclToMesh::processPointCloud() {
+    
+
+    
+    
     // Check if the future is ready
-    if (future && future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-        auto result = future->get();
+    
+    
+ //   auto resulttest = Create3DPCL(data);
+ //   auto vertices = resulttest.first;
+	//auto mesh = resulttest.second;
+
+ //   if (vertices && mesh.polygons.size() > 0) {
+ //       pushobjtomMesh(proMesh, vertices, mesh, sttlogs);
+ //   }
+ //   // reset future
+ //   future = nullptr;
+}
+
+void PclToMesh::show3d_data()
+{
+    static std::future<std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PolygonMesh>> future;
+
+    // Check for new .dat file
+    if (!std::filesystem::exists("C:\\Robdat")) { return; }
+    std::string new_dat_file;
+    for (const auto& entry : std::filesystem::directory_iterator("C:\\Robdat")) {
+        if (entry.path().extension() == ".dat") {
+            new_dat_file = entry.path().string();
+            break;
+        }
+    }
+
+    // If there is a new data file, process it
+    if (new_dat_file != datpath) {
+        datpath = new_dat_file;
+        std::ifstream infile(datpath, std::ios::in);
+        data.clear();
+        std::string line;
+
+        while (std::getline(infile, line)) {
+            std::istringstream iss(line);
+            std::vector<float> row;
+            float f;
+            while (iss >> f) {
+                row.push_back(f);
+            }
+            data.push_back(row);
+        }
+        
+        future = std::async(std::launch::async, [this]() { return Create3DPCL(data); });
+        *sttlogs << "Started processing 3D Object: "
+            + datpath.substr(datpath.find_last_of("\\/") + 1, datpath.find_last_of(".") - datpath.find_last_of("\\/") - 1);
+    }
+    if (!sceneview){    sceneview = &nui::SceneView::getInstance();}
+    // Analyze the future
+    if (future.valid() && future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+        auto result = future.get();
         auto vertices = result.first;
         auto mesh = result.second;
 
-        if (vertices && mesh.polygons.size() > 0) {
-            pushobjtomMesh(proMesh, vertices, mesh,sttlogs);
+        if (vertices && !mesh.polygons.empty()) {
+            pushobjtomMesh(proMesh, vertices, mesh, sttlogs, sceneview);
         }
-        // reset future
-		future = nullptr;
+
+        // Reset future
+        future = std::future<std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PolygonMesh>>();
     }
 }
+
 
 
 

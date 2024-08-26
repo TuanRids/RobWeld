@@ -106,7 +106,25 @@ namespace nelems
 		mViewMatrix = glm::translate(glm::mat4(1.0f), mPosition) * glm::toMat4(orientation);
 		mViewMatrix = glm::inverse(mViewMatrix);
 	}
+	void set_rotation_center(const glm::vec3& position, const float& zoomdis)
+	{
+		// Update the focus to the new position
+		mFocus = { position.x,position.z,-position.y };
 
+		// Set the distance to 1 to zoom in to the new position
+		mDistance = zoomdis;
+
+		// Calculate the direction vector from the current position to the new position
+		glm::vec3 direction = mFocus - mPosition;
+
+		// Update the position of the camera along the direction vector
+		mPosition += direction;
+
+		// Update the view matrix to look at the new position
+		glm::quat orientation = get_direction();
+		mViewMatrix = glm::translate(glm::mat4(1.0f), mPosition) * glm::toMat4(orientation);
+		mViewMatrix = glm::inverse(mViewMatrix);
+	}
 
 
 	void reset()
