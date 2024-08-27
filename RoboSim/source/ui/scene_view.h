@@ -47,5 +47,6 @@ namespace nui
         void render_mode();
         void set_render_mode(const std::string& mode) { arg_render_mode = mode; }
         void setZoom(int newZoom);
+        void reset_camera();
     };
 }

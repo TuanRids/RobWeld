@@ -222,6 +222,16 @@ namespace nelems
 		return mPosition;
 	}
 
+	void reset_camera()
+	{
+		mPosition = { 0.0f, 0.0f, 0.0f };
+		mFocus = { 400.0f, 0.0f, -100.0f };
+		mDistance = 955.0f;
+		mPitch = 0.43f;
+		mYaw = -3.0f;
+
+		update_view_matrix();
+	}
 
 	private:
 		std::shared_ptr<std::string> crActiveGui = std::make_shared<std::string>("none"); // check current active gui

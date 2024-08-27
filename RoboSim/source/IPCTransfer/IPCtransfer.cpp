@@ -24,7 +24,7 @@ void IPCtransfer::send_datatoIPC() {
     if (TriggerToPy["Send1"] != 0) {
         if (!sceneview) { sceneview = &nui::SceneView::getInstance(); }
         promesh->delete_byname("ScanMesh");
-        sceneview->set_rotation_center();
+        sceneview->reset_camera();
     }
     const char* ipc_send_mapping = Config::IPC_SEND_TRIGGER;
 

@@ -154,6 +154,12 @@ void pushobjtomMesh(nelems::mMesh* proMesh, pcl::PointCloud<pcl::PointXYZ>::Ptr 
     }
 }
 
+int extractNumberFromFilename(const std::string& filename) {
+    size_t startPos = filename.find("__") + 2;
+    size_t endPos = filename.find("__", startPos);
+    return std::stoi(filename.substr(startPos, endPos - startPos));
+}
+
 PclToMesh::PclToMesh(): proMesh(nullptr), sttlogs(nullptr), robinit(nullptr), sceneview(nullptr)
 { 
     proMesh = &nelems::mMesh::getInstance(); 
@@ -177,6 +183,8 @@ void readFixedFormatFile(const std::string& filename, std::vector<std::vector<fl
     data.clear();
     std::ifstream infile(filename, std::ios::binary | std::ios::ate);
 
+    // get __int number__ from filename
+
     if (!infile) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return;
@@ -189,6 +197,8 @@ void readFixedFormatFile(const std::string& filename, std::vector<std::vector<fl
     size_t numRows = fileSize / (numCols * sizeof(float)); 
 
     std::vector<float> buffer(numRows * numCols);
+
+    if (numRows < extractNumberFromFilename(filename) - 6 ) { return; }
 
     if (infile.read(reinterpret_cast<char*>(buffer.data()), fileSize)) {
         data.resize(numRows, std::vector<float>(numCols));
@@ -236,16 +246,7 @@ void PclToMesh::show3d_data()
         std::ifstream infile(datpath, std::ios::in);        
         std::string line;     
 
-        readFixedFormatFile(datpath,data);
-        /*while (std::getline(infile, line)) {
-            std::istringstream iss(line);
-            std::vector<float> row;
-            float f;
-            while (iss >> f) {
-                row.push_back(f);
-            }
-            data.push_back(row);
-        }*/
+        readFixedFormatFile(datpath,data);        
         if (data.size() < 5) { datpath = ""; return; }
         
         future = std::async(std::launch::async, [this]() { return Create3DPCL(data); }); // 0.45s

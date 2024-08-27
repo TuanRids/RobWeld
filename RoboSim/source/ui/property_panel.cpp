@@ -31,7 +31,7 @@ namespace nui
 
         // Check if fontPath existed
         if (std::filesystem::exists(fontPath) && fontPath.size() > 10)
-        { io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 17.0f); }
+        { io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 15.0f); }
         /*ImFontConfig fontConfig;
         fontConfig.OversampleH = 6;  
         fontConfig.OversampleV = 6;  
