@@ -44,7 +44,7 @@ namespace nui {
             updateCurrentStatus();
         }
 
-        const std::vector<std::string>& getStatus() const {
+        std::vector<std::string>& getStatus() {
             std::lock_guard<std::mutex> lock(sttmutex);
             return currentStatus;
         }

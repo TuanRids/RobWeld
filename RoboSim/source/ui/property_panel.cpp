@@ -28,9 +28,18 @@ namespace nui
         ImGuiIO& io = ImGui::GetIO();
         std::string fontPath; robinit->get_settings("rob_font", fontPath);
         fontPath = "RobFonts\\" + fontPath + ".ttf";
+
         // Check if fontPath existed
         if (std::filesystem::exists(fontPath) && fontPath.size() > 10)
-        { io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f); }
+        { io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 17.0f); }
+        /*ImFontConfig fontConfig;
+        fontConfig.OversampleH = 6;  
+        fontConfig.OversampleV = 6;  
+        fontConfig.GlyphExtraSpacing.x = 1.0f; 
+        ImFont* customFont = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 17.0f, &fontConfig);
+        if (customFont) {
+            io.FontDefault = customFont;  
+        }*/
 
         mRobot = &nymrobot::ymconnect::getInstance();
         sttlogs = &nui::StatusLogs::getInstance();
@@ -81,8 +90,27 @@ namespace nui
         ImGui::Checkbox("cmdLogs", &cmd_flag); ImGui::SameLine(); ImGui::Checkbox("Vision", &mavis_flag);
         ImGui::SameLine(); ImGui::Checkbox("System", &system_flag);
 
-        // color
+        static std::unique_ptr<cv::String> stt_content = std::make_unique<cv::String>();
+
+        // color        
         for (auto stt_content = sttlogs->getStatus().begin(); stt_content != sttlogs->getStatus().end(); stt_content++){
+            if ( stt_content == sttlogs->getStatus().begin() && stt_content->find("---") != std::string::npos) {
+                *stt_content += "---";
+                if (stt_content->size() > 80) {
+                    size_t firstDashPos = stt_content->find("---")+4;
+                    if (firstDashPos != std::string::npos) {
+                        *stt_content = stt_content->substr(0, firstDashPos);
+                    }
+                }
+                // print as Red color
+                ImGui::TextWrapped(stt_content->substr(0, 10).c_str()); // time
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.20f, 1.0f)); ImGui::SameLine();
+                ImGui::TextWrapped(stt_content->substr(10).c_str()); // content
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) { fullview_Flag = !fullview_Flag; }
+                ImGui::PopStyleColor();
+                continue;
+            }
+
             if (stt_content->find("cmd Logs") != std::string::npos && cmd_flag) {
                 // print as Red color
                 ImGui::TextWrapped(stt_content->substr(0,10).c_str()); // time
@@ -261,7 +289,7 @@ namespace nui
                 ImGui::BeginChild("TableChild", ImVec2(0, 100), true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysVerticalScrollbar);
                 ImGui::BeginTable("Objects", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollX);
                 ImGui::TableSetupColumn("Sel");
-                ImGui::TableSetupColumn("Name",ImGuiTableColumnFlags_WidthFixed, 50.0f);
+                ImGui::TableSetupColumn("Name",ImGuiTableColumnFlags_WidthFixed, 80.0f);
                 ImGui::TableSetupColumn("Hide");
                 ImGui::TableHeadersRow();
 

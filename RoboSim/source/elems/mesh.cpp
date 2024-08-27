@@ -38,18 +38,18 @@ namespace nelems {
         oMaterial.rotation.z += angleZ;
 
         // Rotate Oxyz
-        glm::vec4 newOx_s = rotationMatrix * glm::vec4(oMaterial.mOxyz.xs - oMaterial.position, 1.0f);
-        oMaterial.mOxyz.xs = glm::vec3(newOx_s) + oMaterial.position;
-        glm::vec4 newOx_e = rotationMatrix * glm::vec4(oMaterial.mOxyz.xe - oMaterial.position, 1.0f);
-        oMaterial.mOxyz.xe = glm::vec3(newOx_e) + oMaterial.position;
-        glm::vec4 newOy_s = rotationMatrix * glm::vec4(oMaterial.mOxyz.ys - oMaterial.position, 1.0f);
-        oMaterial.mOxyz.ys = glm::vec3(newOy_s) + oMaterial.position;
-        glm::vec4 newOy_e = rotationMatrix * glm::vec4(oMaterial.mOxyz.ye - oMaterial.position, 1.0f);
-        oMaterial.mOxyz.ye = glm::vec3(newOy_e) + oMaterial.position;
-        glm::vec4 newOz_s = rotationMatrix * glm::vec4(oMaterial.mOxyz.zs - oMaterial.position, 1.0f);
-        oMaterial.mOxyz.zs = glm::vec3(newOz_s) + oMaterial.position;
-        glm::vec4 newOz_e = rotationMatrix * glm::vec4(oMaterial.mOxyz.ze - oMaterial.position, 1.0f);
-        oMaterial.mOxyz.ze = glm::vec3(newOz_e) + oMaterial.position;
+        oMaterial.mOxyz.xs = rotationMatrix * glm::vec4(oMaterial.mOxyz.xs - oMaterial.position, 1.0f);
+        //oMaterial.mOxyz.xs = glm::vec3(newOx_s) + oMaterial.position;
+        oMaterial.mOxyz.xe = rotationMatrix * glm::vec4(oMaterial.mOxyz.xe - oMaterial.position, 1.0f);
+        //oMaterial.mOxyz.xe = glm::vec3(newOx_e) + oMaterial.position;
+        oMaterial.mOxyz.ys = rotationMatrix * glm::vec4(oMaterial.mOxyz.ys - oMaterial.position, 1.0f);
+        //oMaterial.mOxyz.ys = glm::vec3(newOy_s) + oMaterial.position;
+        oMaterial.mOxyz.ye = rotationMatrix * glm::vec4(oMaterial.mOxyz.ye - oMaterial.position, 1.0f);
+        //oMaterial.mOxyz.ye = glm::vec3(newOy_e) + oMaterial.position;
+        oMaterial.mOxyz.zs = rotationMatrix * glm::vec4(oMaterial.mOxyz.zs - oMaterial.position, 1.0f);
+        //oMaterial.mOxyz.zs = glm::vec3(newOz_s) + oMaterial.position;
+        oMaterial.mOxyz.ze = rotationMatrix * glm::vec4(oMaterial.mOxyz.ze - oMaterial.position, 1.0f);
+        //oMaterial.mOxyz.ze = glm::vec3(newOz_e) + oMaterial.position;
     }
 
     // rotate without changing the direction of other bases
@@ -473,60 +473,31 @@ namespace nelems {
     }
 
     void mMesh::set_OBxyz(float length, oMesh& mesh, oMesh& OBox, oMesh& OBoy, oMesh& OBoz) {
-        /*oMesh oxMesh;
-        oxMesh.mVertices.clear();
-        oxMesh.mVertexIndices.clear();
-        oxMesh.add_vertex(VertexHolder(mesh.oMaterial.mOxyz.xs, glm::vec3(1.0f, 0.0f, 0.0f)));
-        oxMesh.add_vertex(VertexHolder(mesh.oMaterial.mOxyz.xe, glm::vec3(1.0f, 0.0f, 0.0f)));
-        oxMesh.add_vertex_index(0);
-        oxMesh.add_vertex_index(1);
-        oxMesh.init();
-        OBox = oxMesh;
-        OBox.oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.0f);
-        oMesh oyMesh;
-        oyMesh.mVertices.clear();
-        oyMesh.mVertexIndices.clear();
-        oyMesh.add_vertex(VertexHolder(mesh.oMaterial.mOxyz.ys, glm::vec3(0.0f, 1.0f, 1.0f)));
-        oyMesh.add_vertex(VertexHolder(mesh.oMaterial.mOxyz.ye, glm::vec3(0.0f, 1.0f, 1.0f)));
-        oyMesh.add_vertex_index(0);
-        oyMesh.add_vertex_index(1);
-        oyMesh.init();
-        OBoy = oyMesh;
-        OBoy.oMaterial.mColor = glm::vec3(0.0f, 1.0f, 1.0f);
-        oMesh ozMesh;
-        ozMesh.mVertices.clear();
-        ozMesh.mVertexIndices.clear();
-        ozMesh.add_vertex(VertexHolder(mesh.oMaterial.mOxyz.zs, glm::vec3(0.5f, 0.0f, 0.5f)));
-        ozMesh.add_vertex(VertexHolder(mesh.oMaterial.mOxyz.ze, glm::vec3(0.5f, 0.0f, 0.5f)));
-        ozMesh.add_vertex_index(0);
-        ozMesh.add_vertex_index(1);
-        ozMesh.init();
-        OBoz = ozMesh;
-        OBoz.oMaterial.mColor = glm::vec3(0.5f, 0.0f, 0.5f);*/
-        
+
+
         glm::mat4 rotationMatrix;
 
         glm::vec3 position = mesh.oMaterial.position;
         glm::vec3 rotation = mesh.oMaterial.rotation;
 
 
-        rotationMatrix = glm::rotate(glm::mat4(1.0f), rotation.x, glm::vec3(1, 0, 0));
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.y, glm::vec3(0, 1, 0));
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.z, glm::vec3(0, 0, 1));
+        rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1, 0, 0));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
         glm::vec3 ox_vector = glm::vec3(rotationMatrix * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
         glm::vec3 ox_end_point = position + glm::normalize(ox_vector) * length;
 
         rotationMatrix = glm::mat4(1.0f);
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.x, glm::vec3(1, 0, 0));
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.y, glm::vec3(0, 1, 0));
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.z, glm::vec3(0, 0, 1));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
         glm::vec3 oy_vector = glm::vec3(rotationMatrix * glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
         glm::vec3 oy_end_point = position + glm::normalize(oy_vector) * length;
 
         rotationMatrix = glm::mat4(1.0f);
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.x, glm::vec3(1, 0, 0));
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.y, glm::vec3(0, 1, 0));
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.z, glm::vec3(0, 0, 1));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
         glm::vec3 oz_vector = glm::vec3(rotationMatrix * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
         glm::vec3 oz_end_point = position + glm::normalize(oz_vector) * length;
 
@@ -562,7 +533,7 @@ namespace nelems {
         ozMesh.add_vertex_index(1);
         ozMesh.init();
         OBoz = ozMesh;
-        OBoz.oMaterial.mColor = glm::vec3(1.0f, 0.0f,0.5f);
+        OBoz.oMaterial.mColor = glm::vec3(1.0f, 0.0f, 0.5f);
 
     }
 }

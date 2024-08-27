@@ -11,6 +11,8 @@
 #include "IPCTransfer/IPCtransfer.h"
 #include "Filemgr/RobInitFile.h"
 #include "mutex"
+
+
 struct UIState {
     unsigned int coumove{ 3 };
     bool START_Flag{ false };
@@ -34,6 +36,7 @@ namespace nymrobot {
 
     class ymconnect {
     private:
+
         mutable std::mutex ymmutex;
         static UIState ui_state;
         StatusInfo status{};
@@ -57,6 +60,7 @@ namespace nymrobot {
             sttlogs = &nui::StatusLogs::getInstance();
             shmdata = std::make_unique<IPCtransfer>();
             for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
+
         }
         ~ymconnect();
         // ROBOT CONTROL & RENDER 

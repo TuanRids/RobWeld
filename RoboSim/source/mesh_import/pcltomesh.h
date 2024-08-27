@@ -6,14 +6,8 @@
 #include "ui/statuslogs.h"
 #include "Filemgr/RobInitFile.h"
 #include "ui/scene_view.h"
+#include "cudacal/cudacal.h"
 
-struct Point {
-    float x, y, z;
-};
-
-struct Triangle {
-    Point p1, p2, p3;
-};
 
 
 class PclToMesh {

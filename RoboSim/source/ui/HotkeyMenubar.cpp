@@ -221,7 +221,7 @@ namespace nui {
             try
             {
                 robinit->get_settings("theme", theme_idx);
-                robinit->get_settings("rob_font", rob_font);
+                // robinit->get_settings("rob_font", rob_font);
                 robinit->get_settings("SSXA_Ratio", SSXA_Ratio);
                 robinit->get_settings("robot_tcp", robot_tcp);
                 robinit->get_settings("creating_speed", creating_speed);
@@ -233,7 +233,6 @@ namespace nui {
             catch (const std::exception& e) {};
             loading_flag = false;
         }
-
         // UI
         ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoDocking);
         ImGui::Combo("Theme", &theme_idx, theme_items, IM_ARRAYSIZE(theme_items));

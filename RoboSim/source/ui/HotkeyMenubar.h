@@ -23,7 +23,7 @@ namespace nui {
         static bool waitloop[6];
         static bool shint;
         std::string theme;
-        std::string rob_font="seguihis";
+        std::string rob_font="seguihis"; // verdanab seguihis
         std::mutex mtx;
 
         bool OptionSetting_Flag = false;

@@ -111,7 +111,7 @@ namespace nrender
             newcolor.titlebg               = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
             newcolor.titlebgactive         = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
             newcolor.titlebgcollapsed      = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
-            newcolor.textcolor             = ImVec4{ 0.9f, 0.995f, 0.95f, 1.0f };
+            newcolor.textcolor             = ImVec4{ 0.99f, 0.995f, 0.99f, 1.0f };
             newcolor.scrollbarbg           = ImVec4{ 0.13f, 0.14f, 0.26f, 1.0f };
             return newcolor;
         }

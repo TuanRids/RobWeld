@@ -6,20 +6,20 @@
 #include <filesystem>
 #include <future>
 #include <chrono>
-
 namespace fs = std::filesystem;
-
 namespace nymrobot {
 
     std::vector<std::vector<float>> ymconnect::get6pos(0, std::vector<float>(6, 0.0f));
     char ymconnect::connect_content[100] = "Welcome";
     UIState ymconnect::ui_state{};
+
     ymconnect::~ymconnect() {
         if (controller) {
             disconnect_robot(false);
         }
         delete controller;
     }
+
     bool isNetworkAvailable(const std::string& ip) {
         std::string command = "cmd.exe /c ping -n 1 " + ip + " > nul 2>&1";
 
@@ -59,8 +59,15 @@ namespace nymrobot {
         robinit->get_settings("robot_tcp", temp_tcp);
         strncpy_s(ip_address, temp_tcp.c_str(), sizeof(ip_address));
 
+
+        static float pos_x, pos_y, size_x, size_y;
+        nui::FrameManage::GetViewPos(pos_x, pos_y);
+        nui::FrameManage::get3DSize(size_x, size_y);
+
+        ImGui::SetNextWindowPos(ImVec2(pos_x + 15.0f, pos_y + 35.0f)); // Set the position of the frame
+        ImGui::SetNextWindowSize(ImVec2(size_x * 0.15f, size_y * 0.2f - 35.0f)); // Set the size of the frame
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.3f, 0.2f, 1.0f));
-        ImGui::Begin("GetIP", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+        ImGui::Begin("GetIP", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground);
         //ImGui::SetWindowSize(ImVec2(400, 100));
         ImGui::SetNextItemWidth(120);
         ImGui::InputText("IP", ip_address, sizeof(ip_address));
@@ -347,13 +354,13 @@ namespace nymrobot {
             *sttlogs << "Go back to the Home pos";
         }
         ImGui::SameLine();
-        ImGui::Text("Lin spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::Text("Linear:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
         ImGui::InputFloat("##LS", &ui_state.spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
-        ImGui::Text("Joint spd:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+        ImGui::Text("Joint:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
         ImGui::InputFloat("##JS", &ui_state.spdjoint, 0.0f, 0.0f, "%.2f"); ImGui::SameLine(); ImGui::SetNextItemWidth(30);
         // MotionAccelDecel accdec{ 20,20 };
-        ImGui::InputDouble("ACC", &ui_state.accdec.accelRatio,0.0f,0.0f,"%.2f"); ImGui::SameLine(); ImGui::SetNextItemWidth(30);
-        ImGui::InputDouble("DEC", &ui_state.accdec.decelRatio, 0.0f, 0.0f, "%.2f");
+        //ImGui::InputDouble("ACC", &ui_state.accdec.accelRatio,0.0f,0.0f,"%.2f"); ImGui::SameLine(); ImGui::SetNextItemWidth(30);
+        //ImGui::InputDouble("DEC", &ui_state.accdec.decelRatio, 0.0f, 0.0f, "%.2f");
         ImGui::Separator();
 
         std::vector<const char*> selection = { "Linear", "Circular", "Joint","Mid-Cur"};
@@ -449,14 +456,10 @@ namespace nymrobot {
                 else if (name.find("RBSIMBase_7") != std::string::npos) { base[6] = std::move(mesh); }
             }
         }
-        // If no base objects found, return
         if (base[0] == nullptr) { return; }
 
-        // *****************************************************
-        // B - Initialize static variables for joint angles & RB Hand pos
         static float tolerance = 0.1f, pre[6]{ 0 }, prehand[3]{ 0 };
-        // static std::vector<std::vector <float>> limangle{ 6, {-360,360} };
-        // static bool CtrFlag = false;
+
         static std::vector<std::shared_ptr<nelems::oMesh>> OrgBase = {
             std::make_shared<nelems::oMesh>(*base[0]),
             std::make_shared<nelems::oMesh>(*base[1]),
@@ -477,9 +480,6 @@ namespace nymrobot {
         prehand[0] = base[5]->oMaterial.position.x;
         prehand[1] = base[5]->oMaterial.position.y;
         prehand[2] = base[5]->oMaterial.position.z;
-        // *****************************************************
-        // C - Livesync & Control mode 
-        // LiveSync Mode: 
         if (VisualizeFlag == false) {
             ImVec4 vecred(0.0f, 0.0f, 1.0f, 1.0f);
             for (int i = 0; i < 6; ++i) {
@@ -488,15 +488,15 @@ namespace nymrobot {
 
                 // Display joint angle
                 //ImGui::TextColored(vecred, "Joint %d: %.2f", i + 1, ang[i]);
-                ImGui::Text("Joint %d: %.2f", i + 1, angle[i]);
+                ImGui::Text("Joint %d: %.1f", i + 1, angle[i]);
                 // Display limits
                 ImGui::Text("Min: "); ImGui::SameLine();
                 ImGui::SetNextItemWidth(50);
-                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_0").c_str(), &limitangle[i][0], 0, 0, "%.2f");
+                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_0").c_str(), &limitangle[i][0], 0, 0, "%.1f");
 
                 ImGui::Text("Max:"); ImGui::SameLine();
                 ImGui::SetNextItemWidth(50);
-                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_1").c_str(), &limitangle[i][1], 0, 0, "%.2f");
+                ImGui::InputFloat((std::string("##") + std::to_string(i) + "_1").c_str(), &limitangle[i][1], 0, 0, "%.1f");
 
                 // End the group
                 ImGui::EndGroup();
@@ -505,10 +505,9 @@ namespace nymrobot {
                 if (i % 3 != 2) { ImGui::SameLine(); }
             }
         }
-        // Control Mode:
+
         else
         {
-
             ImGui::SetNextItemWidth(100);
             ImGui::InputFloat("Joint 1", &angle[0], 1, 0.1, "%.2f");
             ImGui::SetNextItemWidth(100);
@@ -524,10 +523,7 @@ namespace nymrobot {
             ImGui::Separator();
 
         }
-        //*****************************************************
-        // D - Caclculate for simulate the movement
 
-        // D - 2 Joints Siumulation
         bool exceeds_tolerance = false;
         for (int i = 0; i < 6; ++i) {
             if (std::abs(angle[i] - pre[i]) > tolerance) {
@@ -537,6 +533,7 @@ namespace nymrobot {
         }
         if (exceeds_tolerance)
         {
+            
             for (int i = 0; i < 7; i++)
             {
                 base[i]->mVertices.clear();
@@ -546,15 +543,14 @@ namespace nymrobot {
                 base[i]->oMaterial.mOxyz = OrgBase[i]->oMaterial.mOxyz;
             }
             pre[0] = pre[1] = pre[2] = pre[3] = pre[4] = pre[5] = 0;
-            // rotateJoint(6, ang[5], pre[5], tolerance, base, ang[5] - pre[5], 0, 0);
             rotateJoint(5, angle[5], pre[5], tolerance, base, -(angle[5] - pre[5]), 0, 0);
             rotateJoint(4, angle[4], pre[4], tolerance, base, 0, -(angle[4] - pre[4]), 0);
             rotateJoint(3, angle[3], pre[3], tolerance, base, -(angle[3] - pre[3]), 0, 0);
             rotateJoint(2, angle[2], pre[2], tolerance, base, 0, -(angle[2] - pre[2]), 0);
             rotateJoint(1, angle[1], pre[1], tolerance, base, 0, (angle[1] - pre[1]), 0);
             rotateJoint(0, angle[0], pre[0], tolerance, base, 0, 0, (angle[0] - pre[0]));
+            
         }
-        // Create buffers for each base
         for (auto& bs : base)
         {
             bs->delete_buffers();
@@ -615,9 +611,9 @@ namespace nymrobot {
                 }
 
                 // Update oMaterial position
-                Eigen::Vector4f centerPos(base[i]->oMaterial.position.x - center.x, base[i]->oMaterial.position.y - center.y, base[i]->oMaterial.position.z - center.z, 1.0f);
-                Eigen::Vector4f newCenterPos = transform * centerPos;
-                base[i]->oMaterial.position = glm::vec3(newCenterPos.x() + center.x, newCenterPos.y() + center.y, newCenterPos.z() + center.z);
+                //Eigen::Vector4f centerPos(base[i]->oMaterial.position.x - center.x, base[i]->oMaterial.position.y - center.y, base[i]->oMaterial.position.z - center.z, 1.0f);
+                //Eigen::Vector4f newCenterPos = transform * centerPos;
+                //base[i]->oMaterial.position = glm::vec3(newCenterPos.x() + center.x, newCenterPos.y() + center.y, newCenterPos.z() + center.z);
             }
             pre = std::round(ang * 100.0f) / 100.0f;
         }
