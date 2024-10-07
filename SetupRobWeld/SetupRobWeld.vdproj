@@ -15,6 +15,18 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_07578BF3AD9C426F821EC07CE5435469"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_0AA39D0D29CE4A819B439FFD145D521C"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_0FA4F0279FBE4E729548371AF2928923"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -27,6 +39,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_14E269F4EC7B4EC5B683B86622973EBC"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_18262E7A584A48A4ADF63F61F8B6C376"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -34,6 +52,12 @@
         "Entry"
         {
         "MsmKey" = "8:_19F875D0CC144D35B2C519675584EDAF"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_1F8932F0338C47BFB4F0C1A01EE6EF32"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -57,7 +81,19 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_40854DD4173B4AFF8DA9BCBDFA9D93DF"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_40CB443E1BF049908F219067665F6732"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_448B04631F824880801D2B34380B90D0"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -75,6 +111,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_47A3513BA15D451890990887FA84C606"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_49238B0C193D469BBFD2B764338215F6"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -87,7 +129,31 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_4A51320080DF47E2ABF5733A519EFC77"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_4A958A150AB843219CEF0CC27DCF560D"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_4AA8E5EA206646F7846692C68351AEAD"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_4B99DAB9A6F64DDBB66F515C658D3D41"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_4C6E73E662EF41F4AECA2081EB2606D5"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -135,6 +201,18 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_5B3038160B52448A9DBE2C8AF65D528C"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_621FEA9FBAC14FFB845653F274BB6133"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_663212B9F1A2408DAB0E4BE512461FC8"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -153,13 +231,31 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_744CAC58E4284378B6649C105CC9BEFF"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_766869EF41BF412A941A212FD62ACFF6"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
+        "MsmKey" = "8:_7DABE78088224A8EB5C92396DB2B0347"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_7F4A5A9C985F43CEA681057CA2477412"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_7F506A8C2F084F17ABA31664F51CD7D7"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -177,7 +273,19 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_835315D3D56A443196D509C34B5DA547"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_8529F0C21D7E47BE814F1D8C8872073A"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_854F547F99C24BFC967174B3124C7AB7"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -213,13 +321,31 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_95E4F6C36C094D4E891835D51EA901B8"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_97B21E0EAB01436991E0844AE213364B"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
+        "MsmKey" = "8:_9C67B0C205F44BD99D3F2D95C0CEB3C3"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_A015995F6A774DC2B4E386C711BBFD4A"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A1884056A32D42B795E8EAC7B75E31B3"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -249,6 +375,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_ABB0D98DBA3D40E4A1CCC88022BE3301"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_B2C3AA62D5AC4D0485B41752252671AA"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -268,6 +400,18 @@
         "Entry"
         {
         "MsmKey" = "8:_BBEC78B0557F48FE84924527E4F26A89"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_BD64CA16D0DF4D2B9801BE26597558C5"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_BD7A3968C5EB4D7BACEF9942CAF5F9BE"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -304,6 +448,18 @@
         "Entry"
         {
         "MsmKey" = "8:_C50B5E76F6F54EC19BF3FB6EBB262C83"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C57E625B301F4D7A8DEE79D0714B9395"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C80B3DAE4A2245B5A2314783DB3AAB7D"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -357,7 +513,19 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_F04B49D9687740A78AEDD5A2FECD818E"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_F0FA6808880F47D8A30A0D1C11B3E90E"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F834F31CE78B46F99462569D61C865B8"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -443,6 +611,46 @@
         }
         "File"
         {
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_07578BF3AD9C426F821EC07CE5435469"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.OpenMP\\vcomp140.dll"
+            "TargetName" = "8:vcomp140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0AA39D0D29CE4A819B439FFD145D521C"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\msvcp140_2d.dll"
+            "TargetName" = "8:msvcp140_2d.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0FA4F0279FBE4E729548371AF2928923"
             {
             "SourcePath" = "8:..\\x64\\Release\\opencv_core4.dll"
@@ -483,6 +691,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_14E269F4EC7B4EC5B683B86622973EBC"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\vcruntime140d.dll"
+            "TargetName" = "8:vcruntime140d.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_18262E7A584A48A4ADF63F61F8B6C376"
             {
             "SourcePath" = "8:..\\x64\\Release\\python312.dll"
@@ -507,6 +735,26 @@
             {
             "SourcePath" = "8:..\\x64\\Release\\tiff.dll"
             "TargetName" = "8:tiff.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1F8932F0338C47BFB4F0C1A01EE6EF32"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\vcruntime140_threadsd.dll"
+            "TargetName" = "8:vcruntime140_threadsd.dll"
             "Tag" = "8:"
             "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
             "Condition" = "8:"
@@ -583,12 +831,52 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_40854DD4173B4AFF8DA9BCBDFA9D93DF"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\msvcp140.dll"
+            "TargetName" = "8:msvcp140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_40CB443E1BF049908F219067665F6732"
             {
             "SourcePath" = "8:..\\x64\\Release\\shaders\\fs.shader"
             "TargetName" = "8:fs.shader"
             "Tag" = "8:"
             "Folder" = "8:_A04322DAE28E477486D3F5B30A6908C3"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_448B04631F824880801D2B34380B90D0"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\vcruntime140_threads.dll"
+            "TargetName" = "8:vcruntime140_threads.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -643,6 +931,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_47A3513BA15D451890990887FA84C606"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\msvcp140_atomic_wait.dll"
+            "TargetName" = "8:msvcp140_atomic_wait.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_49238B0C193D469BBFD2B764338215F6"
             {
             "SourcePath" = "8:..\\x64\\Release\\RobFonts\\imgui.ini"
@@ -683,12 +991,92 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4A51320080DF47E2ABF5733A519EFC77"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\msvcp140_1d.dll"
+            "TargetName" = "8:msvcp140_1d.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4A958A150AB843219CEF0CC27DCF560D"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\msvcp140_codecvt_ids.dll"
+            "TargetName" = "8:msvcp140_codecvt_ids.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4AA8E5EA206646F7846692C68351AEAD"
             {
             "SourcePath" = "8:..\\x64\\Release\\RobotStandard\\imgui.ini"
             "TargetName" = "8:imgui.ini"
             "Tag" = "8:"
             "Folder" = "8:_28F4A5568D21479E8B910E73F89DBACF"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4B99DAB9A6F64DDBB66F515C658D3D41"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CXXAMP\\vcamp140.dll"
+            "TargetName" = "8:vcamp140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4C6E73E662EF41F4AECA2081EB2606D5"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\vcruntime140_1d.dll"
+            "TargetName" = "8:vcruntime140_1d.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -843,6 +1231,46 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5B3038160B52448A9DBE2C8AF65D528C"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\vccorlib140.dll"
+            "TargetName" = "8:vccorlib140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_621FEA9FBAC14FFB845653F274BB6133"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\msvcp140d_codecvt_ids.dll"
+            "TargetName" = "8:msvcp140d_codecvt_ids.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_663212B9F1A2408DAB0E4BE512461FC8"
             {
             "SourcePath" = "8:..\\x64\\Release\\RobotStandard\\Yaskawa-gp8-113k.fbx"
@@ -903,6 +1331,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_744CAC58E4284378B6649C105CC9BEFF"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\vcruntime140.dll"
+            "TargetName" = "8:vcruntime140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_766869EF41BF412A941A212FD62ACFF6"
             {
             "SourcePath" = "8:..\\x64\\Release\\3D Samples\\sphere.fbx"
@@ -923,10 +1371,50 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7DABE78088224A8EB5C92396DB2B0347"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\msvcp140_2.dll"
+            "TargetName" = "8:msvcp140_2.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7F4A5A9C985F43CEA681057CA2477412"
             {
             "SourcePath" = "8:..\\x64\\Release\\assimp-vc142-mtd.dll"
             "TargetName" = "8:assimp-vc142-mtd.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7F506A8C2F084F17ABA31664F51CD7D7"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugOpenMP\\vcomp140d.dll"
+            "TargetName" = "8:vcomp140d.dll"
             "Tag" = "8:"
             "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
             "Condition" = "8:"
@@ -983,12 +1471,52 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_835315D3D56A443196D509C34B5DA547"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\msvcp140d.dll"
+            "TargetName" = "8:msvcp140d.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8529F0C21D7E47BE814F1D8C8872073A"
             {
             "SourcePath" = "8:..\\x64\\Release\\RobFonts\\arial.ttf"
             "TargetName" = "8:arial.ttf"
             "Tag" = "8:"
             "Folder" = "8:_869979F7775347D581AAA709554C527F"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_854F547F99C24BFC967174B3124C7AB7"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.OpenMP.LLVM\\libomp140.x86_64.dll"
+            "TargetName" = "8:libomp140.x86_64.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1103,6 +1631,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_95E4F6C36C094D4E891835D51EA901B8"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\msvcp140d_atomic_wait.dll"
+            "TargetName" = "8:msvcp140d_atomic_wait.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_97B21E0EAB01436991E0844AE213364B"
             {
             "SourcePath" = "8:..\\x64\\Release\\3D Samples\\Simple Object.objbak"
@@ -1123,12 +1671,52 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9C67B0C205F44BD99D3F2D95C0CEB3C3"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\msvcp140_1.dll"
+            "TargetName" = "8:msvcp140_1.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A015995F6A774DC2B4E386C711BBFD4A"
             {
             "SourcePath" = "8:..\\x64\\Release\\RobFonts\\verdanab.ttf"
             "TargetName" = "8:verdanab.ttf"
             "Tag" = "8:"
             "Folder" = "8:_869979F7775347D581AAA709554C527F"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A1884056A32D42B795E8EAC7B75E31B3"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\concrt140.dll"
+            "TargetName" = "8:concrt140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1223,6 +1811,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_ABB0D98DBA3D40E4A1CCC88022BE3301"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\x64\\Microsoft.VC143.CRT\\vcruntime140_1.dll"
+            "TargetName" = "8:vcruntime140_1.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B2C3AA62D5AC4D0485B41752252671AA"
             {
             "SourcePath" = "8:..\\x64\\Release\\liblzma.dll"
@@ -1287,6 +1895,46 @@
             {
             "SourcePath" = "8:..\\x64\\Release\\libwebpdecoder.dll"
             "TargetName" = "8:libwebpdecoder.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_BD64CA16D0DF4D2B9801BE26597558C5"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\concrt140d.dll"
+            "TargetName" = "8:concrt140d.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_BD7A3968C5EB4D7BACEF9942CAF5F9BE"
+            {
+            "SourcePath" = "8:C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.5\\bin\\cudart64_12.dll"
+            "TargetName" = "8:cudart64_12.dll"
             "Tag" = "8:"
             "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
             "Condition" = "8:"
@@ -1407,6 +2055,46 @@
             {
             "SourcePath" = "8:..\\x64\\Release\\libsharpyuv.dll"
             "TargetName" = "8:libsharpyuv.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C57E625B301F4D7A8DEE79D0714B9395"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.OpenMP.LLVM\\libomp140d.x86_64.dll"
+            "TargetName" = "8:libomp140d.x86_64.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C80B3DAE4A2245B5A2314783DB3AAB7D"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCXXAMP\\vcamp140d.dll"
+            "TargetName" = "8:vcamp140d.dll"
             "Tag" = "8:"
             "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
             "Condition" = "8:"
@@ -1583,10 +2271,50 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F04B49D9687740A78AEDD5A2FECD818E"
+            {
+            "SourcePath" = "8:C:\\Program Files (x86)\\Microsoft SDKs\\Windows Kits\\10\\ExtensionSDKs\\Microsoft.UniversalCRT.Debug\\10.0.22621.0\\Redist\\Debug\\x64\\ucrtbased.dll"
+            "TargetName" = "8:ucrtbased.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F0FA6808880F47D8A30A0D1C11B3E90E"
             {
             "SourcePath" = "8:..\\x64\\Release\\RobWeld.pdb"
             "TargetName" = "8:RobWeld.pdb"
+            "Tag" = "8:"
+            "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F834F31CE78B46F99462569D61C865B8"
+            {
+            "SourcePath" = "8:C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Redist\\MSVC\\14.40.33807\\debug_nonredist\\x64\\Microsoft.VC143.DebugCRT\\vccorlib140d.dll"
+            "TargetName" = "8:vccorlib140d.dll"
             "Tag" = "8:"
             "Folder" = "8:_EB67C5C7FD8441AD8FDC6F6D47ACE7BE"
             "Condition" = "8:"
@@ -1735,7 +2463,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:RobWeld"
         "ProductCode" = "8:{C75B527E-8EA0-49A9-A848-4BD40E4C411C}"
-        "PackageCode" = "8:{66BE4940-8E97-4E23-A70E-DBD6759C1E70}"
+        "PackageCode" = "8:{65D35C35-2C35-4D5B-ABBC-63BEDC4C0A0D}"
         "UpgradeCode" = "8:{C64F7E65-FF50-408C-A3AA-3418AF12915D}"
         "AspNetVersion" = "8:"
         "RestartWWWService" = "11:FALSE"
