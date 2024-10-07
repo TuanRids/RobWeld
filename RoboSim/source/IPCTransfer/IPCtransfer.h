@@ -2,7 +2,7 @@
 #pragma once
 #include "pch.h"  // config in pch
 
-
+#include "cfreader.h"
 #include "utils/RobsFileIO.h"
 #include "ui/statuslogs.h"
 #include "ui/FrameManage.h"
@@ -11,15 +11,21 @@
 #include "ui/scene_view.h"
 class IPCtransfer {
 public:
-    IPCtransfer();
-    ~IPCtransfer();
+    static IPCtransfer& getInstance() { static IPCtransfer instance; return instance; }
     void IPCTransferRender();
     void getter_6pos(std::vector<std::vector<float>>& get6pos);
     void status_robot(const bool& cn_status){ robot_cnstt = cn_status; }
-
+    void trigger_run();
+    void trigger_re3D(){tgre3d = true;}
+	void trigger_details(){tgdetails = true;}
+	void trigger_sample(){tgsample = true;}
 private:
-    bool UnImgFrameTrigger = false;
+    ~IPCtransfer();
+    // singleton
+    IPCtransfer();
 
+    bool UnImgFrameTrigger = false;
+    bool tgre3d, tgdetails, tgsample = 0;
     GLuint image_texture;
     GLuint image_texture_below;
     cv::Mat img;
@@ -52,4 +58,6 @@ private:
     void displayMainImage();
     void displaySecondaryImage();
     void displayLaserView();
+
+    void handleDragAndCrop(ImVec2 window_pos, float zoomFactor, cv::Mat& img_selected, GLuint& texture);
 };

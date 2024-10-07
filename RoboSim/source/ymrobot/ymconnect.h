@@ -36,6 +36,8 @@ namespace nymrobot {
 
     class ymconnect {
     private:
+        char ip_address[64] = "192.168.10.102";
+        bool autocn_flag = true;
 
         mutable std::mutex ymmutex;
         static UIState ui_state;
@@ -52,15 +54,15 @@ namespace nymrobot {
         nelems::mMesh* proMeshRb = nullptr;
         std::stringstream resultmsg;
         nui::StatusLogs* sttlogs;
-        std::unique_ptr<IPCtransfer> shmdata;
+        IPCtransfer* shmdata;
         RobInitFile* robinit;
-        static char connect_content[100];
+        static std::string connect_content;
         ymconnect() : controller(nullptr), angle{}, sttlogs(nullptr), shmdata(nullptr) {
             robinit = &RobInitFile::getinstance(); 
             sttlogs = &nui::StatusLogs::getInstance();
-            shmdata = std::make_unique<IPCtransfer>();
+            shmdata = &IPCtransfer::getInstance();
             for (int i{ 0 }; i < 7; i++) { base.push_back(nullptr); }
-
+            
         }
         ~ymconnect();
         // ROBOT CONTROL & RENDER 
@@ -81,6 +83,14 @@ namespace nymrobot {
         void disconnect_robot(bool showmsg);
         // Render the Robot & UI
         bool check_connect() { if (!controller) { return false; } else { return true; } }
+
+
+
+        void start_reading();
+        void stop_reading();
+        std::thread read_thread;
+        std::atomic<bool> running{ false };
+        std::mutex data_mutex;
 
     public:
         static ymconnect& getInstance() { static ymconnect instance; return instance; }

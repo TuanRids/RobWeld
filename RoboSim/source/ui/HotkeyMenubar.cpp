@@ -116,6 +116,7 @@ namespace nui {
 
     {
         if (OptionSetting_Flag) { OptionSettings(); }
+        if (!ipc) { ipc = &IPCtransfer::getInstance(); }
 
         drchart->render();
         static double lastPressTime{ 0 };
@@ -151,6 +152,28 @@ namespace nui {
         { lastPressTime = currentTime;  uiaction.SaveToFile(); }
         if (glfwGetKey(mWindow, GLFW_KEY_DELETE) == GLFW_PRESS)
         { lastPressTime = currentTime;  uiaction.Del_selected_objects(); }
+
+        if (glfwGetKey(mWindow, GLFW_KEY_F1) == GLFW_PRESS && tdelay)
+        {
+            ipc->trigger_run(); lastPressTime = currentTime;
+        }
+        if (glfwGetKey(mWindow, GLFW_KEY_F2) == GLFW_PRESS && tdelay)
+        {
+            ipc->trigger_re3D(); lastPressTime = currentTime;
+        }
+        if (glfwGetKey(mWindow, GLFW_KEY_F3) == GLFW_PRESS && tdelay)
+        {
+            ipc->trigger_details(); lastPressTime = currentTime;
+        }
+        if (glfwGetKey(mWindow, GLFW_KEY_F4) == GLFW_PRESS && tdelay)
+        {
+            ipc->trigger_sample(); lastPressTime = currentTime;
+        }
+        if (glfwGetKey(mWindow, GLFW_KEY_F5) == GLFW_PRESS && tdelay)
+        {
+            OptionSetting_Flag = true; lastPressTime = currentTime;
+        }
+
         // TODO: move this and camera to scene UI component?
         if (scene_view->getCrActiveGui("ViewPort") == true)
         {
@@ -187,10 +210,43 @@ namespace nui {
             {
                 scene_view->reset_view();
             }
-
+            
             double x, y;
             glfwGetCursorPos(mWindow, &x, &y);
             scene_view->on_mouse_move(x, y, nelems::Input::GetPressedButton(mWindow));
+            //// convert mouse position to 2D screen coordinates
+            //int windowWidth, windowHeight;
+            //glfwGetWindowSize(mWindow, &windowWidth, &windowHeight);
+            //glm::vec2 mousePosition = glm::vec2(x, windowHeight - y); // invert y
+            //// camera position
+            //glm::vec3 ray_origin = scene_view->camPosition();
+            //glm::vec4 ray_clip = glm::vec4(
+            //    (2.0f * mousePosition.x) / windowWidth - 1.0f,
+            //    (2.0f * mousePosition.y) / windowHeight - 1.0f,
+            //    -1.0f,
+            //    1.0f
+            //);
+
+            //glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+            //glm::mat4 viewMatrix = glm::lookAt(ray_origin, ray_origin + glm::vec3(0.0f, 0.0f, -1.0f) , glm::vec3(0.0f, 1.0f, 0.0f));
+
+            //// create vec3 ray_origin and ray_direction
+            //glm::vec4 ray_eye = glm::inverse(projectionMatrix) * ray_clip;
+            //ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f);
+            //glm::vec3 ray_direction = glm::normalize(glm::vec3(glm::inverse(viewMatrix) * ray_eye));
+
+            //for (auto it = proMesh->getMesh()->begin(); it != proMesh->getMesh()->end(); it++)
+            //{
+            //    if (std::string(it->get()->oname).find("RBSIMBase_") != std::string::npos) { continue; }
+            //    if (std::string(it->get()->oname).find("movepath__SKIP__") != std::string::npos) { continue; }
+            //    if (it->get()->hide) { continue; }
+            //    if (it->get()->oMaterial.BBox.intersect(ray_origin, ray_direction))
+            //    {
+            //        it->get()->selected = true;
+            //    }
+            //}
+
+
             if (nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Right ||
                 nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Left ||
                 nelems::Input::GetPressedButton(mWindow) == nelems::EInputButton::Middle)
@@ -209,6 +265,9 @@ namespace nui {
         static char scriptPath[256] = "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot\\src\\Infer_software.py";
         static char workDir[256] = "E:\\Quan\\AutoRoboticInspection-V1\\VIKO_UltraRobot";
         static int theme_idx = 0;
+
+        static const char* mQuality_item[] = { "HD", "Full HD","2k","Quad 2k", "4k"};
+        static int mQuality = 2;
         static int creating_speed = 0;
         static float SSXA_Ratio = 3.0f;
         static bool lock_frame = true;
@@ -223,6 +282,7 @@ namespace nui {
                 robinit->get_settings("theme", theme_idx);
                 // robinit->get_settings("rob_font", rob_font);
                 robinit->get_settings("SSXA_Ratio", SSXA_Ratio);
+				robinit->get_settings("mQuality", mQuality);
                 robinit->get_settings("robot_tcp", robot_tcp);
                 robinit->get_settings("creating_speed", creating_speed);
                 robinit->get_settings("pythonPath", pythonPath);
@@ -241,7 +301,8 @@ namespace nui {
         ImGui::Text("Font: %s", rob_font.c_str());
 
         ImGui::Separator(); ImGui::Separator();
-        ImGui::InputFloat("SSXA Ratio", &SSXA_Ratio, 1.0f, 6.0f);
+		ImGui::Combo("Resolution", &mQuality, mQuality_item, IM_ARRAYSIZE(mQuality_item));
+
         ImGui::InputText("Robot TCP Input", robot_tcp, sizeof(robot_tcp));
         ImGui::Combo("ReBuild Mesh Level", &creating_speed, creat_item, IM_ARRAYSIZE(creat_item));
 
@@ -253,6 +314,7 @@ namespace nui {
 
         if (ImGui::Button("Save")) {
             robinit->update_settings("theme", theme_idx);
+			robinit->update_settings("mQuality", mQuality);
             robinit->update_settings("rob_font", rob_font);
             robinit->update_settings("SSXA_Ratio", SSXA_Ratio);
             robinit->update_settings("robot_tcp", std::string(robot_tcp));

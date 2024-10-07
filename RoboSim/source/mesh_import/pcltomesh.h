@@ -25,7 +25,6 @@ private:
     unsigned int creating_speed = 0;
     float x_size = 100.0f; // mm
     float y_size = 200.0f; // mm
-    std::string filePath = Config::PATH_TO_3D_HUNG;
     nelems::mMesh* proMesh;
     nui::StatusLogs* sttlogs;
     nui::SceneView* sceneview;

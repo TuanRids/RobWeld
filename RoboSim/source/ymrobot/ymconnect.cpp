@@ -8,12 +8,12 @@
 #include <chrono>
 namespace fs = std::filesystem;
 namespace nymrobot {
-
     std::vector<std::vector<float>> ymconnect::get6pos(0, std::vector<float>(6, 0.0f));
-    char ymconnect::connect_content[100] = "Welcome";
+    std::string ymconnect::connect_content = "Connecting.";
     UIState ymconnect::ui_state{};
 
     ymconnect::~ymconnect() {
+        stop_reading();
         if (controller) {
             disconnect_robot(false);
         }
@@ -54,48 +54,44 @@ namespace nymrobot {
     }
 
     void ymconnect::connect_robot() {
-        static char ip_address[64] = "192.168.10.102";
         std::string temp_tcp;
         robinit->get_settings("robot_tcp", temp_tcp);
         strncpy_s(ip_address, temp_tcp.c_str(), sizeof(ip_address));
-
-
+        
         static float pos_x, pos_y, size_x, size_y;
         nui::FrameManage::GetViewPos(pos_x, pos_y);
         nui::FrameManage::get3DSize(size_x, size_y);
 
         ImGui::SetNextWindowPos(ImVec2(pos_x + 15.0f, pos_y + 35.0f)); // Set the position of the frame
-        ImGui::SetNextWindowSize(ImVec2(size_x * 0.15f, size_y * 0.2f - 35.0f)); // Set the size of the frame
+        ImGui::SetNextWindowSize(ImVec2(size_x * 0.20f, size_y * 0.2f - 35.0f)); // Set the size of the frame
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.3f, 0.2f, 1.0f));
-        ImGui::Begin("GetIP", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground);
+        ImGui::Begin("Connection", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground);
         //ImGui::SetWindowSize(ImVec2(400, 100));
-        ImGui::SetNextItemWidth(120);
+        ImGui::SetNextItemWidth(200);
         ImGui::InputText("IP", ip_address, sizeof(ip_address));
-        ImGui::SetNextItemWidth(120);
-        ImGui::InputText("Msg", connect_content, sizeof(connect_content));
-
-        if (ImGui::Button("Connect") && !controller) {
-            std::string getip{ ip_address };
-            if (isNetworkAvailable(getip)) {
-                controller = YMConnect::OpenConnection(getip, status);
-                if (status.StatusCode != 0) { std::stringstream ss; ss << status; *sttlogs << "Error: " + ss.str(); }
-                else {
-                    strcpy_s(connect_content, "Welcome to OhLabs.");
-                    status = controller->ControlCommands->DisplayStringToPendant(connect_content);
-                    *sttlogs << "Connected";
-                }
+        ImGui::SetNextItemWidth(200);
+        if (!controller)
+        {
+            if (!autocn_flag){
+                ImGui::TextColored(ImVec4(0.8f, 0.3f, 0.0f, 1.0f), "Disconnected!");
             }
-            else {
-                *sttlogs << "Error: Cannot connect to " + getip + ". Check IP on your robot system.";
+            else
+            {
+                connect_content += "."; if (connect_content.size() > 50) { connect_content = "Connecting."; }
+                ImGui::TextColored(ImVec4(0.2f, 0.89f, 0.9f, 1.0f), connect_content.c_str());
             }
         }
+        else
+        {ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.0f, 1.0f), connect_content.c_str());}
+        ImGui::Checkbox("Auto Connect", &autocn_flag);
+        
         ImGui::SameLine();
+        
         if (ImGui::Button("Disconnect")) {
             if (controller)
             {
                 status = controller->ControlCommands->DisplayStringToPendant("Disconnect!");
                 disconnect_robot(false);
-
             }
         }
         ImGui::Separator();
@@ -103,53 +99,49 @@ namespace nymrobot {
         ImGui::PopStyleColor();
     }
 
+
     void ymconnect::disconnect_robot(bool showmsg) {
         *sttlogs << "Disconnect" ;
-        strcpy_s(connect_content, "Disconnect!");
+        connect_content = "Disconnect!";
         if (controller) { controller = nullptr; }
         if (showmsg)
         { ImGui::OpenPopup("Disconnected"); }
+        autocn_flag = false;
     }
+
+    void ymconnect::start_reading() {
+        running = true;
+        read_thread = std::thread([this]() {
+            while (running) {
+                { 
+                    read_robot();
+                }
+            }
+            });
+    }
+    void ymconnect::stop_reading() {
+        running = false;
+        if (read_thread.joinable()) {
+            read_thread.join();
+        }
+    }
+
 
     void ymconnect::render() {
         if (!controller){shmdata->status_robot(false);}
         else { shmdata->status_robot(true); }
         // get proMeshRb and Statuslogs
         if (!proMeshRb) { proMeshRb = &nelems::mMesh::getInstance(); }
+
+        // setup        
         Robot_Controls_table();
         connect_robot();
         setup_MOVE_ui(ui_state);
         move_robot();
-        auto future_read = std::async(std::launch::async, [this]() {read_robot(); });
-        if (future_read.wait_for(std::chrono::seconds(3)) == std::future_status::timeout) 
-        {
-            *sttlogs << "out of time";
-            disconnect_robot(true); return;
+        if (!running) {
+            start_reading();
         }
-                       
-        static int x{ 200 }, y{ 400 };
-        static float pos_x, pos_y,sizex,sizey;
-        nui::FrameManage::GetViewPos(pos_x, pos_y);
-        nui::FrameManage::get3DSize(sizex, sizey);
-        ImGui::SetNextWindowPos(ImVec2(pos_x + 15+ sizex*0.83f, pos_y + sizey * 0.25f)); // Set the position of the frame
-        ImGui::SetNextWindowSize(ImVec2(sizex*0.15f, sizey*0.73f)); // Set the size of the frame
-        ImGui::Begin("Robot Status:", nullptr,
-            ImGuiWindowFlags_NoDocking | // Cannot be docked
-            ImGuiWindowFlags_NoBackground | // Do not display background
-            ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
-        ImGui::Separator();
-        if (resultmsg) {ImGui::TextColored(ImVec4(0.85f, 0.6f, 0.0f, 1.0f), resultmsg.str().c_str());        }
-        ImGui::Separator();
-        // set button for higher fps
-        if (ImGui::Button("Get Cr Pos") && controller)
-        {
-            PositionData raxisData{};
-            controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, raxisData);
-            std::stringstream ss; ss << raxisData; std::string currentInfo = ss.str();
-            std::replace(currentInfo.begin(), currentInfo.end(), '\n', ';');
-            *sttlogs << "Position: " + currentInfo; std::cout << raxisData;
-        }
-        ImGui::End();
+   
     }
 
     struct JointMotionFunctor {auto operator()(ControlGroupId groupId, PositionData& posData, float speed) const {
@@ -270,169 +262,216 @@ namespace nymrobot {
   
     void ymconnect::setup_MOVE_ui(UIState& ui_state)
     {
-        ImGui::Separator();
-        ImGui::Begin("Attributes: ");
-        static auto LinepathStart = std::chrono::high_resolution_clock::now();
-        ImGui::SetNextItemWidth(80); int step = 1, faststep = 2;
-        ImGui::InputScalar("##", ImGuiDataType_U32, &ui_state.coumove,  &step, &faststep, NULL, ImGuiInputTextFlags_None);
-        if (ui_state.coumove < 1) { ui_state.coumove = 1; }; ImGui::SameLine();
-        ui_state.START_Flag = ImGui::Button("Start (R)"); ImGui::SameLine();
-        
-        if (ImGui::BeginPopupContextItem("RightStart", ImGuiPopupFlags_MouseButtonRight)) 
-        { 
-            if (ImGui::MenuItem((ui_state.SharedMemoryFlag?"Stop SharedMemory" : "start SharedMemory")))
+        // STATUS UI                   
+        {
+            static int x{ 200 }, y{ 400 };
+            static float pos_x, pos_y, sizex, sizey;
+            nui::FrameManage::GetViewPos(pos_x, pos_y);
+            nui::FrameManage::get3DSize(sizex, sizey);
+            ImGui::SetNextWindowPos(ImVec2(pos_x + 15 + sizex * 0.83f, pos_y + sizey * 0.25f)); // Set the position of the frame
+            ImGui::SetNextWindowSize(ImVec2(sizex * 0.15f, sizey * 0.73f)); // Set the size of the frame
+            ImGui::Begin("Robot Status:", nullptr,
+                ImGuiWindowFlags_NoDocking | // Cannot be docked
+                ImGuiWindowFlags_NoBackground | // Do not display background
+                ImGuiWindowFlags_NoNavFocus); // Does not bring to front on focus
+            if (resultmsg) { ImGui::TextColored(ImVec4(0.0f, 0.89f, 0.90f, 1.0f), resultmsg.str().c_str()); }
+            // set button for higher fps
+            if (ImGui::Button("Get Cr Pos") && controller)
             {
-                ui_state.SharedMemoryFlag = !ui_state.SharedMemoryFlag;
-                if (ui_state.SharedMemoryFlag) { *sttlogs << "Start Shared Memory"; }
-                else { *sttlogs << "Stop Shared Memory"; }
-
+                PositionData raxisData{};
+                controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, raxisData);
+                std::stringstream ss; ss << raxisData; std::string currentInfo = ss.str();
+                std::replace(currentInfo.begin(), currentInfo.end(), '\n', ';');
+                *sttlogs << "Position: " + currentInfo; std::cout << raxisData;
             }
-            if (ImGui::MenuItem(ui_state.lineshpath? "Hide Path": "Show Path"))
+            ImGui::End();
+        }
+        // Coordinate UI
+        {
+            ImGui::Begin("Attributes: ");
+            static auto LinepathStart = std::chrono::high_resolution_clock::now();
+            ImGui::SetNextItemWidth(80); int step = 1, faststep = 2;
+            ImGui::InputScalar("##", ImGuiDataType_U32, &ui_state.coumove, &step, &faststep, NULL, ImGuiInputTextFlags_None);
+            if (ui_state.coumove < 1) { ui_state.coumove = 1; }; ImGui::SameLine();
+            ui_state.START_Flag = ImGui::Button("Start (R)"); ImGui::SameLine();
+
+            if (ImGui::BeginPopupContextItem("RightStart", ImGuiPopupFlags_MouseButtonRight))
             {
-                ui_state.lineshpath = !ui_state.lineshpath;
-                if (ui_state.lineshpath) { *sttlogs << "Render the Move Path"; }
-                else { *sttlogs << "Stop the Move Path"; proMeshRb->delete_byname("movepath__SKIP__"); }
+                if (ImGui::MenuItem((ui_state.SharedMemoryFlag ? "Stop SharedMemory" : "start SharedMemory")))
+                {
+                    ui_state.SharedMemoryFlag = !ui_state.SharedMemoryFlag;
+                    if (ui_state.SharedMemoryFlag) { *sttlogs << "Start Shared Memory"; }
+                    else { *sttlogs << "Stop Shared Memory"; }
+
+                }
+                if (ImGui::MenuItem(ui_state.lineshpath ? "Hide Path" : "Show Path"))
+                {
+                    ui_state.lineshpath = !ui_state.lineshpath;
+                    if (ui_state.lineshpath) { *sttlogs << "Render the Move Path"; }
+                    else { *sttlogs << "Stop the Move Path"; proMeshRb->delete_byname("movepath__SKIP__"); }
+                }
+                ImGui::EndPopup();
             }
-            ImGui::EndPopup();
-        }
 
-        ImGui::SameLine();
-        if (ui_state.SharedMemoryFlag)
-        { shmdata->getter_6pos(get6pos); }
-        if (ui_state.rbpos.size() < get6pos.size()) {
-            ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
-            ui_state.movTypes.resize(get6pos.size(), 1);
-        }
-        if (get6pos.size() > 0) {
-            ui_state.coumove = get6pos.size()-1;
-            for (auto it = get6pos.begin(); it != get6pos.end(); ++it) {
-                ui_state.rbpos[std::distance(get6pos.begin(), it)] = *it;
-                ui_state.movTypes[it - get6pos.begin()] = 0;
+            ImGui::SameLine();
+            if (ui_state.SharedMemoryFlag)
+            { shmdata->getter_6pos(get6pos); }
+            if (ui_state.rbpos.size() < get6pos.size()) {
+                ui_state.rbpos.resize(get6pos.size(), std::vector<float>(6, 0.0f));
+                ui_state.movTypes.resize(get6pos.size(), 1);
             }
-            ui_state.movTypes[0] = 2;
-            // reset get6pos to size 0
-            get6pos.clear();
+            if (get6pos.size() > 0) {
+                ui_state.coumove = get6pos.size() - 1;
+                for (auto it = get6pos.begin(); it != get6pos.end(); ++it) {
+                    ui_state.rbpos[std::distance(get6pos.begin(), it)] = *it;
+                    ui_state.movTypes[it - get6pos.begin()] = 0;
+                }
+                ui_state.movTypes[0] = 2;
+                // reset get6pos to size 0
+                get6pos.clear();
 
-        }
-        ImGui::SameLine(); // Check the trajectory
-        if (ImGui::Button("Stop") && controller)
-        {
-            std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
-            *ui_state.tpstatus = controller->MotionManager->MotionStop();
-            controller->ControlCommands->SetServos(SignalStatus::OFF);
-            //*ui_state.tpstatus = controller->MotionManager->MotionStart();
-            *sttlogs << "Trying to clear trajectory";
-        }
-        ImGui::SameLine(); // Check the trajectory
-        if (ImGui::Button("Clear") && controller)
-        {
-            std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
-            *temptstt = controller->Faults->ClearAllFaults();
-            if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
-
-            *ui_state.tpstatus = controller->MotionManager->ClearAllTrajectory();
-            controller->ControlCommands->SetServos(SignalStatus::OFF);
-            //*ui_state.tpstatus = controller->MotionManager->MotionStart();
-            *sttlogs << "Trying to clear trajectory";
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Home") && controller)
-        {
-            //*ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
-            //*ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
-            controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
-            controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
-            JointMotion r1home(ControlGroupId::R1, *ui_state.b1crpos, 3);
-            *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(r1home);
-
-            ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
-            ui_state.b1crpos->axisData = { 380.0f,0.0f,405.0f,-180.0f,0.0f,180.0f };
-            JointMotion r2home(ControlGroupId::R1, *ui_state.b1crpos, 3);
-            *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(r2home);
-            *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
-            *ui_state.tpstatus = controller->MotionManager->MotionStart();
-            *sttlogs << "Go back to the Home pos";
-        }
-        ImGui::SameLine();
-        ImGui::Text("Linear:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("##LS", &ui_state.spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
-        ImGui::Text("Joint:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-        ImGui::InputFloat("##JS", &ui_state.spdjoint, 0.0f, 0.0f, "%.2f"); ImGui::SameLine(); ImGui::SetNextItemWidth(30);
-        // MotionAccelDecel accdec{ 20,20 };
-        //ImGui::InputDouble("ACC", &ui_state.accdec.accelRatio,0.0f,0.0f,"%.2f"); ImGui::SameLine(); ImGui::SetNextItemWidth(30);
-        //ImGui::InputDouble("DEC", &ui_state.accdec.decelRatio, 0.0f, 0.0f, "%.2f");
-        ImGui::Separator();
-
-        std::vector<const char*> selection = { "Linear", "Circular", "Joint","Mid-Cur"};
-
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 100.0f);
-        ImGui::Text(" X:"); ImGui::SameLine(0.0f, 40.0f);
-        ImGui::Text(" Y:"); ImGui::SameLine(0.0f, 40.0f);
-        ImGui::Text(" Z:"); ImGui::SameLine(0.0f, 40.0f);
-        ImGui::Text("Rx:"); ImGui::SameLine(0.0f, 40.0f);
-        ImGui::Text("Ry:"); ImGui::SameLine(0.0f, 40.0f);
-        ImGui::Text("Rz:"); ImGui::SameLine(0.0f, 40.0f);
-        ImGui::Text("Type:");
-
-        for (int j = 0; j < ui_state.coumove; ++j) {
-            if (ui_state.rbpos.size() < static_cast<size_t>(ui_state.coumove)) {
-                ui_state.rbpos.resize(ui_state.coumove, std::vector<float>(6, 0.0f));
-                ui_state.movTypes.resize(ui_state.coumove, 0);
             }
-            if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && controller) {
-                *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
-                *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
-                std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.begin() + 6, ui_state.rbpos[j].begin());
-                *sttlogs << "Update the Original Position for " << std::to_string(j);
+            ImGui::SameLine(); // Check the trajectory
+            if (ImGui::Button("Stop") && controller)
+            {
+                std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
+                *ui_state.tpstatus = controller->MotionManager->MotionStop();
+                controller->ControlCommands->SetServos(SignalStatus::OFF);
+                //*ui_state.tpstatus = controller->MotionManager->MotionStart();
+                *sttlogs << "Trying to clear trajectory";
+            }
+            ImGui::SameLine(); // Check the trajectory
+            if (ImGui::Button("Clear") && controller)
+            {
+                std::unique_ptr<StatusInfo> temptstt = std::make_unique<StatusInfo>();
+                *temptstt = controller->Faults->ClearAllFaults();
+                if (temptstt->StatusCode == 0) { resultmsg.str(" "); }
+
+                *ui_state.tpstatus = controller->MotionManager->ClearAllTrajectory();
+                controller->ControlCommands->SetServos(SignalStatus::OFF);
+                //*ui_state.tpstatus = controller->MotionManager->MotionStart();
+                *sttlogs << "Trying to clear trajectory";
             }
             ImGui::SameLine();
-            if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && controller) {
-                *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1workpos);
-                std::copy(ui_state.b1workpos->axisData.begin(), ui_state.b1workpos->axisData.begin()+6, ui_state.rbpos[j].begin());
-                *sttlogs << "Update the Current Position for " + std::to_string(j);
+            if (ImGui::Button("Home") && controller)
+            {
+                //*ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
+                //*ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
+                controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
+                controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
+                JointMotion r1home(ControlGroupId::R1, *ui_state.b1crpos, 3);
+                *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(r1home);
+
+                ui_state.b1crpos->coordinateType = CoordinateType::RobotCoordinate;
+                ui_state.b1crpos->axisData = { 380.0f,0.0f,405.0f,-180.0f,0.0f,180.0f };
+                JointMotion r2home(ControlGroupId::R1, *ui_state.b1crpos, 3);
+                *ui_state.tpstatus = controller->MotionManager->AddPointToTrajectory(r2home);
+                *ui_state.tpstatus = controller->ControlCommands->SetServos(SignalStatus::ON);
+                *ui_state.tpstatus = controller->MotionManager->MotionStart();
+                *sttlogs << "Go back to the Home pos";
             }
-            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##X" + std::to_string(j)).c_str(), &ui_state.rbpos[j][0], 0.0f, 0.0f, "%.2f");
-            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##Y" + std::to_string(j)).c_str(), &ui_state.rbpos[j][1], 0.0f, 0.0f, "%.2f");
-            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##Z" + std::to_string(j)).c_str(), &ui_state.rbpos[j][2], 0.0f, 0.0f, "%.2f"); 
-            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RX" + std::to_string(j)).c_str(), &ui_state.rbpos[j][3], 0.0f, 0.0f, "%.2f"); 
-            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &ui_state.rbpos[j][4], 0.0f, 0.0f, "%.2f"); 
-            ImGui::SameLine(); ImGui::SetNextItemWidth(50);
-            ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &ui_state.rbpos[j][5], 0.0f, 0.0f, "%.2f"); 
-            ImGui::SameLine(); ImGui::SetNextItemWidth(70);
-            std::string label = "##movtyp" + std::to_string(j);
-            ImGui::Combo(label.c_str(), &ui_state.movTypes[j], selection.data(), selection.size());
+            ImGui::SameLine();
+            ImGui::Text("Linear:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat("##LS", &ui_state.spdlinear, 0.0f, 0.0f, "%.2f");  ImGui::SameLine();
+            ImGui::Text("Joint:"); ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+            ImGui::InputFloat("##JS", &ui_state.spdjoint, 0.0f, 0.0f, "%.2f"); ImGui::SameLine(); ImGui::SetNextItemWidth(30);
+            // MotionAccelDecel accdec{ 20,20 };
+            //ImGui::InputDouble("ACC", &ui_state.accdec.accelRatio,0.0f,0.0f,"%.2f"); ImGui::SameLine(); ImGui::SetNextItemWidth(30);
+            //ImGui::InputDouble("DEC", &ui_state.accdec.decelRatio, 0.0f, 0.0f, "%.2f");
+            ImGui::Separator();
+
+            std::vector<const char*> selection = { "Linear", "Circular", "Joint","Mid-Cur" };
+
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 100.0f);
+            ImGui::Text(" X:"); ImGui::SameLine(0.0f, 40.0f);
+            ImGui::Text(" Y:"); ImGui::SameLine(0.0f, 40.0f);
+            ImGui::Text(" Z:"); ImGui::SameLine(0.0f, 40.0f);
+            ImGui::Text("Rx:"); ImGui::SameLine(0.0f, 40.0f);
+            ImGui::Text("Ry:"); ImGui::SameLine(0.0f, 40.0f);
+            ImGui::Text("Rz:"); ImGui::SameLine(0.0f, 40.0f);
+            ImGui::Text("Type:");
+
+            for (int j = 0; j < ui_state.coumove; ++j) {
+                if (ui_state.rbpos.size() < static_cast<size_t>(ui_state.coumove)) {
+                    ui_state.rbpos.resize(ui_state.coumove, std::vector<float>(6, 0.0f));
+                    ui_state.movTypes.resize(ui_state.coumove, 0);
+                }
+                if (ImGui::Button(("Org " + std::to_string(j)).c_str()) && controller) {
+                    *ui_state.tpstatus = controller->Variables->BasePositionVariable->Read(0, *ui_state.b1PositionData);
+                    *ui_state.tpstatus = controller->Kinematics->ConvertPosition(ControlGroupId::R1, ui_state.b1PositionData->positionData, KinematicConversions::PulseToCartesianPos, *ui_state.b1crpos);
+                    std::copy(ui_state.b1crpos->axisData.begin(), ui_state.b1crpos->axisData.begin() + 6, ui_state.rbpos[j].begin());
+                    *sttlogs << "Update the Original Position for " << std::to_string(j);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button(("Cr " + std::to_string(j)).c_str()) && controller) {
+                    *ui_state.tpstatus = controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::BaseCoordinate, 0, 0, *ui_state.b1workpos);
+                    std::copy(ui_state.b1workpos->axisData.begin(), ui_state.b1workpos->axisData.begin() + 6, ui_state.rbpos[j].begin());
+                    *sttlogs << "Update the Current Position for " + std::to_string(j);
+                }
+                ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat(("##X" + std::to_string(j)).c_str(), &ui_state.rbpos[j][0], 0.0f, 0.0f, "%.2f");
+                ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat(("##Y" + std::to_string(j)).c_str(), &ui_state.rbpos[j][1], 0.0f, 0.0f, "%.2f");
+                ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat(("##Z" + std::to_string(j)).c_str(), &ui_state.rbpos[j][2], 0.0f, 0.0f, "%.2f");
+                ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat(("##RX" + std::to_string(j)).c_str(), &ui_state.rbpos[j][3], 0.0f, 0.0f, "%.2f");
+                ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat(("##RY" + std::to_string(j)).c_str(), &ui_state.rbpos[j][4], 0.0f, 0.0f, "%.2f");
+                ImGui::SameLine(); ImGui::SetNextItemWidth(50);
+                ImGui::InputFloat(("##RZ" + std::to_string(j)).c_str(), &ui_state.rbpos[j][5], 0.0f, 0.0f, "%.2f");
+                ImGui::SameLine(); ImGui::SetNextItemWidth(70);
+                std::string label = "##movtyp" + std::to_string(j);
+                ImGui::Combo(label.c_str(), &ui_state.movTypes[j], selection.data(), selection.size());
+            }
+            ImGui::End();
         }
-        ImGui::End();
     }
 
     void ymconnect::read_robot() {
+        static std::stringstream ss;
+        // auto connect 
+        if (autocn_flag && !controller) {
+            controller = YMConnect::OpenConnection(std::string(ip_address), status);
+            if (status.StatusCode == 0)
+            {
+                connect_content =  "Connected; Welcome to OhLabs.";
+                status = controller->ControlCommands->DisplayStringToPendant(connect_content);
+                *sttlogs << "Connected";
+            }
+        }        
+        if (!controller) 
+        { 
+            return;
+        }
         std::stringstream strget;
         StatusInfo tpstatus;
         PositionData rposData{}, rjointangle{};
-        if (status.StatusCode != 0) {return;} 
-        resultmsg.str(" ");
+        if (status.StatusCode != 0) {return;}         
                
         // Have to check controler before calling for avoiding nullptr due to disconnect from threading.
         if (controller) { controller->ControlGroup->ReadPositionData(ControlGroupId::R1, CoordinateType::Pulse, 0, 0, rposData); }
-        if (controller) {controller->Kinematics->ConvertPosition(ControlGroupId::R1, rposData, KinematicConversions::PulseToJointAngle, rjointangle);}
+        if (controller) { controller->Kinematics->ConvertPosition(ControlGroupId::R1, rposData, KinematicConversions::PulseToJointAngle, rjointangle);}
         if (!controller) { return; }
-        resultmsg << rposData; 
-        std::copy(rjointangle.axisData.begin(), rjointangle.axisData.begin()+6, angle.begin());
-
+        //std::copy(rjointangle.axisData.begin(), rjointangle.axisData.begin()+6, angle.begin());
         bool isOutOfLimit = std::any_of(std::begin(angle), std::end(angle), [this, i = 0](float a) mutable {
             return a < limitangle[i][0] || a > limitangle[i++][1];
             });
 
         if (isOutOfLimit) {
-            if (controller) { controller->MotionManager->MotionStop(true); }
-            if (controller) { controller->MotionManager->ClearAllTrajectory(); }
-            if (controller) { controller->ControlCommands->SetServos(SignalStatus::OFF); }
-            *sttlogs << "Error: Joint angle is out of limit\n\t Let use Pendant to move the robot to the ";
+            {
+                std::lock_guard<std::mutex> lock(data_mutex);
+                if (controller) { controller->MotionManager->MotionStop(true); }
+                if (controller) { controller->MotionManager->ClearAllTrajectory(); }
+                if (controller) { controller->ControlCommands->SetServos(SignalStatus::OFF); }
+                *sttlogs << "Error: Joint angle is out of limit\n\t Let use Pendant to move the robot to the ";
+            }
+        }
+        {
+            std::lock_guard<std::mutex> lock(data_mutex);     
+            resultmsg.str(" ");
+			resultmsg << rposData;
+            std::copy(rjointangle.axisData.begin(), rjointangle.axisData.begin() + 6, angle.begin());
         }
     }
 

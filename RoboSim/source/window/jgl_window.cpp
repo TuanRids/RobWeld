@@ -8,7 +8,7 @@
 #include "elems/stb_image.h"
 namespace nwindow
 {
-    std::unique_ptr<IPCtransfer> GLWindow::IPreceiver = std::make_unique<IPCtransfer>();
+    IPCtransfer* GLWindow::IPreceiver = &IPCtransfer::getInstance(); 
     bool GLWindow::init(const std::string& title)
     {
         int offsize = 0;

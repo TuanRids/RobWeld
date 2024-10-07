@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34902.65
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RobWeld", "RoboSim\RoboSim.vcxproj", "{397C3892-0B5E-4F40-B7D3-728D97AA39A0}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "SetupRobWeld", "SetupRobWeld\SetupRobWeld.vdproj", "{EC874609-ADA6-4407-B8EF-B1BB67C998C7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -20,6 +22,10 @@ Global
 		{397C3892-0B5E-4F40-B7D3-728D97AA39A0}.Release|x64.Build.0 = Release|x64
 		{397C3892-0B5E-4F40-B7D3-728D97AA39A0}.Release|x86.ActiveCfg = Release|Win32
 		{397C3892-0B5E-4F40-B7D3-728D97AA39A0}.Release|x86.Build.0 = Release|Win32
+		{EC874609-ADA6-4407-B8EF-B1BB67C998C7}.Debug|x64.ActiveCfg = Debug
+		{EC874609-ADA6-4407-B8EF-B1BB67C998C7}.Debug|x86.ActiveCfg = Debug
+		{EC874609-ADA6-4407-B8EF-B1BB67C998C7}.Release|x64.ActiveCfg = Release
+		{EC874609-ADA6-4407-B8EF-B1BB67C998C7}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

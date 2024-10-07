@@ -6,6 +6,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <iostream>
 
+#include <Eigen/Dense>
 struct OBxyz {
     float size{ 300.0f };
     glm::vec3 xs{ 0.0f, 0.0f, 0.0f }; // Ox start point
@@ -51,6 +52,73 @@ struct OBxyz {
     }
 };
 
+struct BoundingBox {
+    glm::vec3 min, max;
+    Eigen::Vector3f corners[8];
+
+    void build_corners() {
+        corners[0] = Eigen::Vector3f(min.x, min.y, min.z);
+        corners[1] = Eigen::Vector3f(min.x, max.y, min.z);
+        corners[2] = Eigen::Vector3f(max.x, max.y, min.z);
+        corners[3] = Eigen::Vector3f(max.x, min.y, min.z);
+        corners[4] = Eigen::Vector3f(min.x, min.y, max.z);
+        corners[5] = Eigen::Vector3f(min.x, max.y, max.z);
+        corners[6] = Eigen::Vector3f(max.x, max.y, max.z);
+        corners[7] = Eigen::Vector3f(max.x, min.y, max.z);
+    }
+    bool intersect(const glm::vec3& ray_origin, const glm::vec3& ray_dir) const {
+        float tmin = (min.x - ray_origin.x) / ray_dir.x;
+        float tmax = (max.x - ray_origin.x) / ray_dir.x;
+
+        if (tmin > tmax) std::swap(tmin, tmax);
+
+        float tymin = (min.y - ray_origin.y) / ray_dir.y;
+        float tymax = (max.y - ray_origin.y) / ray_dir.y;
+
+        if (tymin > tymax) std::swap(tymin, tymax);
+
+        if ((tmin > tymax) || (tymin > tmax))
+            return false;
+
+        if (tymin > tmin)
+            tmin = tymin;
+
+        if (tymax < tmax)
+            tmax = tymax;
+
+        float tzmin = (min.z - ray_origin.z) / ray_dir.z;
+        float tzmax = (max.z - ray_origin.z) / ray_dir.z;
+
+        if (tzmin > tzmax) std::swap(tzmin, tzmax);
+
+        if ((tmin > tzmax) || (tzmin > tmax))
+            return false;
+
+        return true;
+    }
+    /*bool intersect(const glm::vec3& ray_origin, const glm::vec3& ray_dir) const {
+        Eigen::Vector3f rayOrig(ray_origin.x, ray_origin.y, ray_origin.z);
+        Eigen::Vector3f rayDir(ray_dir.x, ray_dir.y, ray_dir.z);
+
+        for (int i = 0; i < 8; ++i) {
+            for (int j = i + 1; j < 8; ++j) {
+                Eigen::Vector3f edge = corners[j] - corners[i];
+                Eigen::Vector3f edge_dir = edge.normalized();
+
+                Eigen::Vector3f oc = rayOrig - corners[i];
+                float t = oc.dot(edge_dir.cross(rayDir)) / rayDir.dot(edge_dir.cross(rayDir));
+
+                if (t >= 0) {
+                    return true; 
+                }
+            }
+        }
+        return false; 
+    }*/
+
+};
+
+
 struct Material {
     glm::vec3 mColor{ 0.7f, 0.8f, 0.8f };
     float mMetallic{ 0.6f };
@@ -59,7 +127,7 @@ struct Material {
     glm::vec3 position{ 0.0f, 0.0f, 0.0f };
     glm::vec3 rotation{ 0.0f, 0.0f, 0.0f };
     OBxyz mOxyz;
-
+    BoundingBox BBox;
 
 };
 

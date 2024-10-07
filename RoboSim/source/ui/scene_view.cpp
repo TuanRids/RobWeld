@@ -5,15 +5,41 @@
 namespace nui
 {
     std::string SceneView::arg_render_mode = "Surface";
-    SceneView::SceneView():zoom(1), mSize(800, 600)
+    SceneView::SceneView():zoom(1), mSize(2560, 1440)
     {
-        float SXAA = 2.5;
-        robinit->get_settings("SSXA_Ratio", SXAA);
-
+        int mQuality = 2;
+        //robinit->get_settings("SSXA_Ratio", SXAA);
+        robinit->get_settings("mQuality", mQuality);
         mFrameBuffer = std::make_shared<nrender::OpenGL_FrameBuffer>();
-        mFrameBuffer->create_buffers(static_cast<int>(800 * SXAA), static_cast<int>(600 * SXAA));
+        if (mQuality == 0) // HD
+        {
+            mSize = { 1280, 720 };
+            mFrameBuffer->create_buffers(static_cast<int>(1280), static_cast<int>(720));
+        }
+        else if (mQuality == 1) // FHD
+        {
+			mSize = { 1920, 1080 };
+			mFrameBuffer->create_buffers(static_cast<int>(1920), static_cast<int>(1080));
+        }
+        else if (mQuality == 2) // 2K
+		{
+			mSize = { 2048, 1080 };
+			mFrameBuffer->create_buffers(static_cast<int>(2048), static_cast<int>(1080));
+		}
+        else if (mQuality == 3) // Quad 2K
+        {
+			mSize = { 2560, 1440 };
+			mFrameBuffer->create_buffers(static_cast<int>(2560), static_cast<int>(1440 ));
+        }
+        // 4k
+        else if (mQuality == 4)
+        {
+			mSize = { 3840, 2160 };
+			mFrameBuffer->create_buffers(static_cast<int>(3840), static_cast<int>(2160));
+        }
         // mShader = std::make_shared<nshaders::Shader>();
         mShader->load("shaders/vs.vert", "shaders/fs_pbr.frag");
+        
     }
 
     void SceneView::resize(int32_t width, int32_t height)
@@ -135,7 +161,7 @@ namespace nui
             // Ensure the texture ID is valid before using it
             if (textureID != 0) {
                 cv::Mat image = framebufferToMat(textureID, static_cast<int>(viewportPanelSize.x), static_cast<int>(viewportPanelSize.y));
-                cv::GaussianBlur(image, image, cv::Size(3, 3), 0);
+                cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
                 cv::Mat sharpImage;
                 cv::Mat kernel = (cv::Mat_<float>(3, 3) <<
                     0, -1, 0,

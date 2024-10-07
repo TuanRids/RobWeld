@@ -2,10 +2,10 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
+// TODO REMOVE THIS IN FUTURE
 #include <string>
-
+#include "cfreader.h"
 namespace Config {
-
 
     // == path to data ===
     // robot model
@@ -30,10 +30,8 @@ namespace Config {
     constexpr const char* IPC_GET_CHART = "Local\\ChartInspection";
 
     // Send mapping data with Vision 
-	constexpr const char* IPC_SEND_TRIGGER = "Local\\TriggerVision";
+	constexpr const char* IPC_SEND_TRIGGER = "Local\\TriggerVision"; 
     
-    
-
 }
 
 #endif // CONFIG_HPP

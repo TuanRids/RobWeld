@@ -377,7 +377,7 @@ namespace nui
         {
             auto mesh = *it;
             if (check_skip(mesh)) { continue; }            
-            ImVec4 color = mesh->selected ? ImVec4(1.0f, 0.0f, 0.0f, 1.0f) : ImVec4(0.27f, 0.48f, 0.39f, 1.0f);
+            ImVec4 color = mesh->selected ? ImVec4(1.0f, 0.0f, 0.0f, 1.0f) : ImVec4(0.0f, 0.95f, 0.97f, 1.0f);
             ImGui::TextColored(color, "%s: %lld - %lld", mesh->oname, mesh->mVertices.size(), mesh->mVertexIndices.size());
         }
         ImGui::End();

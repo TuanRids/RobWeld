@@ -26,129 +26,129 @@ namespace nrender
         glBindVertexArray(0);
     }
 
-  void OpenGL_VertexIndexBuffer::delete_buffers()
-  {
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDeleteBuffers(1, &mIBO);
-    glDeleteBuffers(1, &mVBO);
-    glDeleteVertexArrays(1, &mVAO);
-      
-  }
+    void OpenGL_VertexIndexBuffer::delete_buffers()
+    {
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glDeleteBuffers(1, &mIBO);
+        glDeleteBuffers(1, &mVBO);
+        glDeleteVertexArrays(1, &mVAO);
 
-  void OpenGL_VertexIndexBuffer::bind()
-  {
-    glBindVertexArray(mVAO);
-    // check OpenGL error
-  }
+    }
 
-  void OpenGL_VertexIndexBuffer::unbind()
-  {
-     glBindVertexArray(0);
-  }
+    void OpenGL_VertexIndexBuffer::bind()
+    {
+        glBindVertexArray(mVAO);
+        // check OpenGL error
+    }
 
-  void OpenGL_VertexIndexBuffer::draw(int index_count)
-  {
-    bind();
+    void OpenGL_VertexIndexBuffer::unbind()
+    {
+        glBindVertexArray(0);
+    }
 
-    // the vertices as line loop
-    glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, nullptr);
-    
-    unbind();
-  }
+    void OpenGL_VertexIndexBuffer::draw(int index_count)
+    {
+        bind();
 
-  void OpenGL_VertexIndexBuffer::draw_lines(int index_count, float width )
-  {
-    bind();
+        // the vertices as line loop
+        glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, nullptr);
 
-	// the vertices as line loop
-    glLineWidth(width);
-	glDrawElements(GL_LINES, index_count, GL_UNSIGNED_INT, nullptr);
+        unbind();
+    }
 
-	unbind();
-  }
+    void OpenGL_VertexIndexBuffer::draw_lines(int index_count, float width)
+    {
+        bind();
 
-  void OpenGL_FrameBuffer::create_buffers(int32_t width, int32_t height)
-  {
-      mWidth = width;
-      mHeight = height;
+        // the vertices as line loop
+        glLineWidth(width);
+        glDrawElements(GL_LINES, index_count, GL_UNSIGNED_INT, nullptr);
 
-      if (mFBO)
-      {
-          delete_buffers();
-      }
+        unbind();
+    }
 
-      glGenFramebuffers(1, &mFBO);
-      glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
-      glCreateTextures(GL_TEXTURE_2D, 1, &mTexId);
-      glBindTexture(GL_TEXTURE_2D, mTexId);
+    void OpenGL_FrameBuffer::create_buffers(int32_t width, int32_t height)
+    {
+        mWidth = width;
+        mHeight = height;
 
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mWidth, mHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        if (mFBO)
+        {
+            delete_buffers();
+        }
 
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexId, 0);
+        glGenFramebuffers(1, &mFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+        glCreateTextures(GL_TEXTURE_2D, 1, &mTexId);
+        glBindTexture(GL_TEXTURE_2D, mTexId);
 
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mWidth, mHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-      GLfloat maxAniso = 0.0f;
-      glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
-
-      glCreateTextures(GL_TEXTURE_2D, 1, &mDepthId);
-      glBindTexture(GL_TEXTURE_2D, mDepthId);
-      glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, mWidth, mHeight);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthId, 0);
-
-      GLenum buffers[4] = { GL_COLOR_ATTACHMENT0 };
-      glDrawBuffers(mTexId, buffers);
-
-      unbind();
-  }
-
-  void OpenGL_FrameBuffer::delete_buffers()
-  {
-      if (mFBO)
-      {
-          glDeleteFramebuffers(GL_FRAMEBUFFER, &mFBO);
-          glDeleteTextures(1, &mTexId);
-          glDeleteTextures(1, &mDepthId);
-          mTexId = 0;
-          mDepthId = 0;
-      }
-
-  }
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexId, 0);
 
 
-  void OpenGL_FrameBuffer::bind()
-  {
-    glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
-    glViewport(0, 0, mWidth, mHeight);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-  }
+        GLfloat maxAniso = 0.0f;
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
 
-  void OpenGL_FrameBuffer::unbind()
-  {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  }
+        glCreateTextures(GL_TEXTURE_2D, 1, &mDepthId);
+        glBindTexture(GL_TEXTURE_2D, mDepthId);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, mWidth, mHeight);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  uint32_t OpenGL_FrameBuffer::get_texture()
-  {
-    return mTexId;
-    // check OpenGL error
-  }
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthId, 0);
+
+        GLenum buffers[4] = { GL_COLOR_ATTACHMENT0 };
+        glDrawBuffers(mTexId, buffers);
+
+        unbind();
+    }
+
+    void OpenGL_FrameBuffer::delete_buffers()
+    {
+        if (mFBO)
+        {
+            glDeleteFramebuffers(GL_FRAMEBUFFER, &mFBO);
+            glDeleteTextures(1, &mTexId);
+            glDeleteTextures(1, &mDepthId);
+            mTexId = 0;
+            mDepthId = 0;
+        }
+
+    }
+
+
+    void OpenGL_FrameBuffer::bind()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+        glViewport(0, 0, mWidth, mHeight);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    }
+
+    void OpenGL_FrameBuffer::unbind()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    uint32_t OpenGL_FrameBuffer::get_texture()
+    {
+        return mTexId;
+        // check OpenGL error
+    }
 
 
 }

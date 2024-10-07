@@ -192,7 +192,7 @@ namespace nelems {
             glm::vec3(0.0, 0.5, 0.0), glm::vec3(1.0, 0.8, 0.2), glm::vec3(0.0, 0.6, 0.4),
             glm::vec3(0.2, 0.1, 0.1), glm::vec3(0.04, 0.04, 0.4), glm::vec3(0.4, 0.1, 0.7)
         };*/
-        glm::vec3 color =  glm::vec3(0.0, 0.04, 0.95) ;
+        glm::vec3 color =  glm::vec3(1.0, 1.0, 1.0) ;
         const uint32_t cMeshImportFlags =
             aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices|
             aiProcess_ValidateDataStructure;
@@ -230,7 +230,7 @@ namespace nelems {
                     // Table
                     else if (name.find("table") != std::string::npos)
                     {
-                        newMesh.oMaterial.mMetallic = 0; newMesh.oMaterial.mRoughness = 0;
+                        newMesh.oMaterial.mMetallic = 0.97f; newMesh.oMaterial.mRoughness = 0;
 						newMesh.changeName(name);
 						newMesh.oMaterial.mColor = glm::vec3(0.008f, 0.008f, 0.003f);
                     }
@@ -240,7 +240,7 @@ namespace nelems {
                         newMesh.changeName(name);
                         newMesh.oMaterial.mMetallic = 0.95; newMesh.oMaterial.mRoughness = 0.06;
                         if (name.find("RBSIMBase_6") != std::string::npos){ newMesh.oMaterial.mColor = glm::vec3(0.95f, 0.3f, 0.0f); }
-                        else if (name.find("RBSIMBase_7") != std::string::npos) { newMesh.oMaterial.mColor = glm::vec3(0.0f, 0.83f, 0.3f); }
+                        else if (name.find("RBSIMBase_7") != std::string::npos) { newMesh.oMaterial.mColor = glm::vec3(0.0f, 0.04f, 0.95f); }
 
                         else { newMesh.oMaterial.mColor = color; }
                         name = "RBSIMCenter_" + name.substr(name.find_last_of("_") + 1);
@@ -265,11 +265,17 @@ namespace nelems {
     }
 
     void mMesh::load_specific_mesh(const aiMesh* mesh, oMesh& outMesh) {
+        outMesh.oMaterial.BBox.min = glm::vec3(mesh->mVertices[0].x, mesh->mVertices[0].y, mesh->mVertices[0].z);
+        outMesh.oMaterial.BBox.max = glm::vec3(mesh->mVertices[0].x, mesh->mVertices[0].y, mesh->mVertices[0].z);
+
+
         for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
             VertexHolder vh;
             vh.mPos = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
             vh.mNormal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
             outMesh.mVertices.push_back(vh);
+            outMesh.oMaterial.BBox.min = glm::min(outMesh.oMaterial.BBox.min, vh.mPos);
+            outMesh.oMaterial.BBox.max = glm::max(outMesh.oMaterial.BBox.max, vh.mPos);
         }
 
         for (size_t i = 0; i < mesh->mNumFaces; i++) {
@@ -284,6 +290,7 @@ namespace nelems {
         }
         center /= static_cast<float>(outMesh.mVertices.size());
         outMesh.oMaterial.position = center;
+        outMesh.oMaterial.BBox.build_corners();
         outMesh.init();
     }
 

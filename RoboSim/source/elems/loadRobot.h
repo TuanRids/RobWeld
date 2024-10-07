@@ -12,7 +12,7 @@
 #pragma warning( pop )
 #include <Windows.h>
 // ==================LOAD ROBOT====================
-
+#include "cfreader.h"
 namespace fs = std::filesystem;
 
 class LoadRobot
@@ -30,7 +30,7 @@ public:
     {
         fs::path currentDir = fs::current_path();
 
-        fs::path filePath = currentDir / Config::PATH_TO_ROBOTEMPLATE;
+        fs::path filePath = currentDir / "RobotStandard//Yaskawa-gp8-113k.fbx";            //Config::PATH_TO_ROBOTEMPLATE;
 
         std::string filePathStr = filePath.string();
 

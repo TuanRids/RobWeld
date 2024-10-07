@@ -10,6 +10,8 @@
 #include "nlohmann/json.hpp"
 #pragma warning( pop )
 #include <ymrobot/ymconnect.h>
+#include "IPCTransfer/IPCtransfer.h"
+
 using json = nlohmann::json;
 namespace nui {
     // Manage the hotkey and menubar
@@ -25,18 +27,19 @@ namespace nui {
         std::string theme;
         std::string rob_font="arial"; // verdanab seguihis arial
         std::mutex mtx;
-
+        IPCtransfer* ipc;
         bool OptionSetting_Flag = false;
         void OptionSettings();
         void OpenFileDialog();
         void hint(bool show);
-
+        nelems::mMesh* proMesh;
         void OpenFontDialog(HWND owner);
 
     public:
-        HotkeyMenubar() : scene_view(nullptr){
+        HotkeyMenubar() : scene_view(nullptr),ipc(nullptr), proMesh(nullptr){
             scene_view = &nui::SceneView::getInstance();
             robinit = &RobInitFile::getinstance();
+            proMesh = &nelems::mMesh::getInstance();
         }
         ////====    ==============MENU BAR==================
         //void commandLogs(){  }

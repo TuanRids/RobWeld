@@ -40,7 +40,7 @@ namespace nui
         void set_rotation_center();
 
         void reset_view() { mCamera->reset(); }
-
+        glm::vec3 camPosition() { return mCamera->get_position(); }
         void setlink_meshloadcallback(std::string& fpath) { mMeshLoadCallback(fpath); }
         void SetMeshLoadCallback(const std::function<void(const std::string&)>& callback) { mMeshLoadCallback = callback; }
 

@@ -11,7 +11,7 @@
 #pragma warning( disable : 26819) //3rd party library
 #include "nlohmann/json.hpp"
 #pragma warning( pop ) 
-
+#include "cfreader.h"
 namespace nrender
 {
     std::string UIContext::theme = "Light";
@@ -39,28 +39,29 @@ namespace nrender
         // ini var
         ThemeColors ct_colors = get_colortheme(theme);
 
-        colors[ImGuiCol_WindowBg] = ct_colors.winbg;
-        colors[ImGuiCol_MenuBarBg] = ct_colors.menubarbg;
-        colors[ImGuiCol_Separator] = ct_colors.separator;
-        colors[ImGuiCol_Header] = ct_colors.header;
-        colors[ImGuiCol_HeaderHovered] = ct_colors.headerhovered;
-        colors[ImGuiCol_HeaderActive] = ct_colors.headeractive;
-        colors[ImGuiCol_Button] = ct_colors.button;
-        colors[ImGuiCol_ButtonHovered] = ct_colors.buttonhovered;
-        colors[ImGuiCol_ButtonActive] = ct_colors.buttonactive;
-        colors[ImGuiCol_FrameBg] = ct_colors.framebg;
-        colors[ImGuiCol_FrameBgHovered] = ct_colors.framebghovered;
-        colors[ImGuiCol_FrameBgActive] = ct_colors.framebgactive;
-        colors[ImGuiCol_Tab] = ct_colors.tab;
-        colors[ImGuiCol_TabHovered] = ct_colors.tabhovered;
-        colors[ImGuiCol_TabActive] = ct_colors.tabactive;
-        colors[ImGuiCol_TabUnfocused] = ct_colors.tabunfocused;
-        colors[ImGuiCol_TabUnfocusedActive] = ct_colors.tabunfocusedhovered;
-        colors[ImGuiCol_TitleBg] = ct_colors.titlebg;
-        colors[ImGuiCol_TitleBgActive] = ct_colors.titlebgactive;
-        colors[ImGuiCol_TitleBgCollapsed] = ct_colors.titlebgcollapsed;
-        colors[ImGuiCol_Text] = ct_colors.textcolor;
-        colors[ImGuiCol_ScrollbarBg] = ct_colors.scrollbarbg;
+        colors[ImGuiCol_WindowBg] =         Cfigreader(theme, "winbg", ImVec4(0.13f, 0.14f, 0.26f, 1.0f));
+        colors[ImGuiCol_MenuBarBg] =        Cfigreader(theme, "menubarbg", ImVec4(0.08f, 0.15f, 0.21f, 1.0f));
+        colors[ImGuiCol_Separator] =        Cfigreader(theme, "separator", ImVec4(0.35f, 0.21f, 0.16f, 1.0f));
+        colors[ImGuiCol_Header] =           Cfigreader(theme, "header", ImVec4(0.32f, 0.2f, 0.4f, 1.0f));
+        colors[ImGuiCol_HeaderHovered] =    Cfigreader(theme, "headerhovered", ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        colors[ImGuiCol_HeaderActive] =     Cfigreader(theme, "headeractive", ImVec4(0.23f, 0.24f, 0.40f, 1.0f));
+        colors[ImGuiCol_Button] =           Cfigreader(theme, "button", ImVec4(0.13f, 0.14f, 0.40f, 1.0f));
+        colors[ImGuiCol_ButtonHovered] =    Cfigreader(theme, "buttonhovered", ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        colors[ImGuiCol_ButtonActive] =     Cfigreader(theme, "buttonactive", ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
+        colors[ImGuiCol_FrameBg] =          Cfigreader(theme, "framebg", ImVec4(0.13f, 0.14f, 0.40f, 1.0f));
+        colors[ImGuiCol_FrameBgHovered] =   Cfigreader(theme, "framebghovered", ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        colors[ImGuiCol_FrameBgActive] =    Cfigreader(theme, "framebgactive", ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
+        colors[ImGuiCol_Tab] =              Cfigreader(theme, "tab", ImVec4(0.13f, 0.14f, 0.40f, 1.0f));
+        colors[ImGuiCol_TabHovered] =       Cfigreader(theme, "tabhovered", ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        colors[ImGuiCol_TabActive] =        Cfigreader(theme, "tabactive", ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
+        colors[ImGuiCol_TabUnfocused] =     Cfigreader(theme, "tabunfocused", ImVec4(0.13f, 0.14f, 0.40f, 1.0f));
+        colors[ImGuiCol_TabUnfocusedActive] = Cfigreader(theme, "tabunfocusedhovered", ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        colors[ImGuiCol_TitleBg] =          Cfigreader(theme, "titlebg", ImVec4(0.13f, 0.14f, 0.40f, 1.0f));
+        colors[ImGuiCol_TitleBgActive] =    Cfigreader(theme, "titlebgactive", ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
+        colors[ImGuiCol_TitleBgCollapsed] = Cfigreader(theme, "titlebgcollapsed", ImVec4(0.13f, 0.14f, 0.40f, 1.0f));
+        colors[ImGuiCol_Text] =             Cfigreader(theme, "textcolor", ImVec4(0.95f, 0.995f, 0.99f, 1.0f));
+        colors[ImGuiCol_ScrollbarBg] =      Cfigreader(theme, "scrollbarbg", ImVec4(0.13f, 0.14f, 0.26f, 1.0f));
+
 
         // customize style for special frame
 
@@ -111,7 +112,7 @@ namespace nrender
             newcolor.titlebg               = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
             newcolor.titlebgactive         = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
             newcolor.titlebgcollapsed      = ImVec4{ 0.13f, 0.14f, 0.40f, 1.0f };
-            newcolor.textcolor             = ImVec4{ 0.99f, 0.995f, 0.99f, 1.0f };
+            newcolor.textcolor             = ImVec4{ 0.95f, 0.995f, 0.99f, 1.0f };
             newcolor.scrollbarbg           = ImVec4{ 0.13f, 0.14f, 0.26f, 1.0f };
             return newcolor;
         }

@@ -36,7 +36,7 @@ namespace nwindow
 
       // UI components
       std::unique_ptr<nui::Property_Panel> mPropertyPanel;
-      static std::unique_ptr<IPCtransfer> IPreceiver;
+      static IPCtransfer* IPreceiver;
 
       nui::SceneView* mSceneView;
       nui::uiAction uiaction;

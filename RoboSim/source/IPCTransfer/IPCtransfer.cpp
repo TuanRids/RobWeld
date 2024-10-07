@@ -21,12 +21,8 @@ IPCtransfer::~IPCtransfer() {
 }
 
 void IPCtransfer::send_datatoIPC() {
-    if (TriggerToPy["Send1"] != 0) {
-        if (!sceneview) { sceneview = &nui::SceneView::getInstance(); }
-        promesh->delete_byname("ScanMesh");
-        sceneview->reset_camera();
-    }
-    const char* ipc_send_mapping = Config::IPC_SEND_TRIGGER;
+
+    const char* ipc_send_mapping = Cfigreader("IPC_SEND_TRIGGER", "Local\\TriggerVision").c_str(); //"Local\\TriggerVision"
 
     HANDLE hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, TEXT(ipc_send_mapping));
     if (hMapFile == NULL) {
@@ -88,6 +84,14 @@ void IPCtransfer::getter_6pos(std::vector<std::vector<float>>& get6pos) {
     }
 }
 
+void IPCtransfer::trigger_run()
+{
+    auto checkconnect = [this]()->bool {if (!robot_cnstt) { *sttlogs << "Robot is not Connected."; return false; } else { return true; } };
+
+    sceneview->reset_camera();
+    if (checkconnect()) { TriggerToPy["Send1"] = 1; promesh->delete_byname("ScanMesh");    }
+}
+
 void IPCtransfer::IPCTransferRender() {
     pcl2m->show3d_data(); // For testing
     receive_data();
@@ -117,12 +121,13 @@ void IPCtransfer::reset_TriggerToPy() {
 }
 
 bool IPCtransfer::receive_data() {
-    const char* dat_Img = Config::IPC_GET_IMG;             // Get Image
-    const char* dat_ImgBelow = Config::IPC_GET_IMG_BELOW; // Get Image Below
-    const char* dat_rospos = Config::IPC_GET_POS;          // Get ROS Position
-    const char* dat_status = Config::IPC_GET_STATUS;        // Get Status  
-    const char* dat_coord = Config::IPC_GET_COOR3DMESH;     // Get Coordinators
-    const char* dat_chart = Config::IPC_GET_CHART;     // Get Coordinators
+    static std::string tempt1 = std::string(Cfigreader("IPC_GET_IMG",               "Local\\ImgAbove"));        const char* dat_Img = tempt1.c_str(); 
+    static std::string tempt2 = std::string(Cfigreader("IPC_GET_IMG_BELOW",         "Local\\ImgBelow"));        const char* dat_ImgBelow = tempt2.c_str();
+    static std::string tempt3 = std::string(Cfigreader("IPC_GET_POS",               "Local\\Robpos"));          const char* dat_rospos = tempt3.c_str();
+    static std::string tempt4 = std::string(Cfigreader("IPC_GET_STATUS",            "Local\\VisionStatus"));    const char* dat_status = tempt4.c_str();
+    static std::string tempt5 = std::string(Cfigreader("IPC_GET_COOR3DMESH",        "Local\\Coor3DMesh"));      const char* dat_coord = tempt5.c_str();
+    static std::string tempt6 = std::string(Cfigreader("IPC_GET_CHART",             "Local\\ChartInspection")); const char* dat_chart = tempt6.c_str();
+
 
     // Open the shared memory objects
     HANDLE hMapFileImg = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT(dat_Img));
@@ -342,15 +347,22 @@ GLuint IPCtransfer::matToTexture(const cv::Mat& mat) {
 }
 
 void IPCtransfer::displayControlButtons() {
+    if (!sceneview) { sceneview = &nui::SceneView::getInstance(); }    
     auto checkconnect = [this]()->bool {if (!robot_cnstt) { *sttlogs << "Robot is not Connected."; return false; } else { return true; } };
 
     ImVec4 runcolor = ImVec4(0.5f, 0.0f, 0.2f, 1.0f);
-    ImGui::PushStyleColor(ImGuiCol_Button, runcolor); 
-    if (ImGui::Button("   Run   ")) { if (checkconnect()) { TriggerToPy["Send1"] = 1; } }ImGui::SameLine();
+    ImGui::PushStyleColor(ImGuiCol_Button, runcolor);
+    if (ImGui::Button("F1 Run")) 
+    { 
+        promesh->delete_byname("ScanMesh"); sceneview->reset_camera();
+        if (checkconnect()) { TriggerToPy["Send1"] = 1; } 
+    }
+    ImGui::SameLine();
     ImGui::PopStyleColor(1);
 
-    if (ImGui::Button("Reload 3D")) {  pcl2m->reset_unqueIDpath();  }ImGui::SameLine();
-    if (ImGui::Button("Details")) {UnImgFrameTrigger = true;}
+    if (ImGui::Button("F2 Re. 3D") || tgre3d == 1) { pcl2m->reset_unqueIDpath(); tgre3d = 0; }ImGui::SameLine();
+    if (ImGui::Button("F3 Details")|| tgdetails == 1) {UnImgFrameTrigger = true; tgdetails = 0;}ImGui::SameLine();
+    if (ImGui::Button("F4 Insp.") || tgsample == 1) { if (checkconnect()) { TriggerToPy["Send2"] = 1; }; tgsample = 0;    }
     // if (ImGui::Button("R Right")) { if (checkconnect()) { TriggerToPy["Send3"] = 1; } } ImGui::SameLine();
     // if (ImGui::Button("R Insp")) { if (checkconnect()) { TriggerToPy["Send4"] = 1; } }ImGui::SameLine();
 }
@@ -368,11 +380,11 @@ void IPCtransfer::displayMainImage() {
 
         ImVec2 image_size;
         if (winsize.x / scale_ratio > winsize.y) {
-            image_size.x = winsize.y * scale_ratio * 0.85;
+            image_size.x = winsize.y * scale_ratio * 0.95;
             image_size.y = winsize.y * 0.95;
         }
         else {
-            image_size.x = winsize.x * 0.85;
+            image_size.x = winsize.x * 0.95;
             image_size.y = winsize.x / scale_ratio * 0.95;
         }
         ImGui::Image((void*)(intptr_t)image_texture, image_size);
@@ -401,11 +413,11 @@ void IPCtransfer::displaySecondaryImage() {
 
         ImVec2 image_size;
         if (winsize.x / scale_ratio > winsize.y) {
-            image_size.x = winsize.y * scale_ratio * 0.85;
+            image_size.x = winsize.y * scale_ratio * 0.95;
             image_size.y = winsize.y * 0.95;
         }
         else {
-            image_size.x = winsize.x * 0.85;
+            image_size.x = winsize.x * 0.95;
             image_size.y = winsize.x / scale_ratio * 0.95;
         }
         ImGui::Image((void*)(intptr_t)image_texture_below, image_size);
@@ -440,7 +452,6 @@ void IPCtransfer::displayLaserView() {
     ImGui::SliderFloat("Gamma", &Gamma, 0.0f, 3.0f); ImGui::SetNextItemWidth(80);
     ImGui::SliderFloat("Saturation", &Saturation, 0.0f, 3.0f); ImGui::SetNextItemWidth(80);
     ImGui::SliderFloat("ZoomFactor", &zoomFactor, 0.1f, 10.0f);
-    ImGui::Separator();
     for (auto it = history_img->begin(); it != history_img->end(); ++it)
     {
         std::string button_label = "" + std::to_string(it - history_img->begin());
@@ -473,9 +484,11 @@ void IPCtransfer::displayLaserView() {
     // Apply image adjustments using OpenCV
     cv::Mat adjusted_img;
     img_selected.convertTo(adjusted_img, -1, 1 + Contrast / 100.0, Brightness);
-    if (Gamma > 0) { applyGammaCorrection(adjusted_img, adjusted_img, Gamma); }
-    if (Saturation > 0) { applySaturation(adjusted_img, adjusted_img, Saturation); }
-    if (Sharpness) { applySharpness(adjusted_img, adjusted_img, Sharpness / 100.0); }
+
+   
+    if (Gamma > 0 && history_img->size() > 0) { applyGammaCorrection(adjusted_img, adjusted_img, Gamma); }
+    if (Saturation > 0 && history_img->size() > 0) { applySaturation(adjusted_img, adjusted_img, Saturation); }
+    if (Sharpness && history_img->size() > 0) { applySharpness(adjusted_img, adjusted_img, Sharpness / 100.0); }
 
     static GLuint adjusted_texture = 0;
     if (adjusted_texture != 0) {

@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{397C3892-0B5E-4F40-B7D3-728D97AA39A0}</ProjectGuid>
-    <RootNamespace>JGL_MeshLoader</RootNamespace>
+    <RootNamespace>MeshLoader</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>RobWeld</ProjectName>
   </PropertyGroup>
@@ -164,6 +164,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\cfreader.cpp" />
     <ClCompile Include="source\Command\CommandSys.cpp" />
     <ClCompile Include="source\Command\ObHistory.cpp" />
     <ClCompile Include="source\Command\Transform.cpp" />
@@ -238,6 +239,7 @@
     <ClInclude Include="source\Command\CommandSys.h" />
     <ClInclude Include="source\Command\dcommand.h" />
     <ClInclude Include="source\Command\Transform.h" />
+    <ClInclude Include="source\cfreader.h" />
     <ClInclude Include="source\elems\loadRobot.h" />
     <ClInclude Include="source\elems\material.h" />
     <ClInclude Include="source\elems\stb_image.h" />
@@ -277,6 +279,7 @@
     <ClInclude Include="source\ymrobot\ymmotion.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="config.ini" />
     <None Include="libs\assimp\LICENSE" />
     <None Include="shaders\fs.shader" />
     <None Include="shaders\fs_pbr.frag" />

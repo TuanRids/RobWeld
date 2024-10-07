@@ -6,7 +6,7 @@
 #include "input.h"
 #include "element.h"
 #include "shader/shader_util.h"
-
+#include "cfreader.h"
 
 namespace nelems
 {
@@ -227,8 +227,8 @@ namespace nelems
 		mPosition = { 0.0f, 0.0f, 0.0f };
 		mFocus = { 400.0f, 0.0f, -100.0f };
 		mDistance = 955.0f;
-		mPitch = 0.43f;
-		mYaw = -3.0f;
+		mPitch = glm::radians(Cfigreader("Pitch", 30.0f));
+		mYaw = glm::radians(Cfigreader("Yaw", 0.0f));
 
 		update_view_matrix();
 	}
@@ -242,14 +242,14 @@ namespace nelems
 
 		glm::vec3 mFocus = { 400.0f, 0.0f, -100.0f };
 
-		float mDistance = 955.0f;
+		float mDistance = Cfigreader("camDistance", 955.0f);
 		float mAspect;
 		float mFOV;
 		float mNear;
 		float mFar;
 
-		float mPitch = 0.43f;
-		float mYaw = -3.0f;
+		float mPitch = glm::radians(Cfigreader("Pitch", 30.0f));// glm::radians(0.0f); // x axis is flipped in opengl
+		float mYaw = glm::radians(Cfigreader("Yaw", 0.0f)); // y axis is flipped in opengl
 
 		glm::vec2 mCurrentPos2d = { 0.0f,0.0f };
 
