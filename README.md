@@ -93,8 +93,9 @@ This project is licensed under the MIT License.
 
 ## Contact
 
-For any questions or inquiries, please contact [ngdtuan.dn@gmail.com].
-
+For any questions or inquiries, please contact:
+email: [ngdtuan.dn@gmail.com].
+LinkedIn: https://www.linkedin.com/in/nguyen-tuan-a2a589128/
 We hope you find this project useful and look forward to your contributions and feedback!
 
 
