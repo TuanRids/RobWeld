@@ -54,6 +54,7 @@ As the primary developer, contributions include:
 - Integration and optimization of ImGui interfaces for enhanced user interaction.
 - Robust IPC framework ensuring efficient real-time communication with auxiliary Python modules.
 - Collaborative project, not primary architect.
+
 ## Future Improvements
 - Benchmark performance under various hardware conditions.
 - Further GPU optimizations to reduce overall latency.
@@ -71,3 +72,4 @@ Distributed under the MIT License.
 ## Contact
 - **Email**: ngdtuan.dn@gmail.com
 - **LinkedIn**: [Nguyen Tuan](https://www.linkedin.com/in/nguyen-tuan-a2a589128/)
+- Noted: This project was implemented as part of a collaborative robotics effort. My contributions focused on GPU-based LiDAR visualization and IPC between modules
