@@ -53,7 +53,7 @@ As the primary developer, contributions include:
 - Development of GPU-accelerated point cloud processing and OpenGL visualization.
 - Integration and optimization of ImGui interfaces for enhanced user interaction.
 - Robust IPC framework ensuring efficient real-time communication with auxiliary Python modules.
-
+- Collaborative project, not primary architect.
 ## Future Improvements
 - Benchmark performance under various hardware conditions.
 - Further GPU optimizations to reduce overall latency.
